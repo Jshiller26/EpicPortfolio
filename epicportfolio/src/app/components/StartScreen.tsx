@@ -22,35 +22,27 @@ export default function StartScreen() {
           background: 'linear-gradient(135deg, #1a5c4a 0%, #2d8b6d 100%)',
         }}
       >
-        {/* Decorative circles */}
-        <div className="absolute inset-0 opacity-20">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute border-2 border-yellow-400 rounded-full"
-              style={{
-                width: `${(i + 1) * 100}px`,
-                height: `${(i + 1) * 100}px`,
-                left: `${Math.sin(i) * 200 + 50}%`,
-                top: `${Math.cos(i) * 200 + 50}%`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            />
-          ))}
-        </div>
-      </div>
+    </div>
 
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
-        <div className="title-container mb-8">
+        <div className="title-container mb-4">
           <Image
-            src=""
-            alt=""
+            src="/images/PokemonName2.png"
+            alt="Joe Shiller"
             width={400}
             height={150}
             priority
           />
+        </div>
+
+        {/* Subtitle */}
+        <div 
+          className="text-white text-2xl mb-8"
+          style={{ fontFamily: 'BengalPixel, sans-serif' }}
+        >
+          SOFTWARE DEVELOPER
         </div>
 
         {/* Press Start Text */}
