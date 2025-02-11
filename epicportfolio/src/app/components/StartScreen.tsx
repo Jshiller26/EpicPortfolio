@@ -4,20 +4,52 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function StartScreen() {
-  const [isBlinking, setIsBlinking] = useState(true);
+  const [animationState, setAnimationState] = useState('initial');
+  const [isBlinking, setIsBlinking] = useState(false);
 
   useEffect(() => {
+    const sequence = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setAnimationState('shine');
+      
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      setAnimationState('slideTitle');
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setAnimationState('showDeveloper');
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setAnimationState('showBackground');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setAnimationState('complete');
+      
+      setIsBlinking(true);
+    };
+    
+    sequence();
+  }, []);
+
+  useEffect(() => {
+    if (!isBlinking) return;
+    
     const interval = setInterval(() => {
       setIsBlinking(prev => !prev);
     }, 800);
     return () => clearInterval(interval);
-  }, []);
+  }, [isBlinking]);
 
   return (
-    <div className="relative h-screen w-full bg-emerald-800 overflow-hidden">
-      {/* Background pattern */}
+    <div className={`relative h-screen w-full overflow-hidden ${
+      animationState === 'initial' || animationState === 'shine' ? 'bg-black' : ''
+    }`}>
+      {/* Background pattern*/}
       <div 
-        className="absolute inset-0" 
+        className={`absolute inset-0 transition-opacity duration-1000 ${
+          animationState === 'initial' || animationState === 'shine' || animationState === 'slideTitle' || animationState === 'showDeveloper'
+            ? 'opacity-0'
+            : 'opacity-100'
+        }`}
         style={{
           background: 'linear-gradient(135deg, #1a5c4a 0%, #2d8b6d 100%)',
         }}
@@ -26,20 +58,48 @@ export default function StartScreen() {
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
-        <div className="title-container mb-2 flex justify-center">
-          <Image
-            src="/images/pokemonNameCurve5.png"
-            alt="Joe Shiller"
-            width={1730}
-            height={578}
-            quality={100}
-            priority
-            className="transform -translate-y-20 max-w-[600px] w-auto h-auto [image-rendering:crisp-edges]"
-          />
+        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 ${
+          animationState === 'initial' || animationState === 'shine' ? 'translate-y-0' :
+          animationState === 'slideTitle' || animationState === 'showDeveloper' || animationState === 'showBackground' || animationState === 'complete'
+            ? '-translate-y-20'
+            : ''
+        }`}>
+          <div className="relative">
+            <div className="relative overflow-hidden bg-black">
+              <Image
+                src="/images/pokemonNameCurve5.png"
+                alt="Joe Shiller"
+                width={1730}
+                height={578}
+                quality={100}
+                priority
+                className="max-w-[600px] w-auto h-auto [image-rendering:crisp-edges] relative"
+              />
+              {/* Shine Overlay */}
+              {animationState === 'shine' && (
+                <div 
+                  className="absolute inset-0 pointer-events-none"
+                >
+                  <div
+                    className="absolute inset-0 animate-shine"
+                    style={{
+                      background: 'linear-gradient(75deg, transparent, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.8) 45%, rgba(255, 255, 255, 0.8) 55%, rgba(255, 255, 255, 0) 80%, transparent)',
+                      width: '25%',
+                      mixBlendMode: 'color-dodge'
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Subtitle text */}
-        <div className="flex flex-col items-center -mt-28">
+        <div className={`flex flex-col items-center -mt-28 transition-opacity duration-1000 ${
+          animationState === 'initial' || animationState === 'shine' || animationState === 'slideTitle'
+            ? 'opacity-0'
+            : 'opacity-100'
+        }`}>
+          {/* Software Developer subtitle*/}
           <svg width="500" height="80" className="-mb-8">
             <defs>
               <path
@@ -77,7 +137,6 @@ export default function StartScreen() {
               strokeWidth: '8px',
               paintOrder: 'stroke fill',
               letterSpacing: '0.1em'
-
             }}>
               <textPath href="#developer-curve" startOffset="50%" textAnchor="middle">
                 DEVELOPER
@@ -88,8 +147,8 @@ export default function StartScreen() {
 
         {/* Press Start Text */}
         <div
-         
           className={`press-start text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 ${
+            !isBlinking ? 'opacity-0' : 
             isBlinking ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ 
@@ -101,7 +160,9 @@ export default function StartScreen() {
         </div>
 
         {/* Copyright Text */}
-        <div className="absolute bottom-8 w-full text-center">
+        <div className={`absolute bottom-8 w-full text-center transition-opacity duration-500 ${
+          animationState === 'complete' ? 'opacity-100' : 'opacity-0'
+        }`}>
           <p 
             className="text-3xl text-white/90"
             style={{ 
