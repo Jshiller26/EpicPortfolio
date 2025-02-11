@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -21,15 +21,14 @@ export default function StartScreen() {
         style={{
           background: 'linear-gradient(135deg, #1a5c4a 0%, #2d8b6d 100%)',
         }}
-      >
-      </div>
+      />
 
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
         <div className="title-container mb-4 flex justify-center">
           <Image
-            src="/images/pokemonName3.png"
+            src="/images/pokemonNameCurve3.png"
             alt="Joe Shiller"
             width={600}
             height={200}
@@ -40,26 +39,43 @@ export default function StartScreen() {
 
         {/* Subtitle text */}
         <div className="flex flex-col items-center -mt-8 mb-16">
-          <div 
-            className="text-white text-4xl tracking-wider"
-            style={{ 
+          <svg width="500" height="120" className="-mb-8">
+            <defs>
+              <path
+                id="software-curve"
+                d="M 50,80 Q 250,20 450,80"
+                fill="none"
+              />
+            </defs>
+            <text className="text-5xl" style={{
               fontFamily: 'BengalPixel, sans-serif',
-              transform: 'perspective(500px) rotateX(10deg)',
+              fill: 'white',
               textShadow: '2px 2px 0px #000'
-            }}
-          >
-            SOFTWARE
-          </div>
-          <div 
-            className="text-white text-4xl tracking-wider mt-1"
-            style={{ 
+            }}>
+              <textPath href="#software-curve" startOffset="50%" textAnchor="middle">
+                SOFTWARE
+              </textPath>
+            </text>
+          </svg>
+          
+          <svg width="500" height="120">
+            <defs>
+              <path
+                id="developer-curve"
+                d="M 50,80 Q 250,20 450,80"
+                fill="none"
+              />
+            </defs>
+            <text className="text-5xl" style={{
               fontFamily: 'BengalPixel, sans-serif',
-              transform: 'perspective(500px) rotateX(10deg)',
+              fill: 'white',
               textShadow: '2px 2px 0px #000'
-            }}
-          >
-            DEVELOPER
-          </div>
+            }}>
+              <textPath href="#developer-curve" startOffset="50%" textAnchor="middle">
+                DEVELOPER
+              </textPath>
+            </text>
+          </svg>
         </div>
 
         {/* Press Start Text */}
