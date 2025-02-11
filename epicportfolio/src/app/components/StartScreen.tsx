@@ -28,7 +28,7 @@ export default function StartScreen() {
         {/* Title Logo */}
         <div className="title-container mb-2 flex justify-center">
           <Image
-            src="/images/pokemonNameCurve4.png"
+            src="/images/pokemonNameCurve5.png"
             alt="Joe Shiller"
             width={1730}
             height={578}
@@ -87,12 +87,13 @@ export default function StartScreen() {
         </div>
 
         {/* Press Start Text */}
-        <div 
+        <div
+         
           className={`press-start text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 ${
             isBlinking ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ 
-            fontFamily: 'BengalPixel, sans-serif',
+            fontFamily: 'Gbboot, sans-serif',
             textShadow: '2px 2px 0px #000'
           }}
         >
@@ -100,8 +101,16 @@ export default function StartScreen() {
         </div>
 
         {/* Copyright Text */}
-        <div className="absolute bottom-4 right-4 text-white text-sm opacity-80">
-          © 2025 Joe Shiller
+        <div className="absolute bottom-8 w-full text-center">
+          <p 
+            className="text-3xl text-white/90"
+            style={{ 
+              fontFamily: 'Gbboot, sans-serif',
+              textShadow: '1px 1px 0px #000'
+            }}
+          >
+            © 2025 Epic Personal Site inc.
+          </p>
         </div>
       </div>
     </div>
