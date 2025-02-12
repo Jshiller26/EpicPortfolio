@@ -9,10 +9,10 @@ export default function StartScreen() {
 
   useEffect(() => {
     const sequence = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 200));
       setAnimationState('shine');
       
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setAnimationState('slideTitle');
       
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -41,7 +41,9 @@ export default function StartScreen() {
 
   return (
     <div className={`relative h-screen w-full overflow-hidden ${
-      animationState === 'initial' || animationState === 'shine' ? 'bg-black' : ''
+      animationState !== 'showBackground' && animationState !== 'complete' 
+        ? 'bg-black' 
+        : ''
     }`}>
       {/* Background pattern*/}
       <div 
@@ -65,7 +67,7 @@ export default function StartScreen() {
             : ''
         }`}>
           <div className="relative">
-            <div className="relative overflow-hidden bg-black">
+            <div className={`relative ${animationState === 'shine' || animationState === 'initial' ? 'overflow-hidden bg-black' : ''}`}>
               <Image
                 src="/images/pokemonNameCurve5.png"
                 alt="Joe Shiller"
@@ -77,9 +79,7 @@ export default function StartScreen() {
               />
               {/* Shine Overlay */}
               {animationState === 'shine' && (
-                <div 
-                  className="absolute inset-0 pointer-events-none"
-                >
+                <div className="absolute inset-0 pointer-events-none">
                   <div
                     className="absolute inset-0 animate-shine"
                     style={{
