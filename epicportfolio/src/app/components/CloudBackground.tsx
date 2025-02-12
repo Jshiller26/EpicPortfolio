@@ -9,78 +9,101 @@ interface Cloud {
   id: number;
   type: number;
   x: number;
-  side: 'left' | 'right' | 'center';
   delay: number;
   size: number;
+  wiggleDuration: number;
 }
 
 const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
   const [clouds, setClouds] = useState<Cloud[]>([]);
-  const totalClouds = 12; 
+  const totalClouds = 16;
+  
+  // Function to get a random X position in the allowed zones
+  const getRandomXPosition = () => {
+    const rand = Math.random();
+    
+    if (rand < 0.5) {
+      // Left side (0-45%)
+      return Math.random() * 45;
+    } else {
+      // Right side (65%-100%)
+      return Math.random() * 20 + 65;
+    }
+  };
 
   useEffect(() => {
     if (animationState !== 'showBackground') return;
 
-    const initialClouds: Cloud[] = Array.from({ length: totalClouds }, (_, i) => {
-      const sideOptions: ('left' | 'center' | 'right')[] = ['left', 'center', 'right'];
-      const side = sideOptions[i % 3];
-      
-      // Calculate base X position based on side
-      let baseX = 0;
-      switch(side) {
-        case 'left':
-          baseX = -10;
-          break;
-        case 'center':
-          baseX = 40;
-          break;
-        case 'right':
-          baseX = 90;
-          break;
-      }
-
-      return {
+    const initialClouds: Cloud[] = [];
+    
+    for (let i = 0; i < totalClouds; i++) {
+      initialClouds.push({
         id: i,
-        type: Math.floor(Math.random() * 3) + 1,
-        x: baseX + (Math.random() * 20 - 10), 
-        side,
-        delay: -(Math.random() * 120),
-        size: Math.random() * 0.5 + 2.5 
-      };
-    });
+        type: Math.floor(Math.random() * 7) + 1,
+        x: getRandomXPosition(),
+        delay: -(Math.random() * 90),
+        size: Math.random() * 0.4 + 2.3,
+        wiggleDuration: Math.random() * 6 + 8,
+      });
+    }
 
     setClouds(initialClouds);
+
+    const spawnInterval = setInterval(() => {
+      setClouds(prevClouds => {
+        const activeClouds = prevClouds.filter(cloud => 
+          cloud.delay + 60 > -(Date.now() / 1000 % 60)
+        );
+        
+        const newCloud = {
+          id: Date.now(),
+          type: Math.floor(Math.random() * 7) + 1,
+          x: getRandomXPosition(),
+          delay: 0,
+          size: Math.random() * 0.4 + 2.3,
+          wiggleDuration: Math.random() * 6 + 8,
+        };
+        
+        return [...activeClouds, newCloud];
+      });
+    }, 3000); // change this for spawn rate
+
+    return () => clearInterval(spawnInterval);
   }, [animationState]);
 
   if (animationState !== 'showBackground') return null;
 
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
-      {/* Cloud Container */}
       <div className="absolute inset-0">
         {clouds.map((cloud) => (
-          <div
-            key={cloud.id}
-            className="absolute top-0 left-0 w-full"
-            style={{
-              transform: `translateX(${cloud.x}%)`,
-              animation: `cloudFloat 60s linear infinite`,
-              animationDelay: `${cloud.delay}s`,
-            }}
-          >
-            <Image
-              src={`/images/clouds/cloud${cloud.type}.png`}
-              alt="cloud"
-              width={256}
-              height={128}
-              className="cloud-sprite"
+            <div
+                key={cloud.id}
+                className="absolute w-full"
+                style={{
+                    left: `${cloud.x - 15}%`, // Offset to center clouds spawn region
+                    animation: `cloudFloat 60s linear infinite`,
+                    animationDelay: `${cloud.delay}s`,
+                }}
+            >
+            <div
               style={{
+                animation: `wiggle ${cloud.wiggleDuration}s ease-in-out infinite`,
                 transform: `scale(${cloud.size})`,
-                opacity: 0.85,
-                animation: `wiggle ${12 + Math.random() * 4}s ease-in-out infinite`,
               }}
-              priority
-            />
+            >
+              <Image
+                src={`/images/clouds/cloud${cloud.type}.png`}
+                alt="cloud"
+                width={256}
+                height={128}
+                className="cloud-sprite"
+                style={{
+                  opacity: 0.85,
+                }}
+                priority
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -88,22 +111,22 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
       <style jsx global>{`
         @keyframes cloudFloat {
           0% {
-            transform: translate(0, 120vh);
+            transform: translateY(120vh);
           }
           100% {
-            transform: translate(0, -120vh);
+            transform: translateY(-120vh);
           }
         }
 
         @keyframes wiggle {
           0%, 100% {
-            transform: translate(0) scale(var(--scale));
+            transform: translateX(0);
           }
           25% {
-            transform: translate(-2rem) scale(var(--scale));
+            transform: translateX(-20px);
           }
           75% {
-            transform: translate(2rem) scale(var(--scale));
+            transform: translateX(20px);
           }
         }
 

@@ -60,7 +60,7 @@ export default function StartScreen() {
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
-        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 translate-x-2 ${
+        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 translate-x-3 ${
           animationState === 'initial' || animationState === 'shine' ? 'translate-y-0' :
           animationState === 'slideTitle' || animationState === 'showDeveloper' || animationState === 'showBackground' || animationState === 'complete'
             ? '-translate-y-20'
