@@ -15,29 +15,27 @@ export default function StartScreen() {
       await new Promise(resolve => setTimeout(resolve, 3000));
       setAnimationState('slideTitle');
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 200));
       setAnimationState('showDeveloper');
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setAnimationState('showBackground');
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setAnimationState('complete');
-      
-      setIsBlinking(true);
+      setIsBlinking(true); 
     };
-    
     sequence();
   }, []);
 
   useEffect(() => {
-    if (!isBlinking) return;
-    
-    const interval = setInterval(() => {
-      setIsBlinking(prev => !prev);
-    }, 800);
-    return () => clearInterval(interval);
-  }, [isBlinking]);
+    let interval;
+    if (animationState === 'showBackground') {
+      interval = setInterval(() => {
+        setIsBlinking(prev => !prev);
+      }, 800);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [animationState]);
 
   return (
     <div className={`relative h-screen w-full overflow-hidden ${
@@ -60,7 +58,7 @@ export default function StartScreen() {
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
-        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 ${
+        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 translate-x-1 ${
           animationState === 'initial' || animationState === 'shine' ? 'translate-y-0' :
           animationState === 'slideTitle' || animationState === 'showDeveloper' || animationState === 'showBackground' || animationState === 'complete'
             ? '-translate-y-20'
@@ -94,11 +92,16 @@ export default function StartScreen() {
           </div>
         </div>
 
-        <div className={`flex flex-col items-center -mt-28 transition-opacity duration-1000 ${
-          animationState === 'initial' || animationState === 'shine' || animationState === 'slideTitle'
-            ? 'opacity-0'
-            : 'opacity-100'
-        }`}>
+        <div 
+          className={`flex flex-col items-center -mt-28 transition-all ${
+            animationState === 'initial' || animationState === 'shine' || animationState === 'slideTitle'
+              ? 'opacity-0 -translate-y-24'
+              : 'opacity-100 translate-y-0'  
+          }`}
+          style={{ 
+            transitionDuration: '2500ms'
+          }}
+        >
           {/* Software Developer subtitle*/}
           <svg width="500" height="80" className="-mb-8">
             <defs>
@@ -145,11 +148,11 @@ export default function StartScreen() {
           </svg>
         </div>
 
-        {/* Press Start Text */}
         <div
-          className={`press-start text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 ${
-            !isBlinking ? 'opacity-0' : 
-            isBlinking ? 'opacity-100' : 'opacity-0'
+          className={`text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 ${
+            animationState === 'showBackground' ? 
+              (isBlinking ? 'opacity-100' : 'opacity-0') : 
+              'opacity-0'
           }`}
           style={{ 
             fontFamily: 'Gbboot, sans-serif',
@@ -161,7 +164,7 @@ export default function StartScreen() {
 
         {/* Copyright Text */}
         <div className={`absolute bottom-8 w-full text-center transition-opacity duration-500 ${
-          animationState === 'complete' ? 'opacity-100' : 'opacity-0'
+          animationState === 'showBackground' || animationState === 'complete' ? 'opacity-100' : 'opacity-0'
         }`}>
           <p 
             className="text-3xl text-white/90"
