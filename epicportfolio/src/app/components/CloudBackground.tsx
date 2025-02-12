@@ -1,83 +1,120 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 interface CloudBackgroundProps {
   animationState: string;
 }
 
+interface Cloud {
+  id: number;
+  type: number;
+  x: number;
+  side: 'left' | 'right' | 'center';
+  delay: number;
+  size: number;
+}
+
 const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
+  const [clouds, setClouds] = useState<Cloud[]>([]);
+  const totalClouds = 12; 
+
+  useEffect(() => {
+    if (animationState !== 'showBackground') return;
+
+    const initialClouds: Cloud[] = Array.from({ length: totalClouds }, (_, i) => {
+      const sideOptions: ('left' | 'center' | 'right')[] = ['left', 'center', 'right'];
+      const side = sideOptions[i % 3];
+      
+      // Calculate base X position based on side
+      let baseX = 0;
+      switch(side) {
+        case 'left':
+          baseX = -10;
+          break;
+        case 'center':
+          baseX = 40;
+          break;
+        case 'right':
+          baseX = 90;
+          break;
+      }
+
+      return {
+        id: i,
+        type: Math.floor(Math.random() * 3) + 1,
+        x: baseX + (Math.random() * 20 - 10), 
+        side,
+        delay: -(Math.random() * 120),
+        size: Math.random() * 0.5 + 2.5 
+      };
+    });
+
+    setClouds(initialClouds);
+  }, [animationState]);
+
   if (animationState !== 'showBackground') return null;
 
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
-      {/* Cloud Layer */}
+      {/* Cloud Container */}
       <div className="absolute inset-0">
-        <div className="cloud-scroll">
-          {/* Pixel-perfect cloud shapes */}
-          <svg className="cloud-sprite w-32 h-8" viewBox="0 0 32 8" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M4 0h24v2h2v2h2v2h-2v2h-2v-2h-24v-2h-2v-2h2v-2z"
-              fill="#9CD3E7"
-              className="cloud-pixel"
+        {clouds.map((cloud) => (
+          <div
+            key={cloud.id}
+            className="absolute top-0 left-0 w-full"
+            style={{
+              transform: `translateX(${cloud.x}%)`,
+              animation: `cloudFloat 60s linear infinite`,
+              animationDelay: `${cloud.delay}s`,
+            }}
+          >
+            <Image
+              src={`/images/clouds/cloud${cloud.type}.png`}
+              alt="cloud"
+              width={256}
+              height={128}
+              className="cloud-sprite"
+              style={{
+                transform: `scale(${cloud.size})`,
+                opacity: 0.85,
+                animation: `wiggle ${12 + Math.random() * 4}s ease-in-out infinite`,
+              }}
+              priority
             />
-            <path
-              d="M6 2h20v2h-20v-2z"
-              fill="#B8E6F5"
-              className="cloud-highlight"
-            />
-          </svg>
-          
-          {/* Repeat cloud patterns */}
-          <div className="cloud-row">
-            {[...Array(6)].map((_, i) => (
-              <div key={`cloud-${i}`} className="cloud-group" style={{ 
-                transform: `translateX(${i * 120}px) translateY(${(i % 2) * 40}px)`
-              }}>
-                <div className="relative">
-                  <svg className="cloud-sprite w-32 h-8" viewBox="0 0 32 8">
-                    <use href="#cloud-shape" />
-                  </svg>
-                </div>
-              </div>
-            ))}
           </div>
-        </div>
+        ))}
       </div>
 
-      <style jsx>{`
-        @keyframes cloudScroll {
+      <style jsx global>{`
+        @keyframes cloudFloat {
           0% {
-            transform: translateY(100%);
+            transform: translate(0, 120vh);
           }
           100% {
-            transform: translateY(-100%);
+            transform: translate(0, -120vh);
           }
         }
 
-        .cloud-scroll {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 200%;
-          animation: cloudScroll 20s linear infinite;
-          image-rendering: pixelated;
-        }
-
-        .cloud-row {
-          position: relative;
-          height: 100%;
-          padding: 2rem;
-        }
-
-        .cloud-group {
-          position: absolute;
-          transition: transform 0.5s ease-out;
+        @keyframes wiggle {
+          0%, 100% {
+            transform: translate(0) scale(var(--scale));
+          }
+          25% {
+            transform: translate(-2rem) scale(var(--scale));
+          }
+          75% {
+            transform: translate(2rem) scale(var(--scale));
+          }
         }
 
         .cloud-sprite {
+          width: 512px;
+          height: auto;
           image-rendering: pixelated;
           -webkit-font-smoothing: none;
           -moz-osx-font-smoothing: none;
+          will-change: transform;
+          filter: brightness(1.1);
         }
       `}</style>
     </div>
