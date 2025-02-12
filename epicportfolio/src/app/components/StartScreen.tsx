@@ -2,11 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import CloudBackground from './CloudBackground';
 
 export default function StartScreen() {
+  const router = useRouter();
   const [animationState, setAnimationState] = useState('initial');
   const [isBlinking, setIsBlinking] = useState(false);
+
+  const handleStart = () => {
+    if (animationState === 'showBackground') {
+      setAnimationState('complete');
+      setTimeout(() => {
+        router.push('/home');
+      }, 500);
+    }
+  };
 
   useEffect(() => {
     const sequence = async () => {
@@ -36,6 +47,19 @@ export default function StartScreen() {
     return () => {
       if (interval) clearInterval(interval);
     };
+  }, [animationState]);
+
+  // keyboard listener
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if ((event.key === 'Enter' || event.key === ' ') && animationState === 'showBackground') {
+        event.preventDefault();
+        handleStart();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [animationState]);
 
   return (
@@ -150,8 +174,11 @@ export default function StartScreen() {
           </svg>
         </div>
 
-        <div
-          className={`text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 ${
+        {/* Press Start Text */}
+        <button
+          onClick={handleStart}
+          className={`text-white text-3xl tracking-wider transition-opacity duration-200 mt-16 
+            hover:text-yellow-300 focus:outline-none ${
             animationState === 'showBackground' ? 
               (isBlinking ? 'opacity-100' : 'opacity-0') : 
               'opacity-0'
@@ -162,7 +189,7 @@ export default function StartScreen() {
           }}
         >
           PRESS START
-        </div>
+        </button>
 
         {/* Copyright Text */}
         <div className={`absolute bottom-8 w-full text-center transition-opacity duration-500 ${
