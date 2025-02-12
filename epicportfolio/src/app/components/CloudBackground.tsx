@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 
 interface CloudBackgroundProps {
@@ -12,16 +12,16 @@ interface Cloud {
   delay: number;
   size: number;
   wiggleDuration: number;
+  createdAt: number;
 }
 
 const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
   const [clouds, setClouds] = useState<Cloud[]>([]);
+  const startTimeRef = useRef<number>(0);
   const totalClouds = 16;
   
-  // Function to get a random X position in the allowed zones
   const getRandomXPosition = () => {
     const rand = Math.random();
-    
     if (rand < 0.5) {
       // Left side (0-45%)
       return Math.random() * 45;
@@ -33,9 +33,10 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
 
   useEffect(() => {
     if (animationState !== 'showBackground') return;
+    
+    startTimeRef.current = Date.now();
 
     const initialClouds: Cloud[] = [];
-    
     for (let i = 0; i < totalClouds; i++) {
       initialClouds.push({
         id: i,
@@ -44,6 +45,7 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
         delay: -(Math.random() * 90),
         size: Math.random() * 0.4 + 2.3,
         wiggleDuration: Math.random() * 6 + 8,
+        createdAt: Date.now()
       });
     }
 
@@ -51,24 +53,31 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
 
     const spawnInterval = setInterval(() => {
       setClouds(prevClouds => {
-        const activeClouds = prevClouds.filter(cloud => 
-          cloud.delay + 60 > -(Date.now() / 1000 % 60)
-        );
+        const currentTime = Date.now();
+        const relativeTime = (currentTime - startTimeRef.current) / 1000;
+        
+        const activeClouds = prevClouds.filter(cloud => {
+          const cloudAge = (currentTime - cloud.createdAt) / 1000;
+          return cloudAge < 60; // Remove clouds after 30 secs
+        });
         
         const newCloud = {
-          id: Date.now(),
+          id: currentTime,
           type: Math.floor(Math.random() * 7) + 1,
           x: getRandomXPosition(),
           delay: 0,
           size: Math.random() * 0.4 + 2.3,
           wiggleDuration: Math.random() * 6 + 8,
+          createdAt: currentTime
         };
         
         return [...activeClouds, newCloud];
       });
-    }, 3000); // change this for spawn rate
+    }, 3000);
 
-    return () => clearInterval(spawnInterval);
+    return () => {
+      clearInterval(spawnInterval);
+    };
   }, [animationState]);
 
   if (animationState !== 'showBackground') return null;
@@ -77,15 +86,15 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
     <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
       <div className="absolute inset-0">
         {clouds.map((cloud) => (
-            <div
-                key={cloud.id}
-                className="absolute w-full"
-                style={{
-                    left: `${cloud.x - 15}%`, // Offset to center clouds spawn region
-                    animation: `cloudFloat 60s linear infinite`,
-                    animationDelay: `${cloud.delay}s`,
-                }}
-            >
+          <div
+            key={cloud.id}
+            className="absolute w-full"
+            style={{
+              left: `${cloud.x - 15}%`,
+              animation: `cloudFloat 60s linear infinite`,
+              animationDelay: `${cloud.delay}s`,
+            }}
+          >
             <div
               style={{
                 animation: `wiggle ${cloud.wiggleDuration}s ease-in-out infinite`,

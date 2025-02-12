@@ -27,7 +27,7 @@ export default function StartScreen() {
   }, []);
 
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout | undefined;
     if (animationState === 'showBackground') {
       interval = setInterval(() => {
         setIsBlinking(prev => !prev);
