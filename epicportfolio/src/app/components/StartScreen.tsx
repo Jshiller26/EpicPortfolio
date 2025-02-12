@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import CloudBackground from './CloudBackground';
 
 export default function StartScreen() {
   const [animationState, setAnimationState] = useState('initial');
@@ -45,20 +46,21 @@ export default function StartScreen() {
     }`}>
       {/* Background pattern*/}
       <div 
-        className={`absolute inset-0 transition-opacity duration-1000 ${
+        className={`absolute inset-0 transition-opacity duration-1000 bg-cover bg-center ${
           animationState === 'initial' || animationState === 'shine' || animationState === 'slideTitle' || animationState === 'showDeveloper'
             ? 'opacity-0'
             : 'opacity-100'
         }`}
         style={{
-          background: 'linear-gradient(135deg, #1a5c4a 0%, #2d8b6d 100%)',
+          backgroundImage: 'url("/images/rayquazaanimation/emeraldBackgroundHD.png")',
         }}
       />
-
+      <CloudBackground animationState={animationState} />
+      
       {/* Main content */}
       <div className="relative flex flex-col items-center justify-center h-full">
         {/* Title Logo */}
-        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 translate-x-1 ${
+        <div className={`title-container mb-2 flex justify-center relative transition-transform duration-1000 translate-x-2 ${
           animationState === 'initial' || animationState === 'shine' ? 'translate-y-0' :
           animationState === 'slideTitle' || animationState === 'showDeveloper' || animationState === 'showBackground' || animationState === 'complete'
             ? '-translate-y-20'
