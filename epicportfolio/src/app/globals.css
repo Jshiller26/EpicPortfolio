@@ -53,3 +53,10 @@ body {
   text-align: center;
   /* animation: blink 1s infinite; */
 }
+
+image {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
