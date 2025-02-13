@@ -1,8 +1,8 @@
-// src/app/components/Room.tsx
 "use client";
 
 import React from 'react';
 import Image from 'next/image';
+import Grid from './Grid';
 
 export default function Room() {
   return (
@@ -16,6 +16,7 @@ export default function Room() {
           priority
           unoptimized
         />
+        <Grid />
       </div>
     </div>
   );

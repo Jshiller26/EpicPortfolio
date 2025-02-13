@@ -1,130 +1,133 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
-type Position = { x: number; y: number };
+type GridPosition = { x: number; y: number };
+
+const GRID_SIZE = 64;
+const SPRITE_WIDTH = 34;
+const SPRITE_HEIGHT = 50;
+const SCALE_FACTOR = 2;
+const MOVEMENT_DURATION = 200;
+
+const SPRITE_INDEXES = {
+  down: [0, 1, 2, 3],
+  left: [5, 6, 7, 8],
+  right: [10, 11, 12, 13],
+  up: [15, 16, 17, 18]
+};
 
 export default function Player() {
-  const [position, setPosition] = useState<Position>({ x: 320, y: 240 });
-  const [direction, setDirection] = useState<Direction>('right');
+  const [gridPosition, setGridPosition] = useState<GridPosition>({ x: 5, y: 5 });
   const [isMoving, setIsMoving] = useState(false);
-  const [isSprinting, setIsSprinting] = useState(false);
+  const [direction, setDirection] = useState<Direction>('down');
   const [frame, setFrame] = useState(0);
-  
-  const WALK_SPEED = 4;
-  const SPRINT_SPEED = 8;
-  const SPRITE_SIZE = 32;
+
+  const getCurrentSprite = useCallback(() => {
+    const spriteIndex = SPRITE_INDEXES[direction][frame % 4];
+    return `/images/sprites/tile${spriteIndex.toString().padStart(3, '0')}.png`;
+  }, [direction, frame]);
+
+  const getPixelPosition = useCallback((pos: GridPosition) => ({
+    x: pos.x * GRID_SIZE + GRID_SIZE/2 - (SPRITE_WIDTH * SCALE_FACTOR)/2,
+    y: pos.y * GRID_SIZE + GRID_SIZE/2 - (SPRITE_HEIGHT * SCALE_FACTOR)/2
+  }), []);
+
+  const moveToPosition = useCallback((newPos: GridPosition, newDirection: Direction) => {
+    if (isMoving) return;
+
+    // Boundary checks
+    if (newPos.x < 0 || newPos.x >= 12 || newPos.y < 0 || newPos.y >= 11) return;
+
+    setIsMoving(true);
+    setDirection(newDirection);
+    setGridPosition(newPos);
+
+    setTimeout(() => {
+      setIsMoving(false);
+      setFrame(0);
+    }, MOVEMENT_DURATION);
+  }, [isMoving]);
 
   useEffect(() => {
-    const keys = new Set<string>();
-    let animationFrame = 0;
+    let frameId: number;
     let lastFrameTime = 0;
-    const WALK_FRAME_DURATION = 150; 
-    const SPRINT_FRAME_DURATION = 100;
-    
+    const keys = new Set<string>();
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      keys.add(e.key);
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Shift'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-      }
-      // Update sprint state
-      if (e.key === 'Shift') {
-        setIsSprinting(true);
+        keys.add(e.key);
       }
     };
-    
+
     const handleKeyUp = (e: KeyboardEvent) => {
       keys.delete(e.key);
-      if (e.key === 'Shift') {
-        setIsSprinting(false);
-      }
     };
 
     const gameLoop = (timestamp: number) => {
-      let newX = position.x;
-      let newY = position.y;
-      let newDirection = direction;
-      let moving = false;
+      if (!isMoving && keys.size > 0) {
+        const newPos = { ...gridPosition };
+        let newDirection = direction;
 
-      // Calculate current speed based on sprint state
-      const currentSpeed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
-      const frameDuration = isSprinting ? SPRINT_FRAME_DURATION : WALK_FRAME_DURATION;
+        if (keys.has('ArrowUp')) {
+          newPos.y--;
+          newDirection = 'up';
+        } else if (keys.has('ArrowDown')) {
+          newPos.y++;
+          newDirection = 'down';
+        } else if (keys.has('ArrowLeft')) {
+          newPos.x--;
+          newDirection = 'left';
+        } else if (keys.has('ArrowRight')) {
+          newPos.x++;
+          newDirection = 'right';
+        }
 
-      if (keys.has('ArrowUp')) {
-        newY -= currentSpeed;
-        newDirection = 'up';
-        moving = true;
-      } else if (keys.has('ArrowDown')) {
-        newY += currentSpeed;
-        newDirection = 'down';
-        moving = true;
-      }
-      
-      if (keys.has('ArrowLeft')) {
-        newX -= currentSpeed;
-        newDirection = 'left';
-        moving = true;
-      } else if (keys.has('ArrowRight')) {
-        newX += currentSpeed;
-        newDirection = 'right';
-        moving = true;
+        if (newPos.x !== gridPosition.x || newPos.y !== gridPosition.y) {
+          moveToPosition(newPos, newDirection);
+        }
       }
 
-      // Update animation frame
-      if (moving && timestamp - lastFrameTime > frameDuration) {
-        setFrame(prev => (prev + 1) % 8);
+      if (isMoving && timestamp - lastFrameTime > 100) {
+        setFrame(prev => (prev + 1) % 4);
         lastFrameTime = timestamp;
-      } else if (!moving) {
-        setFrame(0);
       }
 
-      setPosition({ x: newX, y: newY });
-      setDirection(newDirection);
-      setIsMoving(moving);
-
-      animationFrame = requestAnimationFrame(gameLoop);
+      frameId = requestAnimationFrame(gameLoop);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    animationFrame = requestAnimationFrame(gameLoop);
+    frameId = requestAnimationFrame(gameLoop);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      cancelAnimationFrame(animationFrame);
+      cancelAnimationFrame(frameId);
     };
-  }, [position, direction, isSprinting]);
+  }, [gridPosition, direction, isMoving, moveToPosition]);
 
-  const getSpritesheetPosition = () => {
-    const row = isSprinting ? 1 : 0;
-    const col = isMoving ? (frame % 8) : 0;
-    
-    return {
-      backgroundPosition: `-${col * SPRITE_SIZE}px -${row * SPRITE_SIZE}px`,
-      transform: `scaleX(${direction === 'left' ? -1 : 1})`, // Mirror for left movement
-    };
-  };
+  const currentPosition = getPixelPosition(gridPosition);
 
   return (
-    <div 
-      className="absolute transition-transform"
-      style={{ 
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        width: `${SPRITE_SIZE}px`,
-        height: `${SPRITE_SIZE}px`,
-        backgroundImage: 'url("/images/sprites/EmeraldCharacterSheet.png")',
-        imageRendering: 'pixelated',
+    <div
+      className="absolute transition-all duration-200 ease-linear z-10"
+      style={{
+        transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
+        width: `${SPRITE_WIDTH * SCALE_FACTOR}px`,
+        height: `${SPRITE_HEIGHT * SCALE_FACTOR}px`,
       }}
     >
-      <div 
-        className="w-full h-full"
-        style={{
-          ...getSpritesheetPosition(),
-          backgroundImage: 'url("/sprites/character.png")',
-          imageRendering: 'pixelated',
-        }}
+      <Image
+        src={getCurrentSprite()}
+        alt="Player"
+        width={SPRITE_WIDTH * SCALE_FACTOR}
+        height={SPRITE_HEIGHT * SCALE_FACTOR}
+        className="[image-rendering:pixelated]"
+        priority
       />
     </div>
   );
