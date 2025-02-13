@@ -13,6 +13,9 @@ const SPRITE_HEIGHT = 50;
 const SCALE_FACTOR = 2;
 const MOVEMENT_SPEED = 3;
 
+const ROOM_WIDTH = 800;
+const ROOM_HEIGHT = 720;
+
 const SPRITE_INDEXES = {
   down: [0, 1, 2, 3],
   left: [5, 6, 7, 8],
@@ -80,29 +83,25 @@ export default function Player() {
       }
     }
 
-    // Handle animation
     if (isMoving) {
       const dx = targetPosition.current.x - pixelPosition.x;
       const dy = targetPosition.current.y - pixelPosition.y;
       
       if (Math.abs(dx) < MOVEMENT_SPEED && Math.abs(dy) < MOVEMENT_SPEED) {
-        // We reached our target position
         setPixelPosition(targetPosition.current);
         setIsMoving(false);
       } else {
-        // Move towards target position
         const newX = pixelPosition.x + Math.sign(dx) * MOVEMENT_SPEED;
         const newY = pixelPosition.y + Math.sign(dy) * MOVEMENT_SPEED;
         setPixelPosition({ x: newX, y: newY });
         
-        // Update animation frame every 100ms while moving
         if (timestamp - lastFrameTime.current > 100) {
           setFrame(prev => (prev + 1) % 4);
           lastFrameTime.current = timestamp;
         }
       }
     } else if (keys.size === 0) {
-      setFrame(0); // Reset to standing frame when not moving
+      setFrame(0);
     }
 
     animationFrameRef.current = requestAnimationFrame(updatePosition);
@@ -135,12 +134,18 @@ export default function Player() {
     };
   }, [updatePosition]);
 
-  const displayX = pixelPosition.x + (GRID_SIZE / 2) - (SPRITE_WIDTH * SCALE_FACTOR / 2);
-  const displayY = pixelPosition.y + (GRID_SIZE / 2) - (SPRITE_HEIGHT * SCALE_FACTOR / 2);
+  const roomCenterX = window.innerWidth / 2 - ROOM_WIDTH / 2;
+  const roomCenterY = window.innerHeight / 2 - ROOM_HEIGHT / 2;
+  
+  const spriteOffsetX = (GRID_SIZE - SPRITE_WIDTH * SCALE_FACTOR) / 2;
+  const spriteOffsetY = (GRID_SIZE - SPRITE_HEIGHT * SCALE_FACTOR) / 2;
+  
+  const displayX = Math.floor(roomCenterX + pixelPosition.x + spriteOffsetX);
+  const displayY = Math.floor(roomCenterY + pixelPosition.y + spriteOffsetY);
 
   return (
     <div
-      className="absolute z-10"
+      className="fixed z-10"
       style={{
         transform: `translate(${displayX}px, ${displayY}px)`,
         width: `${SPRITE_WIDTH * SCALE_FACTOR}px`,
