@@ -11,26 +11,24 @@ export default function Grid() {
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
       <div 
         style={{
-          width: '768px', 
-          height: '704px', 
+          width: '768px', // 12 * 64
+          height: '704px', // 11 * 64
           backgroundImage: `
             linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 1px)
           `,
           backgroundSize: '64px 64px',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          position: 'absolute'
+          backgroundPosition: '-32px -32px',
         }}
       >
-        {/* Grid cell coordinates for now */}
         {Array.from({ length: GRID_ROWS }, (_, y) =>
           Array.from({ length: GRID_COLS }, (_, x) => (
             <div
               key={`${x}-${y}`}
               style={{
                 position: 'absolute',
-                left: x * GRID_SIZE,
-                top: y * GRID_SIZE,
+                left: (x * GRID_SIZE) - 32,
+                top: (y * GRID_SIZE) - 32,
                 width: GRID_SIZE,
                 height: GRID_SIZE,
                 color: 'rgba(255, 255, 255, 0.4)',

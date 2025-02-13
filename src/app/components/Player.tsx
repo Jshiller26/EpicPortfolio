@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { RoomCollision, createBedroomCollision } from '../utils/tileMap'
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type GridPosition = { x: number; y: number };
@@ -43,14 +44,22 @@ export default function Player() {
     return `/images/sprites/tile${spriteIndex.toString().padStart(3, '0')}.png`;
   }, [direction, frame]);
 
+  const collisionMap = useRef<RoomCollision>(createBedroomCollision());
+
   const moveToGridPosition = useCallback((newGridX: number, newGridY: number) => {
-    if (newGridX >= 0 && newGridX < 12 && newGridY >= 0 && newGridY < 11) {
+    // Check collision before moving
+    if (collisionMap.current.isWalkable(newGridX, newGridY)) {
       setGridPosition({ x: newGridX, y: newGridY });
       targetPosition.current = {
         x: newGridX * GRID_SIZE,
         y: newGridY * GRID_SIZE
       };
       setIsMoving(true);
+    }
+    
+    // Check for interactable tiles
+    if (collisionMap.current.isInteractable(newGridX, newGridY)) {
+      console.log('Interacting with tile at', newGridX, newGridY);
     }
   }, []);
 
