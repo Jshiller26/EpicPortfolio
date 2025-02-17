@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ROOM, GRID_SIZE } from '../constants/roomConstants';
+import { ROOM, GRID_SIZE, GRID } from '../constants/roomConstants';
+import { INTERACTABLES } from '../constants/bedroomCollision';
 import DebugGrid from './DebugGrid';
 import Player from './Player';
+import DialogBox from './DialogBox';
 import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
 import type { GridPosition, MovementRequest } from '../types/gameTypes';
@@ -12,6 +14,7 @@ import type { GridPosition, MovementRequest } from '../types/gameTypes';
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
+  const [dialogMessage, setDialogMessage] = useState<string | null>(null);
   const collisionMap = useRef(createBedroomCollision());
   const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
   const isMoving = useRef(false);
@@ -21,27 +24,88 @@ export default function Room() {
       if (e.key.toLowerCase() === 'g') {
         setShowDebug(prev => !prev);
       }
+      
+      if (e.key.toLowerCase() === 'e' && !dialogMessage) {
+        checkForInteraction();
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [dialogMessage]);
+
+  const getInteractableMessage = (id: string) => {
+    switch(id) {
+      case 'time-management':
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit'
+        });
+        return `The clock reads ${timeString}.`;
+      default:
+        return `Interacting with ${id}`;
+    }
+  };
+
+  const checkForInteraction = () => {
+    if (isMoving.current || dialogMessage) return;
+
+    const { x, y } = playerPosition.current;
+    
+    const interactableItem = Object.entries(INTERACTABLES).find(([_, item]) => {
+      return item.x === x && item.y === y;
+    });
+
+    if (interactableItem) {
+      const [_, item] = interactableItem;
+      const message = getInteractableMessage(item.id);
+      setDialogMessage(message);
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
-    // Don't process new clicks while moving
-    if (isMoving.current) return;
+    if (isMoving.current || dialogMessage) return;
 
-    // Get click coordinates relative to the room container
     const roomElement = e.currentTarget as HTMLDivElement;
     const rect = roomElement.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Convert to grid coordinates
     const gridX = Math.floor(x / GRID_SIZE);
     const gridY = Math.floor(y / GRID_SIZE);
 
-    // Check if target is within grid bounds
+    const clickedItem = Object.entries(INTERACTABLES).find(([_, item]) => 
+      item.x === gridX && item.y === gridY
+    );
+
+    if (clickedItem) {
+      const [_, item] = clickedItem;
+      const targetY = item.y + 1; 
+      
+      if (targetY < GRID.ROWS) {
+        const path = findPath(
+          playerPosition.current,
+          { x: item.x, y: targetY },
+          collisionMap.current
+        );
+
+        if (path.length > 0) {
+          isMoving.current = true;
+          setMovementRequest({
+            path,
+            onComplete: () => {
+              isMoving.current = false;
+              setMovementRequest(null);
+              const message = getInteractableMessage(item.id);
+              setDialogMessage(message);
+            }
+          });
+        }
+      }
+      return;
+    }
+
     if (gridX >= 0 && gridX < 9 && gridY >= 0 && gridY < 8) {
       const path = findPath(
         playerPosition.current,
@@ -107,6 +171,14 @@ export default function Room() {
             unoptimized
           />
         </div>
+        
+        {/* Dialog Layer */}
+        {dialogMessage && (
+          <DialogBox 
+            message={dialogMessage} 
+            onClose={() => setDialogMessage(null)} 
+          />
+        )}
         
         {/* Debug Grid */}
         <DebugGrid visible={showDebug} />
