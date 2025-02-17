@@ -3,13 +3,13 @@ import { TileType } from '../utils/tileMap';
 export const BEDROOM_COLLISION: TileType[][] = [
   // 9 columns x 8 rows
   ['wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall'],    
-  ['wall', 'wall', 'interact', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall'], 
-  ['wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'wall'], 
-  ['wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'wall'], 
-  ['wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'wall'], 
-  ['wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'wall'], 
-  ['wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'wall'], 
-  ['wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall'], 
+  ['interact', 'interact', 'interact', 'interact', 'interact', 'interact', 'wall', 'teleport', 'wall'], 
+  ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
+  ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
+  ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
+  ['floor', 'wall', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
+  ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
+  ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'], 
 ];
 
 export const INTERACTABLES = {

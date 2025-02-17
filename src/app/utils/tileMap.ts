@@ -1,7 +1,7 @@
 import { BEDROOM_COLLISION } from '../constants/bedroomCollision';
 import { GRID } from '../constants/roomConstants';
 
-export type TileType = 'wall' | 'floor' | 'interact';
+export type TileType = 'wall' | 'floor' | 'interact' | 'teleport';
 
 export class RoomCollision {
   private collisionMap: TileType[][];
