@@ -1,4 +1,7 @@
-export type TileType = 'wall' | 'floor' | 'interact';
+import { BEDROOM_COLLISION } from '../constants/bedroomCollision';
+import { GRID } from '../constants/roomConstants';
+
+export type TileType = 'wall' | 'floor' | 'interact' | 'teleport';
 
 export class RoomCollision {
   private collisionMap: TileType[][];
@@ -16,7 +19,6 @@ export class RoomCollision {
     }
   }
 
-  // Check if a position is walkable
   isWalkable(x: number, y: number): boolean {
     if (y >= 0 && y < this.collisionMap.length && 
         x >= 0 && x < this.collisionMap[0].length) {
@@ -25,7 +27,6 @@ export class RoomCollision {
     return false;
   }
 
-  // Check if a position is interactable
   isInteractable(x: number, y: number): boolean {
     if (y >= 0 && y < this.collisionMap.length && 
         x >= 0 && x < this.collisionMap[0].length) {
@@ -36,21 +37,14 @@ export class RoomCollision {
 }
 
 export const createBedroomCollision = (): RoomCollision => {
-  const collision = new RoomCollision(12, 11); 
+  const collision = new RoomCollision(GRID.COLS, GRID.ROWS);
   
-  for (let x = 0; x < 12; x++) {
-    collision.setTile(x, 0, 'wall');  // Top wall
-    collision.setTile(x, 10, 'wall'); // Bottom wall
-  }
-  for (let y = 0; y < 11; y++) {
-    collision.setTile(0, y, 'wall');  // Left wall
-    collision.setTile(11, y, 'wall'); // Right wall
-  }
-  
-  collision.setTile(1, 1, 'wall');
-  collision.setTile(2, 1, 'wall');
-  
-  collision.setTile(9, 1, 'interact');
+  // Apply the collision map from BEDROOM_COLLISION array
+  BEDROOM_COLLISION.forEach((row, y) => {
+    row.forEach((tileType, x) => {
+      collision.setTile(x, y, tileType);
+    });
+  });
   
   return collision;
 };
