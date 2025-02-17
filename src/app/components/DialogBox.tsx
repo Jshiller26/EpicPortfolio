@@ -1,9 +1,12 @@
+"use client";
+
 import React, { useEffect } from 'react';
+import Image from 'next/image';
 
 const DialogBox = ({ message, onClose }: { message: string; onClose: () => void }) => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'e') {
         onClose();
       }
     };
@@ -13,18 +16,56 @@ const DialogBox = ({ message, onClose }: { message: string; onClose: () => void 
   }, [onClose]);
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 p-4">
+    <div 
+      className="absolute bottom-0 left-0 right-0 z-50"
+      style={{ 
+        paddingBottom: '16px' 
+      }}
+    >
       <div 
-        className="relative bg-white border-2 border-gray-800 rounded p-4 mx-auto max-w-2xl"
+        className="relative mx-auto"
         style={{
+          width: '100%',        
+          maxWidth: '800px',  
+          height: '160px', 
           imageRendering: 'pixelated',
-          backgroundColor: '#F8F8F8',
-          borderWidth: '4px'
         }}
       >
-        <p className="text-lg" style={{ fontFamily: 'Pokemon'}}>{message}</p>
-        <div className="absolute bottom-2 right-4">
-          <span className="text-red-600 animate-bounce">▼</span>
+        {/* Background Image */}
+        <Image
+          src="/images/pokemonDialogBox.png"
+          alt="Dialog Box Background"
+          fill
+          className="[image-rendering:pixelated]"
+          priority
+        />
+        
+        {/* Text Content */}
+        <div 
+          className="absolute"
+          style={{
+            top: '16px',
+            left: '32px',
+            right: '32px',
+            bottom: '16px'
+          }}
+        >
+          <p 
+            className="dialogText text-black text-lg"
+            style={{
+              fontSize: '2rem',  
+              lineHeight: '1.75'    
+            }}
+          >
+            {message}
+          </p>
+          
+          {/* Arrow Indicator */}
+          <div 
+            className="absolute bottom-0 right-4 animate-bounce"
+          >
+            <span className="text-black text-2xl">▼</span>
+          </div>
         </div>
       </div>
     </div>
