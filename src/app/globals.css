@@ -23,6 +23,13 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'pokemon-emerald';
+  src: url('/fonts/pokemon-emerald.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -59,4 +66,11 @@ image {
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.dialogText {
+  font-family: 'pokemon-emerald', monospace;
+  font-size: 2rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
