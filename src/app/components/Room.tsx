@@ -91,6 +91,41 @@ export default function Room() {
     const gridX = Math.floor(x / GRID_SIZE);
     const gridY = Math.floor(y / GRID_SIZE);
 
+    // Special cases for clicking above the clock or map
+    if ((gridX === 2 && gridY === 0) || (gridX === 5 && gridY === 0)) {
+      const interactableY = 1;
+      const clickedItem = Object.entries(INTERACTABLES).find(([_, item]) => 
+        item.x === gridX && item.y === interactableY
+      );
+
+      if (clickedItem) {
+        const [_, item] = clickedItem;
+        const targetY = item.y + 1;
+        
+        if (targetY < GRID.ROWS) {
+          const path = findPath(
+            playerPosition.current,
+            { x: item.x, y: targetY },
+            collisionMap.current
+          );
+
+          if (path.length > 0) {
+            isMoving.current = true;
+            setMovementRequest({
+              path,
+              onComplete: () => {
+                isMoving.current = false;
+                setMovementRequest(null);
+                const message = getInteractableMessage(item.id);
+                setDialogMessage(message);
+              }
+            });
+          }
+        }
+        return;
+      }
+    }
+
     const clickedItem = Object.entries(INTERACTABLES).find(([_, item]) => 
       item.x === gridX && item.y === gridY
     );
