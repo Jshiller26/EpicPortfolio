@@ -14,3 +14,8 @@ export interface MovementRequest {
   path: GridPosition[];
   onComplete?: () => void;
 }
+
+export interface InteractionEvent {
+    position: GridPosition;
+    direction: Direction;
+  }

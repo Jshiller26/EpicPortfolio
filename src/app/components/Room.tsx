@@ -9,7 +9,7 @@ import Player from './Player';
 import DialogBox from './DialogBox';
 import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
-import type { GridPosition, MovementRequest } from '../types/gameTypes';
+import type { GridPosition, MovementRequest, Direction } from '../types/gameTypes';
 
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
@@ -23,10 +23,6 @@ export default function Room() {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'g') {
         setShowDebug(prev => !prev);
-      }
-      
-      if (e.key.toLowerCase() === 'e' && !dialogMessage) {
-        checkForInteraction();
       }
     };
 
@@ -48,14 +44,12 @@ export default function Room() {
     }
   };
 
-  const checkForInteraction = () => {
+  const handleInteraction = (position: GridPosition, direction: Direction) => {
     if (isMoving.current || dialogMessage) return;
 
-    const { x, y } = playerPosition.current;
-    
-    const interactableItem = Object.entries(INTERACTABLES).find(([_, item]) => {
-      return item.x === x && item.y === y;
-    });
+    const interactableItem = Object.entries(INTERACTABLES).find(([_, item]) => 
+      item.x === position.x && item.y === position.y
+    );
 
     if (interactableItem) {
       const [_, item] = interactableItem;
@@ -157,6 +151,7 @@ export default function Room() {
         <Player 
           onMove={handlePlayerMove}
           movementRequest={movementRequest}
+          onInteract={handleInteraction}
         />
         
         {/* Sheets Layer */}

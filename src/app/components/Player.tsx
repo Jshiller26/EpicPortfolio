@@ -20,9 +20,10 @@ const SPRITE_INDEXES = {
 interface PlayerProps {
   onMove?: (position: GridPosition) => void;
   movementRequest?: MovementRequest | null;
+  onInteract?: (position: GridPosition, direction: Direction) => void;
 }
 
-export default function Player({ onMove, movementRequest }: PlayerProps) {
+export default function Player({ onMove, movementRequest, onInteract }: PlayerProps) {
   const [gridPosition, setGridPosition] = useState<GridPosition>({ x: 5, y: 5 });
   const [pixelPosition, setPixelPosition] = useState<PixelPosition>({ 
     x: 5 * GRID_SIZE, 
@@ -148,14 +149,38 @@ export default function Player({ onMove, movementRequest }: PlayerProps) {
     animationFrameRef.current = requestAnimationFrame(updatePosition);
   }, [direction, gridPosition, isMoving, moveToGridPosition, pixelPosition]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-        e.preventDefault();
-        keysPressed.current.add(key);
-      }
-    };
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        const key = e.key.toLowerCase();
+        if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+          e.preventDefault();
+          keysPressed.current.add(key);
+        }
+        
+        if ((key === 'e' || key === ' ') && !isMoving && onInteract) {
+          e.preventDefault();
+          const { x, y } = gridPosition;
+          let interactPosition: GridPosition;
+          
+          // Calculate the position to check based on the players direction
+          switch (direction) {
+            case 'up':
+              interactPosition = { x, y: y - 1 };
+              break;
+            case 'down':
+              interactPosition = { x, y: y + 1 };
+              break;
+            case 'left':
+              interactPosition = { x: x - 1, y };
+              break;
+            case 'right':
+              interactPosition = { x: x + 1, y };
+              break;
+          }
+          
+          onInteract(interactPosition, direction);
+        }
+      };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
