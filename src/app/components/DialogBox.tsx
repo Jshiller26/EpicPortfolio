@@ -1,19 +1,59 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 
 const DialogBox = ({ message, onClose }: { message: string; onClose: () => void }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+  
+  // speed of text animation
+  const CHAR_DELAY = 40;
+  
+  const typeText = useCallback(() => {
+    let timeoutId: NodeJS.Timeout;
+    let currentText = '';
+    let currentIndex = 0;
+
+    const typeNextChar = () => {
+      if (currentIndex < message.length) {
+        currentText += message[currentIndex];
+        setDisplayedText(currentText);
+        currentIndex++;
+        timeoutId = setTimeout(typeNextChar, CHAR_DELAY);
+      } else {
+        setIsTyping(false);
+      }
+    };
+
+    typeNextChar();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [message]);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setIsTyping(true);
+    return typeText();
+  }, [message, typeText]);
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Enter' || e.key === 'e') {
-        onClose();
+        if (isTyping) {
+          setDisplayedText(message);
+          setIsTyping(false);
+        } else {
+          onClose();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [onClose]);
+  }, [onClose, isTyping, message]);
 
   return (
     <div 
@@ -57,15 +97,15 @@ const DialogBox = ({ message, onClose }: { message: string; onClose: () => void 
               lineHeight: '1.75'    
             }}
           >
-            {message}
+            {displayedText}
           </p>
           
           {/* Arrow Indicator */}
-          <div 
-            className="absolute bottom-0 right-4 animate-bounce"
-          >
-            <span className="text-black text-2xl">▼</span>
-          </div>
+          {!isTyping && (
+            <div className="absolute bottom-0 right-4 animate-bounce">
+              <span className="text-black text-2xl">▼</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
