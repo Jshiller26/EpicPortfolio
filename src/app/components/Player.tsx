@@ -3,19 +3,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { RoomCollision, createBedroomCollision } from '../utils/tileMap'
+import { GRID_SIZE, SCALE_FACTOR, ROOM } from '../constants/roomConstants';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type GridPosition = { x: number; y: number };
 type PixelPosition = { x: number; y: number };
 
-const GRID_SIZE = 64;
-const SPRITE_WIDTH = 34;
-const SPRITE_HEIGHT = 50;
-const SCALE_FACTOR = 2;
+const SPRITE_WIDTH = 16 * SCALE_FACTOR;
+const SPRITE_HEIGHT = 20 * SCALE_FACTOR;
 const MOVEMENT_SPEED = 3;
 
-const ROOM_WIDTH = 800;
-const ROOM_HEIGHT = 720;
+const ROOM_WIDTH = ROOM.WIDTH;
+const ROOM_HEIGHT = ROOM.HEIGHT;
 
 const SPRITE_INDEXES = {
   down: [0, 1, 2, 3],
@@ -149,23 +148,26 @@ export default function Player() {
   const spriteOffsetX = (GRID_SIZE - SPRITE_WIDTH * SCALE_FACTOR) / 2;
   const spriteOffsetY = (GRID_SIZE - SPRITE_HEIGHT * SCALE_FACTOR) / 2;
   
-  const displayX = Math.floor(roomCenterX + pixelPosition.x + spriteOffsetX);
-  const displayY = Math.floor(roomCenterY + pixelPosition.y + spriteOffsetY);
+  const displayX = Math.floor(pixelPosition.x + spriteOffsetX);
+  const displayY = Math.floor(pixelPosition.y + spriteOffsetY);
 
   return (
-    <div
-      className="fixed z-10"
+    <div className="absolute z-10"
       style={{
         transform: `translate(${displayX}px, ${displayY}px)`,
-        width: `${SPRITE_WIDTH * SCALE_FACTOR}px`,
-        height: `${SPRITE_HEIGHT * SCALE_FACTOR}px`,
+        width: `${SPRITE_WIDTH}px`,
+        height: `${SPRITE_HEIGHT}px`,
+        left: '50%',
+        top: '50%',
+        marginLeft: `-${ROOM.WIDTH / 2}px`,
+        marginTop: `-${ROOM.HEIGHT / 2}px`,
       }}
     >
       <Image
         src={getCurrentSprite()}
         alt="Player"
-        width={SPRITE_WIDTH * SCALE_FACTOR}
-        height={SPRITE_HEIGHT * SCALE_FACTOR}
+        width={SPRITE_WIDTH}
+        height={SPRITE_HEIGHT}
         className="[image-rendering:pixelated]"
         priority
       />
