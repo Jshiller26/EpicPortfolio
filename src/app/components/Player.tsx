@@ -146,11 +146,11 @@ export default function Player() {
   const roomCenterY = window.innerHeight / 2 - ROOM_HEIGHT / 2;
   
   const centerOffsetX = (GRID_SIZE - SPRITE_WIDTH) / 2;
-  const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2;
-
+  const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2 - (GRID_SIZE * 0.25); // Adjust this to nudge player position in grid
+  
   const displayX = Math.floor(pixelPosition.x + centerOffsetX);
   const displayY = Math.floor(pixelPosition.y + centerOffsetY);
-
+  
   return (
     <div 
       className="absolute z-10"
