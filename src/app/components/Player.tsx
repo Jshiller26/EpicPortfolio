@@ -145,14 +145,15 @@ export default function Player() {
   const roomCenterX = window.innerWidth / 2 - ROOM_WIDTH / 2;
   const roomCenterY = window.innerHeight / 2 - ROOM_HEIGHT / 2;
   
-  const spriteOffsetX = (GRID_SIZE - SPRITE_WIDTH * SCALE_FACTOR) / 2;
-  const spriteOffsetY = (GRID_SIZE - SPRITE_HEIGHT * SCALE_FACTOR) / 2;
-  
-  const displayX = Math.floor(pixelPosition.x + spriteOffsetX);
-  const displayY = Math.floor(pixelPosition.y + spriteOffsetY);
+  const centerOffsetX = (GRID_SIZE - SPRITE_WIDTH) / 2;
+  const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2;
+
+  const displayX = Math.floor(pixelPosition.x + centerOffsetX);
+  const displayY = Math.floor(pixelPosition.y + centerOffsetY);
 
   return (
-    <div className="absolute z-10"
+    <div 
+      className="absolute z-10"
       style={{
         transform: `translate(${displayX}px, ${displayY}px)`,
         width: `${SPRITE_WIDTH}px`,
@@ -161,6 +162,7 @@ export default function Player() {
         top: '50%',
         marginLeft: `-${ROOM.WIDTH / 2}px`,
         marginTop: `-${ROOM.HEIGHT / 2}px`,
+        imageRendering: 'pixelated',
       }}
     >
       <Image
