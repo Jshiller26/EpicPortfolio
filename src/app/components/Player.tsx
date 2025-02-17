@@ -2,19 +2,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { RoomCollision, createBedroomCollision } from '../utils/tileMap'
+import { createBedroomCollision } from '../utils/tileMap';
 import { GRID_SIZE, SCALE_FACTOR, ROOM } from '../constants/roomConstants';
-
-type Direction = 'down' | 'up' | 'left' | 'right';
-type GridPosition = { x: number; y: number };
-type PixelPosition = { x: number; y: number };
+import type { Direction, GridPosition, PixelPosition, MovementRequest } from '../types/gameTypes';
 
 const SPRITE_WIDTH = 16 * SCALE_FACTOR;
 const SPRITE_HEIGHT = 20 * SCALE_FACTOR;
 const MOVEMENT_SPEED = 3;
-
-const ROOM_WIDTH = ROOM.WIDTH;
-const ROOM_HEIGHT = ROOM.HEIGHT;
 
 const SPRITE_INDEXES = {
   down: [0, 1, 2, 3],
@@ -23,7 +17,12 @@ const SPRITE_INDEXES = {
   up: [15, 16, 17, 18]
 };
 
-export default function Player() {
+interface PlayerProps {
+  onMove?: (position: GridPosition) => void;
+  movementRequest?: MovementRequest | null;
+}
+
+export default function Player({ onMove, movementRequest }: PlayerProps) {
   const [gridPosition, setGridPosition] = useState<GridPosition>({ x: 5, y: 5 });
   const [pixelPosition, setPixelPosition] = useState<PixelPosition>({ 
     x: 5 * GRID_SIZE, 
@@ -37,13 +36,13 @@ export default function Player() {
   const keysPressed = useRef<Set<string>>(new Set());
   const animationFrameRef = useRef<number | null>(null);
   const targetPosition = useRef<PixelPosition>({ x: 5 * GRID_SIZE, y: 5 * GRID_SIZE });
+  const currentPath = useRef<GridPosition[]>([]);
+  const collisionMap = useRef(createBedroomCollision());
 
   const getCurrentSprite = useCallback(() => {
     const spriteIndex = SPRITE_INDEXES[direction][frame % 4];
     return `/images/sprites/tile${spriteIndex.toString().padStart(3, '0')}.png`;
   }, [direction, frame]);
-
-  const collisionMap = useRef<RoomCollision>(createBedroomCollision());
 
   const moveToGridPosition = useCallback((newGridX: number, newGridY: number) => {
     // Check collision before moving
@@ -54,13 +53,29 @@ export default function Player() {
         y: newGridY * GRID_SIZE
       };
       setIsMoving(true);
+      onMove?.({ x: newGridX, y: newGridY });
     }
-    
-    // Check for interactable tiles
-    if (collisionMap.current.isInteractable(newGridX, newGridY)) {
-      console.log('Interacting with tile at', newGridX, newGridY);
+  }, [onMove]);
+
+  // Handle path movement
+  useEffect(() => {
+    if (movementRequest && !isMoving && movementRequest.path.length > 0) {
+      currentPath.current = [...movementRequest.path];
+      const nextPosition = currentPath.current[0];
+      
+      // Set direction based on movement
+      const dx = nextPosition.x - gridPosition.x;
+      const dy = nextPosition.y - gridPosition.y;
+      
+      if (dx > 0) setDirection('right');
+      else if (dx < 0) setDirection('left');
+      else if (dy > 0) setDirection('down');
+      else if (dy < 0) setDirection('up');
+      
+      moveToGridPosition(nextPosition.x, nextPosition.y);
+      currentPath.current.shift();
     }
-  }, []);
+  }, [movementRequest, isMoving, gridPosition, moveToGridPosition]);
 
   const updatePosition = useCallback((timestamp: number) => {
     const keys = keysPressed.current;
@@ -98,6 +113,24 @@ export default function Player() {
       if (Math.abs(dx) < MOVEMENT_SPEED && Math.abs(dy) < MOVEMENT_SPEED) {
         setPixelPosition(targetPosition.current);
         setIsMoving(false);
+
+        if (currentPath.current.length === 0 && movementRequest?.onComplete) {
+          movementRequest.onComplete();
+        }
+        else if (currentPath.current.length > 0) {
+          const nextPosition = currentPath.current[0];
+          
+          const nextDx = nextPosition.x - gridPosition.x;
+          const nextDy = nextPosition.y - gridPosition.y;
+          
+          if (nextDx > 0) setDirection('right');
+          else if (nextDx < 0) setDirection('left');
+          else if (nextDy > 0) setDirection('down');
+          else if (nextDy < 0) setDirection('up');
+          
+          moveToGridPosition(nextPosition.x, nextPosition.y);
+          currentPath.current.shift();
+        }
       } else {
         const newX = pixelPosition.x + Math.sign(dx) * MOVEMENT_SPEED;
         const newY = pixelPosition.y + Math.sign(dy) * MOVEMENT_SPEED;
@@ -142,11 +175,11 @@ export default function Player() {
     };
   }, [updatePosition]);
 
-  const roomCenterX = window.innerWidth / 2 - ROOM_WIDTH / 2;
-  const roomCenterY = window.innerHeight / 2 - ROOM_HEIGHT / 2;
+  const roomCenterX = window.innerWidth / 2 - ROOM.WIDTH / 2;
+  const roomCenterY = window.innerHeight / 2 - ROOM.HEIGHT / 2;
   
   const centerOffsetX = (GRID_SIZE - SPRITE_WIDTH) / 2;
-  const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2 - (GRID_SIZE * 0.25); // Adjust this to nudge player position in grid
+  const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2 - (GRID_SIZE * 0.25);
   
   const displayX = Math.floor(pixelPosition.x + centerOffsetX);
   const displayY = Math.floor(pixelPosition.y + centerOffsetY);
