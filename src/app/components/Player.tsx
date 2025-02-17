@@ -21,9 +21,10 @@ interface PlayerProps {
   onMove?: (position: GridPosition) => void;
   movementRequest?: MovementRequest | null;
   onInteract?: (position: GridPosition, direction: Direction) => void;
+  isDialogOpen?: boolean;
 }
 
-export default function Player({ onMove, movementRequest, onInteract }: PlayerProps) {
+export default function Player({ onMove, movementRequest, onInteract, isDialogOpen }: PlayerProps) {
   const [gridPosition, setGridPosition] = useState<GridPosition>({ x: 5, y: 5 });
   const [pixelPosition, setPixelPosition] = useState<PixelPosition>({ 
     x: 5 * GRID_SIZE, 
@@ -60,7 +61,7 @@ export default function Player({ onMove, movementRequest, onInteract }: PlayerPr
 
   // Handle path movement
   useEffect(() => {
-    if (movementRequest && !isMoving && movementRequest.path.length > 0) {
+    if (movementRequest && !isMoving && movementRequest.path.length > 0 && !isDialogOpen) {
       currentPath.current = [...movementRequest.path];
       const nextPosition = currentPath.current[0];
       
@@ -76,34 +77,33 @@ export default function Player({ onMove, movementRequest, onInteract }: PlayerPr
       moveToGridPosition(nextPosition.x, nextPosition.y);
       currentPath.current.shift();
     }
-  }, [movementRequest, isMoving, gridPosition, moveToGridPosition]);
+  }, [movementRequest, isMoving, gridPosition, moveToGridPosition, isDialogOpen]);
 
   const updatePosition = useCallback((timestamp: number) => {
     const keys = keysPressed.current;
-    let newDirection = direction;
 
-    if (!isMoving && keys.size > 0) {
+    // Don't process movement if dialog is open
+    if (!isMoving && keys.size > 0 && !isDialogOpen) {
       const { x, y } = gridPosition;
       let newX = x;
       let newY = y;
 
       if (keys.has('arrowup') || keys.has('w')) {
         newY = y - 1;
-        newDirection = 'up';
+        setDirection('up');
       } else if (keys.has('arrowdown') || keys.has('s')) {
         newY = y + 1;
-        newDirection = 'down';
+        setDirection('down');
       } else if (keys.has('arrowleft') || keys.has('a')) {
         newX = x - 1;
-        newDirection = 'left';
+        setDirection('left');
       } else if (keys.has('arrowright') || keys.has('d')) {
         newX = x + 1;
-        newDirection = 'right';
+        setDirection('right');
       }
 
       if (newX !== x || newY !== y) {
         moveToGridPosition(newX, newY);
-        setDirection(newDirection);
       }
     }
 
@@ -118,7 +118,7 @@ export default function Player({ onMove, movementRequest, onInteract }: PlayerPr
         if (currentPath.current.length === 0 && movementRequest?.onComplete) {
           movementRequest.onComplete();
         }
-        else if (currentPath.current.length > 0) {
+        else if (currentPath.current.length > 0 && !isDialogOpen) {
           const nextPosition = currentPath.current[0];
           
           const nextDx = nextPosition.x - gridPosition.x;
@@ -147,40 +147,42 @@ export default function Player({ onMove, movementRequest, onInteract }: PlayerPr
     }
 
     animationFrameRef.current = requestAnimationFrame(updatePosition);
-  }, [direction, gridPosition, isMoving, moveToGridPosition, pixelPosition]);
+  }, [direction, gridPosition, isMoving, moveToGridPosition, pixelPosition, isDialogOpen]);
 
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        const key = e.key.toLowerCase();
-        if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-          e.preventDefault();
-          keysPressed.current.add(key);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      
+      // Don't add movement keys if dialog is open
+      if (!isDialogOpen && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+        e.preventDefault();
+        keysPressed.current.add(key);
+      }
+      
+      // Handle interaction
+      if ((key === 'e' || key === ' ') && !isMoving && onInteract && !isDialogOpen) {
+        e.preventDefault();
+        const { x, y } = gridPosition;
+        let interactPosition: GridPosition;
+        
+        switch (direction) {
+          case 'up':
+            interactPosition = { x, y: y - 1 };
+            break;
+          case 'down':
+            interactPosition = { x, y: y + 1 };
+            break;
+          case 'left':
+            interactPosition = { x: x - 1, y };
+            break;
+          case 'right':
+            interactPosition = { x: x + 1, y };
+            break;
         }
         
-        if ((key === 'e' || key === ' ') && !isMoving && onInteract) {
-          e.preventDefault();
-          const { x, y } = gridPosition;
-          let interactPosition: GridPosition;
-          
-          // Calculate the position to check based on the players direction
-          switch (direction) {
-            case 'up':
-              interactPosition = { x, y: y - 1 };
-              break;
-            case 'down':
-              interactPosition = { x, y: y + 1 };
-              break;
-            case 'left':
-              interactPosition = { x: x - 1, y };
-              break;
-            case 'right':
-              interactPosition = { x: x + 1, y };
-              break;
-          }
-          
-          onInteract(interactPosition, direction);
-        }
-      };
+        onInteract(interactPosition, direction);
+      }
+    };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
@@ -198,7 +200,7 @@ export default function Player({ onMove, movementRequest, onInteract }: PlayerPr
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [updatePosition]);
+  }, [updatePosition, direction, gridPosition, isMoving, onInteract, isDialogOpen]);
 
   const roomCenterX = window.innerWidth / 2 - ROOM.WIDTH / 2;
   const roomCenterY = window.innerHeight / 2 - ROOM.HEIGHT / 2;

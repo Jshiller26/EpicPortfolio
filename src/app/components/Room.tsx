@@ -20,14 +20,30 @@ export default function Room() {
   const isMoving = useRef(false);
 
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleGlobalClick = () => {
+      if (dialogMessage) {
+        setDialogMessage(null);
+      }
+    };
+
+    const handleGlobalKeyPress = (e: KeyboardEvent) => {
+      if (dialogMessage && (e.key === 'e' || e.key === ' ')) {
+        e.preventDefault();
+        setDialogMessage(null);
+      }
+
       if (e.key.toLowerCase() === 'g') {
         setShowDebug(prev => !prev);
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('keydown', handleGlobalKeyPress);
+    
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('keydown', handleGlobalKeyPress);
+    };
   }, [dialogMessage]);
 
   const getInteractableMessage = (id: string) => {
@@ -59,7 +75,13 @@ export default function Room() {
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isMoving.current || dialogMessage) return;
+    if (dialogMessage) {
+      e.stopPropagation();
+      setDialogMessage(null);
+      return;
+    }
+
+    if (isMoving.current) return;
 
     const roomElement = e.currentTarget as HTMLDivElement;
     const rect = roomElement.getBoundingClientRect();
@@ -152,6 +174,7 @@ export default function Room() {
           onMove={handlePlayerMove}
           movementRequest={movementRequest}
           onInteract={handleInteraction}
+          isDialogOpen={!!dialogMessage}
         />
         
         {/* Sheets Layer */}
