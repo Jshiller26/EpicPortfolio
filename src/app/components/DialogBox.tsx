@@ -38,6 +38,7 @@ const DialogBox = ({ message, onClose }: { message: string; onClose: () => void 
     setIsTyping(true);
     return typeText();
   }, [message, typeText]);
+  
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -94,7 +95,7 @@ const DialogBox = ({ message, onClose }: { message: string; onClose: () => void 
             className="dialogText text-black text-lg"
             style={{
               fontSize: '2rem',  
-              lineHeight: '1.75'    
+              lineHeight: '1.25'    
             }}
           >
             {displayedText}

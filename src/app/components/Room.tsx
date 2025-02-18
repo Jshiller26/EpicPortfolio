@@ -11,10 +11,12 @@ import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
 import type { GridPosition, MovementRequest } from '../types/gameTypes';
 
+
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
+  const [isTvOn, setIsTvOn] = useState(false);
   const collisionMap = useRef(createBedroomCollision());
   const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
   const isMoving = useRef(false);
@@ -46,6 +48,41 @@ export default function Room() {
     };
   }, [dialogMessage]);
 
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      if (dialogMessage) {
+        setDialogMessage(null);
+        setIsTvOn(false);
+      }
+    };
+
+    const handleGlobalKeyPress = (e: KeyboardEvent) => {
+      if (dialogMessage && (e.key === 'e' || e.key === ' ')) {
+        e.preventDefault();
+        setDialogMessage(null);
+        setIsTvOn(false); 
+      }
+
+      if (e.key.toLowerCase() === 'g') {
+        setShowDebug(prev => !prev);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('keydown', handleGlobalKeyPress);
+    
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('keydown', handleGlobalKeyPress);
+    };
+  }, [dialogMessage]);
+
+  useEffect(() => {
+    if (!dialogMessage) {
+      setIsTvOn(false);
+    }
+  }, [dialogMessage]);
+
   const getInteractableMessage = (id: string) => {
     switch(id) {
       case 'Clock':
@@ -64,7 +101,8 @@ export default function Room() {
       case 'Game':
         return "Let's play some games";
       case 'TV':
-        return "Breaking Bad marathon";
+        setIsTvOn(true);
+        return "You turned on the TV. Breaking Bad Season 5 episode 5 is playing.";
       default:
         return `Examining the ${id.toLowerCase()}...`;
     }
@@ -167,6 +205,11 @@ export default function Room() {
     playerPosition.current = newPosition;
   };
 
+  const handleDialogClose = () => {
+    setDialogMessage(null);
+    setIsTvOn(false);
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
       <div 
@@ -210,12 +253,28 @@ export default function Room() {
             unoptimized
           />
         </div>
+
+        {/* TV On Layer */}
+        {isTvOn && (
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            <Image
+              src="/images/tiles/TvOn.png"
+              alt="TV Display"
+              width={ROOM.WIDTH}
+              height={ROOM.HEIGHT}
+              className="[image-rendering:pixelated]"
+              priority
+              unoptimized
+            />
+          </div>
+        )}
         
         {/* Dialog Layer */}
         {dialogMessage && (
           <DialogBox 
             message={dialogMessage} 
-            onClose={() => setDialogMessage(null)} 
+            onClose={() => handleDialogClose} 
+            
           />
         )}
         
