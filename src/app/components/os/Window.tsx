@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FileExplorer } from './FileExplorer';
+import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 
 interface WindowProps {
@@ -28,7 +29,6 @@ export const Window: React.FC<WindowProps> = ({
 
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
-      const folderId = id.replace('explorer-', '');
       return <FileExplorer windowId={id} />;
     }
     return <div>Window Content</div>;
@@ -53,33 +53,33 @@ export const Window: React.FC<WindowProps> = ({
     >
       <div className="flex flex-col h-full bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
         {/* Window Title Bar */}
-        <div className="h-8 bg-gray-100 flex items-center justify-between px-2 select-none">
-          <div className="flex items-center space-x-2">
+        <div className="h-9 bg-white flex items-center justify-between select-none">
+          <div className="flex items-center space-x-2 px-3">
             <img
               src="/images/desktop/icons8-folder.svg"
               alt="icon"
               className="w-4 h-4"
             />
-            <span className="text-sm">{getWindowTitle()}</span>
+            <span className="text-sm text-gray-700">{getWindowTitle()}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              className="w-6 h-6 hover:bg-black/5 rounded-sm flex items-center justify-center"
+          <div className="flex h-full">
+            <button 
+              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
               onClick={() => {/* Minimize */}}
             >
-              <span className="transform translate-y-2">_</span>
+              <Minus size={16} className="text-gray-600" />
             </button>
-            <button
-              className="w-6 h-6 hover:bg-black/5 rounded-sm flex items-center justify-center"
+            <button 
+              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
               onClick={() => setIsMaximized(!isMaximized)}
             >
-              □
+              <Square size={14} className="text-gray-600 rounded-sm" />
             </button>
-            <button
-              className="w-6 h-6 hover:bg-red-500 hover:text-white rounded-sm flex items-center justify-center"
+            <button 
+              className="px-4 hover:bg-red-500 flex items-center justify-center h-full group"
               onClick={onClose}
             >
-              ×
+              <X size={16} className="text-gray-600 group-hover:text-white" />
             </button>
           </div>
         </div>

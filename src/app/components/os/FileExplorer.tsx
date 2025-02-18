@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useFileSystemStore } from '../../stores/fileSystemStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
+import { ChevronLeft, ChevronRight, ChevronUp, RotateCcw, Search } from 'lucide-react';
 
 interface FileExplorerProps {
   windowId: string;
   initialPath?: string;
 }
 
-// Type guard to check if an item is a folder
 function isFolder(item: FileSystemItem): item is Folder {
   return item.type === 'folder';
 }
@@ -16,10 +16,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   windowId,
   initialPath = 'C:\\Desktop'
 }) => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const fileSystem = useFileSystemStore();
+  const [viewMode] = useState<'list'>('list');
   
-  // Get current folder's items
   const currentFolder = Object.values(fileSystem.items).find(
     item => item.path === fileSystem.currentPath
   );
@@ -28,17 +27,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     ? currentFolder.children.map(id => fileSystem.items[id])
     : [];
 
-  const navigateToPath = (path: string) => {
-    fileSystem.setCurrentPath(path);
-  };
-
-  const handleItemDoubleClick = (item: File | Folder) => {
-    if (isFolder(item)) {
-      navigateToPath(item.path);
-    }
-    // Handle file opening later
-  };
-
   const formatFileSize = (size?: number): string => {
     if (!size) return '';
     if (size < 1024) return `${size} B`;
@@ -46,135 +34,82 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const PathBar = () => (
-    <div className="flex items-center h-10 px-2 border-b">
-      <button className="p-1 hover:bg-black/5 rounded-sm">
-        <img
-          src="/images/desktop/icons8-back-arrow.svg"
-          alt="Back"
-          className="w-4 h-4"
-        />
-      </button>
-      <button className="p-1 hover:bg-black/5 rounded-sm">
-        <img
-          src="/images/desktop/icons8-forward-arrow.svg"
-          alt="Forward"
-          className="w-4 h-4"
-        />
-      </button>
-      <button className="p-1 hover:bg-black/5 rounded-sm">
-        <img
-          src="/images/desktop/icons8-up-arrow.svg"
-          alt="Up"
-          className="w-4 h-4"
-        />
-      </button>
-      <div className="flex-1 ml-2 px-2 py-1 border rounded-sm">
-        {fileSystem.currentPath}
-      </div>
-    </div>
-  );
-
-  const ToolBar = () => (
-    <div className="flex items-center h-12 px-2 border-b">
-      <div className="flex space-x-2">
-        <button className="px-3 py-1 hover:bg-black/5 rounded-sm">Cut</button>
-        <button className="px-3 py-1 hover:bg-black/5 rounded-sm">Copy</button>
-        <button className="px-3 py-1 hover:bg-black/5 rounded-sm">Paste</button>
-        <span className="border-r mx-2" />
-        <button className="px-3 py-1 hover:bg-black/5 rounded-sm">New</button>
-      </div>
-      <div className="flex-1" />
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={() => setViewMode('list')}
-          className={`p-1 rounded-sm ${viewMode === 'list' ? 'bg-black/10' : 'hover:bg-black/5'}`}
-        >
-          <img
-            src="/images/desktop/icons8-list-view.svg"
-            alt="List"
-            className="w-4 h-4"
-          />
-        </button>
-        <button
-          onClick={() => setViewMode('grid')}
-          className={`p-1 rounded-sm ${viewMode === 'grid' ? 'bg-black/10' : 'hover:bg-black/5'}`}
-        >
-          <img
-            src="/images/desktop/icons8-grid-view.svg"
-            alt="Grid"
-            className="w-4 h-4"
-          />
-        </button>
-      </div>
-    </div>
-  );
-
-  const ListView = () => (
-    <table className="w-full">
-      <thead>
-        <tr className="border-b">
-          <th className="text-left p-2">Name</th>
-          <th className="text-left p-2">Date modified</th>
-          <th className="text-left p-2">Type</th>
-          <th className="text-left p-2">Size</th>
-        </tr>
-      </thead>
-      <tbody>
-        {currentItems.map((item: File | Folder) => (
-          <tr
-            key={item.id}
-            className="hover:bg-black/5 cursor-pointer"
-            onDoubleClick={() => handleItemDoubleClick(item)}
-          >
-            <td className="p-2 flex items-center">
-              <img
-                src={`/images/desktop/icons8-${item.type}.svg`}
-                alt={item.type}
-                className="w-4 h-4 mr-2"
-              />
-              {item.name}
-            </td>
-            <td className="p-2">
-              {item.modified.toLocaleDateString()}
-            </td>
-            <td className="p-2">
-              {isFolder(item) ? 'File folder' : `${item.type} file`}
-            </td>
-            <td className="p-2">{formatFileSize(item.size)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-
-  const GridView = () => (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4 p-4">
-      {currentItems.map((item: File | Folder) => (
-        <div
-          key={item.id}
-          className="flex flex-col items-center p-2 rounded-sm hover:bg-black/5 cursor-pointer"
-          onDoubleClick={() => handleItemDoubleClick(item)}
-        >
-          <img
-            src={`/images/desktop/icons8-${item.type}.svg`}
-            alt={item.type}
-            className="w-12 h-12 mb-1"
-          />
-          <div className="text-sm text-center truncate w-full">
-            {item.name}
+  return (
+    <div className="flex flex-col h-full">
+      {/* Navigation bar */}
+      <div className="flex items-center h-10 px-2 gap-1 text-sm border-b border-gray-200">
+        <div className="flex items-center gap-1">
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <ChevronLeft size={16} className="text-gray-600" />
+          </button>
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <ChevronRight size={16} className="text-gray-600" />
+          </button>
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <ChevronUp size={16} className="text-gray-600" />
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-2 ml-2 flex-1">
+          <button className="p-1 hover:bg-gray-100 rounded">
+            <RotateCcw size={16} className="text-gray-600" />
+          </button>
+          <div className="flex items-center bg-gray-50 border border-gray-300 rounded px-2 py-1 flex-1">
+            <span className="text-gray-600">📂</span>
+            <span className="ml-2 text-gray-700">Public</span>
+          </div>
+          <div className="flex items-center bg-gray-50 border border-gray-300 rounded px-2 py-1 w-48">
+            <Search size={16} className="text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search" 
+              className="bg-transparent border-none outline-none ml-2 w-full text-sm placeholder-gray-400"
+            />
           </div>
         </div>
-      ))}
-    </div>
-  );
+      </div>
 
-  return (
-    <div className="flex flex-col h-full bg-white">
-      <PathBar />
-      <ToolBar />
+      {/* File list */}
       <div className="flex-1 overflow-auto">
-        {viewMode === 'list' ? <ListView /> : <GridView />}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="font-normal text-left px-4 py-1 text-gray-600">Name</th>
+              <th className="font-normal text-left px-4 py-1 text-gray-600">Date modified</th>
+              <th className="font-normal text-left px-4 py-1 text-gray-600">Type</th>
+              <th className="font-normal text-left px-4 py-1 text-gray-600">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map((item: File | Folder) => (
+              <tr
+                key={item.id}
+                className="hover:bg-gray-100"
+              >
+                <td className="px-4 py-1 flex items-center gap-2">
+                  <img
+                    src={`/images/desktop/icons8-${item.type}.svg`}
+                    alt={item.type}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-gray-700">{item.name}</span>
+                </td>
+                <td className="px-4 py-1 text-gray-700">
+                  {new Date(item.modified).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </td>
+                <td className="px-4 py-1 text-gray-700">File folder</td>
+                <td className="px-4 py-1 text-gray-700">{formatFileSize(item.size)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
