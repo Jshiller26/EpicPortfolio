@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import Draggable from 'react-draggable';
+import React, { useState } from 'react';
+import { FileExplorer } from './FileExplorer';
+import { Rnd } from 'react-rnd';
 
 interface WindowProps {
   id: string;
@@ -14,50 +15,80 @@ export const Window: React.FC<WindowProps> = ({
   onClose,
   onFocus,
 }) => {
-  const [maximized, setMaximized] = useState(false);
-  const windowRef = useRef<HTMLDivElement>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [size, setSize] = useState({ width: 800, height: 600 });
 
-  const handleMaximize = () => {
-    setMaximized(!maximized);
+  const getWindowTitle = () => {
+    if (id.startsWith('explorer-')) {
+      return 'File Explorer';
+    }
+    return 'Window';
+  };
+
+  const renderWindowContent = () => {
+    if (id.startsWith('explorer-')) {
+      const folderId = id.replace('explorer-', '');
+      return <FileExplorer windowId={id} />;
+    }
+    return <div>Window Content</div>;
   };
 
   return (
-    <Draggable
-      handle=".window-title-bar"
-      bounds="parent"
-      disabled={maximized}
+    <Rnd
+      position={position}
+      size={size}
+      minWidth={400}
+      minHeight={300}
+      onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
+      onResizeStop={(e, direction, ref, delta, position) => {
+        setSize({
+          width: parseInt(ref.style.width),
+          height: parseInt(ref.style.height),
+        });
+        setPosition(position);
+      }}
+      className={`${isActive ? 'z-50' : 'z-0'}`}
+      onMouseDown={onFocus}
     >
-      <div
-        ref={windowRef}
-        className={`absolute ${
-          maximized ? 'inset-0' : 'w-96 h-64'
-        } bg-windows-window shadow-lg ${
-          isActive ? 'z-50' : 'z-40'
-        }`}
-        onClick={onFocus}
-      >
-        <div className="window-title-bar h-8 bg-windows-title-bar flex items-center justify-between px-2">
-          <span>{id}</span>
-          <div className="flex space-x-2">
+      <div className="flex flex-col h-full bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+        {/* Window Title Bar */}
+        <div className="h-8 bg-gray-100 flex items-center justify-between px-2 select-none">
+          <div className="flex items-center space-x-2">
+            <img
+              src="/images/desktop/icons8-folder.svg"
+              alt="icon"
+              className="w-4 h-4"
+            />
+            <span className="text-sm">{getWindowTitle()}</span>
+          </div>
+          <div className="flex items-center space-x-2">
             <button
-              className="w-6 h-6 hover:bg-gray-700"
-              onClick={handleMaximize}
+              className="w-6 h-6 hover:bg-black/5 rounded-sm flex items-center justify-center"
+              onClick={() => {/* Minimize */}}
+            >
+              <span className="transform translate-y-2">_</span>
+            </button>
+            <button
+              className="w-6 h-6 hover:bg-black/5 rounded-sm flex items-center justify-center"
+              onClick={() => setIsMaximized(!isMaximized)}
             >
               □
             </button>
             <button
-              className="w-6 h-6 hover:bg-red-600"
+              className="w-6 h-6 hover:bg-red-500 hover:text-white rounded-sm flex items-center justify-center"
               onClick={onClose}
             >
               ×
             </button>
           </div>
         </div>
-        <div className="p-4">
-          {/* Window content goes here */}
-          <p>Content for {id}</p>
+
+        {/* Window Content */}
+        <div className="flex-1 overflow-hidden">
+          {renderWindowContent()}
         </div>
       </div>
-    </Draggable>
+    </Rnd>
   );
 };

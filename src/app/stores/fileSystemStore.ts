@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FileSystemState, FileSystemItem, Folder, File } from '../types/fileSystem';
+import { FileSystemState, Folder, File } from '../types/fileSystem';
 
 const initialState: FileSystemState = {
   items: {
@@ -12,7 +12,7 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: null,
       children: ['my-projects']
-    },
+    } as Folder,
     'my-projects': {
       id: 'my-projects',
       name: 'My Projects',
@@ -22,7 +22,7 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'desktop',
       children: []
-    }
+    } as Folder
   },
   currentPath: 'C:\\Desktop',
   selectedItems: [],
@@ -59,13 +59,13 @@ export const useFileSystemStore = create<FileSystemState & {
         [newId]: {
           id: newId,
           name,
-          type: 'folder',
+          type: 'folder' as const,
           path: `${parentPath}\\${name}`,
           created: new Date(),
           modified: new Date(),
           parentId,
           children: []
-        },
+        } as Folder,
         [parentId]: {
           ...parent,
           children: [...parent.children, newId],
@@ -87,14 +87,14 @@ export const useFileSystemStore = create<FileSystemState & {
         [newId]: {
           id: newId,
           name,
-          type: 'file',
+          type: 'file' as const,
           path: `${parentPath}\\${name}`,
           created: new Date(),
           modified: new Date(),
           parentId,
           extension,
           content
-        },
+        } as File,
         [parentId]: {
           ...parent,
           children: [...parent.children, newId],
@@ -138,6 +138,9 @@ export const useFileSystemStore = create<FileSystemState & {
     const { clipboard, items } = get();
     if (!clipboard.items.length || !clipboard.operation) return;
 
-    // how do we paste
+    const targetFolder = items[targetFolderId] as Folder;
+    if (!targetFolder || targetFolder.type !== 'folder') return;
+
+    // paste not working
   }
 }));
