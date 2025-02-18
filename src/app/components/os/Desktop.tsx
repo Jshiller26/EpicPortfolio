@@ -92,13 +92,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
           </div>
         )}
 
-        {/* Widgets */}
-        {widgetsOpen && (
-          <div className="absolute bottom-16 left-32 w-[800px] h-[80vh] bg-white/95 backdrop-blur-md rounded-lg shadow-lg p-4 animate-slide-up">
-            {/* Widgets Content */}
-          </div>
-        )}
-
         {/* Taskbar */}
         <div className="absolute bottom-0 left-0 right-0">
           <Taskbar
@@ -108,10 +101,8 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             onClose={onClose}
             onStartClick={toggleStartMenu}
             onSearchClick={toggleSearch}
-            onWidgetsClick={toggleWidgets}
             isStartOpen={startMenuOpen}
             isSearchOpen={searchOpen}
-            isWidgetsOpen={widgetsOpen}
           />
         </div>
       </div>
