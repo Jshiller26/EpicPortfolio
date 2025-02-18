@@ -201,9 +201,6 @@ export default function Player({ onMove, movementRequest, onInteract, isDialogOp
       }
     };
   }, [updatePosition, direction, gridPosition, isMoving, onInteract, isDialogOpen]);
-
-  const roomCenterX = window.innerWidth / 2 - ROOM.WIDTH / 2;
-  const roomCenterY = window.innerHeight / 2 - ROOM.HEIGHT / 2;
   
   const centerOffsetX = (GRID_SIZE - SPRITE_WIDTH) / 2;
   const centerOffsetY = (GRID_SIZE - SPRITE_HEIGHT) / 2 - (GRID_SIZE * 0.25);
