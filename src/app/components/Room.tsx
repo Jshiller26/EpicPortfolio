@@ -10,11 +10,13 @@ import DialogBox from './DialogBox';
 import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
 import type { GridPosition, MovementRequest, Direction } from '../types/gameTypes';
+import { Desktop } from './os/Desktop';
 
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
+  const [showDesktop, setShowDesktop] = useState(false);
   const collisionMap = useRef(createBedroomCollision());
   const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
   const isMoving = useRef(false);
@@ -55,6 +57,9 @@ export default function Room() {
           minute: '2-digit'
         });
         return `The clock reads ${timeString}.`;
+      case 'PC':
+        setShowDesktop(true);
+        return null;
       default:
         return `Interacting with ${id}`;
     }
@@ -196,6 +201,11 @@ export default function Room() {
             message={dialogMessage} 
             onClose={() => setDialogMessage(null)} 
           />
+        )}
+
+        {/* Desktop Layer */}
+        {showDesktop && (
+          <Desktop onClose={() => setShowDesktop(false)} />
         )}
         
         {/* Debug Grid */}
