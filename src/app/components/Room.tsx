@@ -10,14 +10,19 @@ import DialogBox from './DialogBox';
 import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
 import type { GridPosition, MovementRequest, Direction } from '../types/gameTypes';
+import { Desktop } from './os/Desktop';
+// import router from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
+  const [showDesktop, setShowDesktop] = useState(false);
   const collisionMap = useRef(createBedroomCollision());
   const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
   const isMoving = useRef(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -48,6 +53,11 @@ export default function Room() {
 
   const getInteractableMessage = (id: string) => {
     switch(id) {
+      case 'PC':
+        setTimeout(() => {
+          router.push('/desktop');
+        }, 0);
+        return null;
       case 'time-management':
         const now = new Date();
         const timeString = now.toLocaleTimeString([], { 
@@ -196,6 +206,11 @@ export default function Room() {
             message={dialogMessage} 
             onClose={() => setDialogMessage(null)} 
           />
+        )}
+
+        {/* Desktop Layer */}
+        {showDesktop && (
+          <Desktop onClose={() => setShowDesktop(false)} />
         )}
         
         {/* Debug Grid */}
