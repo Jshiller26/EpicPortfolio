@@ -18,6 +18,7 @@ export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
+  const [isTvOn, setIsTvOn] = useState(false);
   const [showDesktop, setShowDesktop] = useState(false);
   const collisionMap = useRef(createBedroomCollision());
   const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
@@ -51,6 +52,41 @@ export default function Room() {
     };
   }, [dialogMessage]);
 
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      if (dialogMessage) {
+        setDialogMessage(null);
+        setIsTvOn(false);
+      }
+    };
+
+    const handleGlobalKeyPress = (e: KeyboardEvent) => {
+      if (dialogMessage && (e.key === 'e' || e.key === ' ')) {
+        e.preventDefault();
+        setDialogMessage(null);
+        setIsTvOn(false); 
+      }
+
+      if (e.key.toLowerCase() === 'g') {
+        setShowDebug(prev => !prev);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('keydown', handleGlobalKeyPress);
+    
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('keydown', handleGlobalKeyPress);
+    };
+  }, [dialogMessage]);
+
+  useEffect(() => {
+    if (!dialogMessage) {
+      setIsTvOn(false);
+    }
+  }, [dialogMessage]);
+
   const getInteractableMessage = (id: string) => {
     switch(id) {
       case 'PC':
@@ -58,29 +94,74 @@ export default function Room() {
           router.push('/desktop');
         }, 0);
         return null;
-      case 'time-management':
+      case 'Clock':
         const now = new Date();
         const timeString = now.toLocaleTimeString([], { 
           hour: '2-digit', 
           minute: '2-digit'
         });
         return `The clock reads ${timeString}.`;
+      case 'PC':
+        return "Epic PC";
+      case 'Book':
+        return "Reading is broing";
+      case 'Map':
+        return "Epic Map of Philadelphia";
+      case 'Game':
+        return "Let's play some games";
+      case 'TV':
+        setIsTvOn(true);
+        return "You turned on the TV. Breaking Bad Season 5 episode 5 is playing.";
       default:
-        return `Interacting with ${id}`;
+        return `Examining the ${id.toLowerCase()}...`;
     }
   };
 
-  const handleInteraction = (position: GridPosition, direction: Direction) => {
+  const findInteractableAtPosition = (x: number, y: number) => {
+    return Object.values(INTERACTABLES).find(item => 
+      item.x === x && item.y === y
+    );
+  };
+
+  const handleInteraction = (position: GridPosition) => {
     if (isMoving.current || dialogMessage) return;
 
-    const interactableItem = Object.entries(INTERACTABLES).find(([_, item]) => 
-      item.x === position.x && item.y === position.y
-    );
+    const interactableItem = findInteractableAtPosition(position.x, position.y);
 
     if (interactableItem) {
-      const [_, item] = interactableItem;
-      const message = getInteractableMessage(item.id);
+      const message = getInteractableMessage(interactableItem.id);
       setDialogMessage(message);
+    }
+  };
+
+  const handleMovement = (path: GridPosition[], onComplete?: () => void) => {
+    isMoving.current = true;
+    setMovementRequest({
+      path,
+      onComplete: () => {
+        isMoving.current = false;
+        setMovementRequest(null);
+        onComplete?.();
+      }
+    });
+  };
+
+  const handleInteractableClick = (item: typeof INTERACTABLES[keyof typeof INTERACTABLES]) => {
+    const targetY = item.y + 1;
+    
+    if (targetY < GRID.ROWS) {
+      const path = findPath(
+        playerPosition.current,
+        { x: item.x, y: targetY },
+        collisionMap.current
+      );
+
+      if (path.length > 0) {
+        handleMovement(path, () => {
+          const message = getInteractableMessage(item.id);
+          setDialogMessage(message);
+        });
+      }
     }
   };
 
@@ -95,65 +176,47 @@ export default function Room() {
 
     const roomElement = e.currentTarget as HTMLDivElement;
     const rect = roomElement.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = Math.floor((e.clientX - rect.left) / GRID_SIZE);
+    const y = Math.floor((e.clientY - rect.top) / GRID_SIZE);
 
-    const gridX = Math.floor(x / GRID_SIZE);
-    const gridY = Math.floor(y / GRID_SIZE);
+    // Special cases for clicking above the clock or map
+    if ((x === 2 && y === 0) || (x === 5 && y === 0)) {
+      const interactableY = 1;
+      const interactableItem = findInteractableAtPosition(x, interactableY);
 
-    const clickedItem = Object.entries(INTERACTABLES).find(([_, item]) => 
-      item.x === gridX && item.y === gridY
-    );
+      if (interactableItem) {
+        handleInteractableClick(interactableItem);
+        return;
+      }
+    }
+
+    const clickedItem = findInteractableAtPosition(x, y);
 
     if (clickedItem) {
-      const [_, item] = clickedItem;
-      const targetY = item.y + 1; 
-      
-      if (targetY < GRID.ROWS) {
-        const path = findPath(
-          playerPosition.current,
-          { x: item.x, y: targetY },
-          collisionMap.current
-        );
-
-        if (path.length > 0) {
-          isMoving.current = true;
-          setMovementRequest({
-            path,
-            onComplete: () => {
-              isMoving.current = false;
-              setMovementRequest(null);
-              const message = getInteractableMessage(item.id);
-              setDialogMessage(message);
-            }
-          });
-        }
-      }
+      handleInteractableClick(clickedItem);
       return;
     }
 
-    if (gridX >= 0 && gridX < 9 && gridY >= 0 && gridY < 8) {
+    if (x >= 0 && x < GRID.COLS && y >= 0 && y < GRID.ROWS) {
       const path = findPath(
         playerPosition.current,
-        { x: gridX, y: gridY },
+        { x, y },
         collisionMap.current
       );
 
       if (path.length > 0) {
-        isMoving.current = true;
-        setMovementRequest({
-          path,
-          onComplete: () => {
-            isMoving.current = false;
-            setMovementRequest(null);
-          }
-        });
+        handleMovement(path);
       }
     }
   };
 
   const handlePlayerMove = (newPosition: GridPosition) => {
     playerPosition.current = newPosition;
+  };
+
+  const handleDialogClose = () => {
+    setDialogMessage(null);
+    setIsTvOn(false);
   };
 
   return (
@@ -199,12 +262,28 @@ export default function Room() {
             unoptimized
           />
         </div>
+
+        {/* TV On Layer */}
+        {isTvOn && (
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            <Image
+              src="/images/tiles/TvOn.png"
+              alt="TV Display"
+              width={ROOM.WIDTH}
+              height={ROOM.HEIGHT}
+              className="[image-rendering:pixelated]"
+              priority
+              unoptimized
+            />
+          </div>
+        )}
         
         {/* Dialog Layer */}
         {dialogMessage && (
           <DialogBox 
             message={dialogMessage} 
-            onClose={() => setDialogMessage(null)} 
+            onClose={() => handleDialogClose} 
+            
           />
         )}
 
