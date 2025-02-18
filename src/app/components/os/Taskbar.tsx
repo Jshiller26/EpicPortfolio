@@ -1,49 +1,134 @@
-import React, { useState } from 'react';
-// import { StartMenu } from './StartMenu';
+import React from 'react';
 
 interface TaskbarProps {
   openWindows: string[];
   activeWindow: string | null;
   onWindowSelect: (windowId: string) => void;
   onClose: () => void;
+  onStartClick: () => void;
+  onSearchClick: () => void;
+  onWidgetsClick: () => void;
+  isStartOpen: boolean;
+  isSearchOpen: boolean;
+  isWidgetsOpen: boolean;
 }
+
+const iconMap: { [key: string]: string } = {
+  chrome: '/images/desktop/icons8-chrome.svg',
+  edge: '/images/desktop/icons8-microsoft-edge.svg',
+  vscode: '/images/desktop/icons8-visual-studio-code-2019.svg',
+  folder: '/images/desktop/icons8-folder.svg',
+};
 
 export const Taskbar: React.FC<TaskbarProps> = ({
   openWindows,
   activeWindow,
   onWindowSelect,
   onClose,
+  onStartClick,
+  onSearchClick,
+  onWidgetsClick,
+  isStartOpen,
+  isSearchOpen,
+  isWidgetsOpen,
 }) => {
-  const [startMenuOpen, setStartMenuOpen] = useState(false);
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-12 bg-windows-taskbar flex items-center px-2">
-      <button
-        className="px-4 py-2 hover:bg-gray-700"
-        onClick={() => setStartMenuOpen(!startMenuOpen)}
-      >
-        Start
-      </button>
-      <div className="flex-1 flex space-x-2">
+    <div className="h-12 bg-white/80 backdrop-blur-md shadow-lg flex items-center justify-between px-3">
+      {/* Left section - Start, Search, etc. */}
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={onStartClick}
+          className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
+            isStartOpen ? 'bg-black/10' : ''
+          }`}
+        >
+          <img 
+            src="/images/desktop/icons8-windows-11.svg" 
+            alt="Start" 
+            className="w-5 h-5"
+          />
+        </button>
+
+        {/* Pinned apps */}
+        <div className="flex space-x-1">
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <img 
+              src={iconMap.edge}
+              alt="Edge"
+              className="w-5 h-5"
+            />
+          </button>
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <img 
+              src={iconMap.chrome}
+              alt="Chrome"
+              className="w-5 h-5"
+            />
+          </button>
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <img 
+              src={iconMap.vscode}
+              alt="VS Code"
+              className="w-5 h-5"
+            />
+          </button>
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <img 
+              src={iconMap.folder}
+              alt="File Explorer"
+              className="w-5 h-5"
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Center section - Running apps */}
+      <div className="flex items-center space-x-1">
         {openWindows.map((windowId) => (
           <button
             key={windowId}
-            className={`px-4 py-2 ${
-              activeWindow === windowId ? 'bg-gray-700' : 'hover:bg-gray-600'
-            }`}
             onClick={() => onWindowSelect(windowId)}
+            className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
+              activeWindow === windowId ? 'bg-black/10' : ''
+            }`}
           >
-            {windowId}
+            <img 
+              src={iconMap[windowId] || iconMap.folder}
+              alt={windowId}
+              className="w-5 h-5"
+            />
           </button>
         ))}
       </div>
-      <button
-        className="px-4 py-2 hover:bg-red-600"
-        onClick={onClose}
-      >
-        Exit
-      </button>
-      {startMenuOpen && <StartMenu onClose={() => setStartMenuOpen(false)} />}
+
+      {/* Right section - System tray */}
+      <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 text-sm">
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <span className="text-xs">🔊</span>
+          </button>
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <span className="text-xs">📶</span>
+          </button>
+          <button className="p-2 rounded-md hover:bg-black/10">
+            <span className="text-xs">🔋</span>
+          </button>
+        </div>
+        <div className="text-sm font-medium px-2">
+          {getCurrentTime()}
+        </div>
+        <button 
+          className="ml-2 w-3 hover:bg-black/10 h-full"
+          onClick={() => {/* Show desktop */}}
+        />
+      </div>
     </div>
   );
 };
