@@ -39,9 +39,13 @@ export default function Player({ onMove, movementRequest, onInteract, isDialogOp
   const lastFrameTime = useRef<number>(0);
   const keysPressed = useRef<Set<string>>(new Set());
   const animationFrameRef = useRef<number | null>(null);
-  const targetPosition = useRef<PixelPosition>({ x: 5 * GRID_SIZE, y: 5 * GRID_SIZE });
+  const targetPosition = useRef<PixelPosition>({ 
+    x: spawnPosition.x * GRID_SIZE, 
+    y: spawnPosition.y * GRID_SIZE 
+  });
   const currentPath = useRef<GridPosition[]>([]);
   const collisionMap = useRef(createBedroomCollision());
+  const lastSpawnPosition = useRef(spawnPosition);
 
   const getCurrentSprite = useCallback(() => {
     const spriteIndex = SPRITE_INDEXES[direction][frame % 4];
@@ -80,6 +84,27 @@ export default function Player({ onMove, movementRequest, onInteract, isDialogOp
       currentPath.current.shift();
     }
   }, [movementRequest, isMoving, gridPosition, moveToGridPosition, isDialogOpen]);
+  
+  useEffect(() => {
+    if (
+      lastSpawnPosition.current.x !== spawnPosition.x || 
+      lastSpawnPosition.current.y !== spawnPosition.y
+    ) {
+      setGridPosition(spawnPosition);
+      setPixelPosition({ 
+        x: spawnPosition.x * GRID_SIZE, 
+        y: spawnPosition.y * GRID_SIZE 
+      });
+      targetPosition.current = {
+        x: spawnPosition.x * GRID_SIZE,
+        y: spawnPosition.y * GRID_SIZE
+      };
+      lastSpawnPosition.current = spawnPosition;
+      if (onMove) {
+        onMove(spawnPosition);
+      }
+    }
+  }, [spawnPosition, onMove]);
 
   const updatePosition = useCallback((timestamp: number) => {
     const keys = keysPressed.current;
