@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
@@ -26,7 +26,6 @@ export const Window: React.FC<WindowProps> = ({
   const { addMinimizedWindow, removeMinimizedWindow, minimizedWindows } = useWindowStore();
   const rndRef = useRef<Rnd>(null);
 
-  // Effect to handle window restoration
   useEffect(() => {
     const isMinimized = minimizedWindows.some(w => w.id === id);
     if (!isMinimized && isMinimizing) {
@@ -73,14 +72,12 @@ export const Window: React.FC<WindowProps> = ({
         
         setIsMinimizing(true);
         
-        // Add to minimized windows store
         addMinimizedWindow({
           id,
           title: getWindowTitle(),
           icon: getIconPath(),
         });
 
-        // Animate using CSS transform
         const scaleX = iconRect.width / windowRect.width;
         const scaleY = iconRect.height / windowRect.height;
         const translateX = iconRect.left - windowRect.left;
@@ -90,7 +87,6 @@ export const Window: React.FC<WindowProps> = ({
         rndNode.style.transform = 
           `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
 
-        // Wait for animation to complete
         await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
@@ -122,21 +118,18 @@ export const Window: React.FC<WindowProps> = ({
       size={size}
       minWidth={400}
       minHeight={300}
-      style={{
-        transition: isMaximized ? 'none' : 'width 0.2s, height 0.2s'
-      }}
       onDragStop={(e, d) => {
         if (!isMaximized) {
           setPosition({ x: d.x, y: d.y });
         }
       }}
-      onResizeStop={(e, direction, ref, delta, position) => {
+      onResize={(e, direction, ref, delta, position) => {
         if (!isMaximized) {
-          setSize({
-            width: parseInt(ref.style.width),
-            height: parseInt(ref.style.height),
-          });
           setPosition(position);
+          setSize({
+            width: ref.offsetWidth,
+            height: ref.offsetHeight,
+          });
         }
       }}
       className={`${isActive ? 'z-50' : 'z-0'}`}
@@ -144,10 +137,22 @@ export const Window: React.FC<WindowProps> = ({
       disableDragging={isMaximized}
       enableResizing={!isMaximized}
       bounds="window"
+      resizeHandleClasses={{
+        bottom: 'h-1 bg-transparent ',
+        bottomLeft: 'h-2 w-2 bg-transparent ',
+        bottomRight: 'h-2 w-2 bg-transparent ',
+        left: 'w-1 bg-transparent ',
+        right: 'w-1 bg-transparent ',
+        top: 'h-1 bg-transparent ',
+        topLeft: 'h-2 w-2 bg-transparent ',
+        topRight: 'h-2 w-2 bg-transparent '
+      }}
     >
-      <div className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border border-gray-200 ${
-        isMaximized ? '' : 'rounded-lg'
-      }`}>
+      <div 
+        className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border border-gray-200 ${
+          isMaximized ? '' : 'rounded-lg'
+        }`}
+      >
         {/* Window Title Bar */}
         <div className="h-9 bg-white flex items-center justify-between select-none">
           <div className="flex items-center space-x-2 px-3">

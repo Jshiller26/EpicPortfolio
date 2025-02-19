@@ -26,11 +26,14 @@ export default function Room() {
   const [showDesktop, setShowDesktop] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const collisionMap = useRef(createBedroomCollision());
-  const playerPosition = useRef<GridPosition>({ x: 1, y: 4 });
   const isMoving = useRef(false);
   const router = useRouter();
   const setSpawnPosition = useSpawnStore(state => state.setPosition);
   const searchParams = useSearchParams();
+  const spawnPosition = useSpawnStore(state => state.position);
+  const playerPosition = useRef<GridPosition>(spawnPosition);
+
+  
   
 
   useEffect(() => {
@@ -59,6 +62,10 @@ export default function Room() {
       window.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, [dialogMessage]);
+
+  useEffect(() => {
+    playerPosition.current = spawnPosition;
+  }, [spawnPosition]);
 
   useEffect(() => {
     const from = searchParams.get('from');

@@ -6,6 +6,6 @@ interface SpawnState {
 }
 
 export const useSpawnStore = create<SpawnState>((set) => ({
-  position: { x: 1, y: 5 }, // Default spawn
+  position: { x: 1, y: 4 }, // Default spawn
   setPosition: (x, y) => set({ position: { x, y } }),
 }));
