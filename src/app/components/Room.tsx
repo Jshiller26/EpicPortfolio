@@ -13,17 +13,25 @@ import type { GridPosition, MovementRequest, Direction } from '../types/gameType
 import { Desktop } from './os/Desktop';
 // import router from 'next/router';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useSpawnStore } from '../stores/spawnStore';
 
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
   const [movementRequest, setMovementRequest] = useState<MovementRequest | null>(null);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
   const [isTvOn, setIsTvOn] = useState(false);
+  const [isPcOn, setIsPcOn] = useState(false);
+  const [isFading, setIsFading] = useState(false);
   const [showDesktop, setShowDesktop] = useState(false);
+  const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const collisionMap = useRef(createBedroomCollision());
-  const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
+  const playerPosition = useRef<GridPosition>({ x: 1, y: 4 });
   const isMoving = useRef(false);
   const router = useRouter();
+  const setSpawnPosition = useSpawnStore(state => state.setPosition);
+  const searchParams = useSearchParams();
+  
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -51,6 +59,15 @@ export default function Room() {
       window.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, [dialogMessage]);
+
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from === 'desktop') {
+      setSpawnPosition(0, 2);
+    } else {
+      setSpawnPosition(1, 4);
+    }
+  }, [searchParams, setSpawnPosition]);
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -87,13 +104,28 @@ export default function Room() {
     }
   }, [dialogMessage]);
 
+  useEffect(() => {
+    if (!dialogMessage && isPcOn) {
+      setFadeOpacity('opacity-0');
+      setIsFading(true);
+      
+      setTimeout(() => {
+        setFadeOpacity('opacity-100');
+      }, 50); 
+      
+      const timer = setTimeout(() => {
+        router.push('/desktop');
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [dialogMessage, isPcOn, router]);
+
   const getInteractableMessage = (id: string) => {
     switch(id) {
       case 'PC':
-        setTimeout(() => {
-          router.push('/desktop');
-        }, 0);
-        return null;
+        setIsPcOn(true);
+        return "You booted up the PC.";
       case 'Clock':
         const now = new Date();
         const timeString = now.toLocaleTimeString([], { 
@@ -101,8 +133,6 @@ export default function Room() {
           minute: '2-digit'
         });
         return `The clock reads ${timeString}.`;
-      case 'PC':
-        return "Epic PC";
       case 'Book':
         return "Reading is broing";
       case 'Map':
@@ -276,6 +306,29 @@ export default function Room() {
               unoptimized
             />
           </div>
+        )}
+
+        {/* PC On Layer */}
+        {isPcOn && (
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            <Image
+              src="/images/tiles/PCon.png"
+              alt="PC Display"
+              width={ROOM.WIDTH}
+              height={ROOM.HEIGHT}
+              className="[image-rendering:pixelated]"
+              priority
+              unoptimized
+            />
+          </div>
+        )}
+
+        {/* Fade Out Layer */}
+        {isFading && (
+          <div 
+            className={`absolute inset-0 z-50 bg-black pointer-events-none transition-opacity duration-500 ${fadeOpacity}`}
+            aria-hidden="true"
+          />
         )}
         
         {/* Dialog Layer */}

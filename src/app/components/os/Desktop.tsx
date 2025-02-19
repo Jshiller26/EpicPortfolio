@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Taskbar } from './Taskbar';
 import { DesktopIcons } from './DesktopIcons';
 import { Window } from './Window';
+import { BackButton } from './BackButton';
+import DialogBox from '../DialogBox';
+import { useRouter } from 'next/navigation';
 
 interface DesktopProps {
   onClose: () => void;
@@ -13,6 +16,10 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [widgetsOpen, setWidgetsOpen] = useState(false);
+  const [showShutdownDialog, setShowShutdownDialog] = useState(false);
+  const [isFading, setIsFading] = useState(false);
+  const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
+  const router = useRouter();
 
   const handleOpenWindow = (windowId: string) => {
     if (!openWindows.includes(windowId)) {
@@ -46,8 +53,32 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     setSearchOpen(false);
   };
 
+  const handleShutdown = () => {
+    setShowShutdownDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setShowShutdownDialog(false);
+    setFadeOpacity('opacity-0');
+    setIsFading(true);
+    
+    setTimeout(() => {
+      setFadeOpacity('opacity-100');
+    }, 50);
+    
+    setTimeout(() => {
+      router.push('/home?from=desktop');
+    }, 500);
+  };
+
+  const handleGlobalClick = (e: React.MouseEvent) => {
+    if (showShutdownDialog) {
+      handleDialogClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-hidden">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden" onClick={handleGlobalClick}>
       {/* Windows 11 wallpaper background */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -56,6 +87,9 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
           backgroundColor: "#0078D4" 
         }}
       />
+
+      {/* Back Button */}
+      <BackButton onClick={handleShutdown} />
       
       {/* Desktop Content */}
       <div className="h-full w-full relative">
@@ -105,6 +139,23 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             isSearchOpen={searchOpen}
           />
         </div>
+
+        {/* Shutdown Dialog */}
+        {showShutdownDialog && (
+          <DialogBox 
+            message="You shut down the PC."
+            onClose={handleDialogClose}
+          />
+        )}
+
+        {/* Fade Out Layer */}
+        {isFading && (
+          <div 
+            className={`absolute inset-0 z-50 bg-black pointer-events-none transition-opacity duration-500 ${fadeOpacity}`}
+            aria-hidden="true"
+          />
+        )}
+
       </div>
     </div>
   );
