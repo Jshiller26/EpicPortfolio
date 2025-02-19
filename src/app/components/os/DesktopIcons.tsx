@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFileSystemStore } from '../../stores/fileSystemStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
+import { ContextMenu } from './ContextMenu';
 
 interface IconPosition {
   x: number;
@@ -11,14 +12,26 @@ interface DesktopIconsProps {
   onOpenWindow: (windowId: string) => void;
 }
 
-const GRID_SIZE = 76; 
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  itemId: string | null;
+}
+
+const GRID_SIZE = 76;
 
 export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const desktop = useFileSystemStore(state => state.items['desktop']) as Folder;
   const items = useFileSystemStore(state => state.items);
   const [isDragging, setIsDragging] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    itemId: null
+  });
   
-  // State to store icon positions
   const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>(() => {
     const saved = localStorage.getItem('desktopIconPositions');
     return saved ? JSON.parse(saved) : {};
@@ -32,8 +45,79 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     ? desktop.children.map(id => items[id])
     : [];
 
-  const handleDoubleClick = (itemId: string) => {
+  const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
+    e.preventDefault();
+    const item = items[itemId];
+    
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      itemId
+    });
+  };
+
+  const handleOpen = (itemId: string) => {
     onOpenWindow(`explorer-${itemId}`);
+  };
+
+  const handleCut = (itemId: string) => {
+    console.log('Cut:', itemId);
+    // Implement cut functionality
+  };
+
+  const handleCopy = (itemId: string) => {
+    console.log('Copy:', itemId);
+    // Implement copy functionality
+  };
+
+  const handleDelete = (itemId: string) => {
+    console.log('Delete:', itemId);
+    // Implement delete functionality
+  };
+
+  const handleRename = (itemId: string) => {
+    console.log('Rename:', itemId);
+    // Implement rename functionality
+  };
+
+  const handleProperties = (itemId: string) => {
+    console.log('Properties:', itemId);
+    // Implement properties functionality
+  };
+
+  const getContextMenuItems = (itemId: string) => {
+    const item = items[itemId];
+    return [
+      {
+        label: 'Open',
+        onClick: () => handleOpen(itemId)
+      },
+      { divider: true },
+      {
+        label: 'Cut',
+        onClick: () => handleCut(itemId)
+      },
+      {
+        label: 'Copy',
+        onClick: () => handleCopy(itemId)
+      },
+      { divider: true },
+      {
+        label: 'Delete',
+        onClick: () => handleDelete(itemId)
+      },
+      { divider: true },
+      {
+        label: 'Rename',
+        onClick: () => handleRename(itemId)
+      },
+      { divider: true },
+      {
+        label: 'Properties',
+        onClick: () => handleProperties(itemId)
+      }
+    ];
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
@@ -60,12 +144,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (!itemId) return;
 
     const desktopRect = e.currentTarget.getBoundingClientRect();
-    
-    // Find position relative to desktop container
     const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
     const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
     
-    // Snap to grid 
     const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
     const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
     
@@ -93,9 +174,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
               transition: isDragging ? 'none' : 'transform 0.1s ease-out'
             }}
             draggable="true"
+            onContextMenu={(e) => handleContextMenu(e, item.id)}
             onDragStart={(e) => handleDragStart(e, item.id)}
             onDragEnd={handleDragEnd}
-            onDoubleClick={() => handleDoubleClick(item.id)}
+            onDoubleClick={() => handleOpen(item.id)}
           >
             <div className="w-8 h-8 flex items-center justify-center mb-1">
               <img
@@ -111,6 +193,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           </div>
         );
       })}
+
+      {contextMenu.visible && contextMenu.itemId && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={getContextMenuItems(contextMenu.itemId)}
+          onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
+        />
+      )}
     </div>
   );
 };
