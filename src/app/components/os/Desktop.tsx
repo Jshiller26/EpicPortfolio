@@ -94,9 +94,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
       {/* Desktop Content */}
       <div className="h-full w-full relative">
         {/* Desktop Icons Grid */}
-        <div className="p-4 grid grid-cols-auto-fit gap-4">
           <DesktopIcons onOpenWindow={handleOpenWindow} />
-        </div>
 
         {/* Windows */}
         <div className="absolute inset-0 pointer-events-none">

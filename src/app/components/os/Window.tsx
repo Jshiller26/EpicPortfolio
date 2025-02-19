@@ -138,14 +138,14 @@ export const Window: React.FC<WindowProps> = ({
       enableResizing={!isMaximized}
       bounds="window"
       resizeHandleClasses={{
-        bottom: 'h-1 bg-transparent hover:bg-blue-500/50',
-        bottomLeft: 'h-2 w-2 bg-transparent hover:bg-blue-500/50',
-        bottomRight: 'h-2 w-2 bg-transparent hover:bg-blue-500/50',
-        left: 'w-1 bg-transparent hover:bg-blue-500/50',
-        right: 'w-1 bg-transparent hover:bg-blue-500/50',
-        top: 'h-1 bg-transparent hover:bg-blue-500/50',
-        topLeft: 'h-2 w-2 bg-transparent hover:bg-blue-500/50',
-        topRight: 'h-2 w-2 bg-transparent hover:bg-blue-500/50'
+        bottom: 'h-1 bg-transparent ',
+        bottomLeft: 'h-2 w-2 bg-transparent ',
+        bottomRight: 'h-2 w-2 bg-transparent ',
+        left: 'w-1 bg-transparent ',
+        right: 'w-1 bg-transparent ',
+        top: 'h-1 bg-transparent ',
+        topLeft: 'h-2 w-2 bg-transparent ',
+        topRight: 'h-2 w-2 bg-transparent '
       }}
     >
       <div 
