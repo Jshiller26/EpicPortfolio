@@ -101,7 +101,7 @@ export default function Room() {
       
       const timer = setTimeout(() => {
         router.push('/desktop');
-      }, 1000);
+      }, 500);
       
       return () => clearTimeout(timer);
     }
