@@ -67,12 +67,18 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     }, 50);
     
     setTimeout(() => {
-      router.push('/home');
+      router.push('/home?from=desktop');
     }, 500);
   };
 
+  const handleGlobalClick = (e: React.MouseEvent) => {
+    if (showShutdownDialog) {
+      handleDialogClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-hidden">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden" onClick={handleGlobalClick}>
       {/* Windows 11 wallpaper background */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
