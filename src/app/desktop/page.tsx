@@ -7,7 +7,7 @@ export default function DesktopPage() {
   const router = useRouter();
 
   const handleClose = () => {
-    router.push('/home');
+    router.push('/home?from=desktop');
   };
 
   return <Desktop onClose={handleClose} />;

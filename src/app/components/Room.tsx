@@ -13,6 +13,8 @@ import type { GridPosition, MovementRequest, Direction } from '../types/gameType
 import { Desktop } from './os/Desktop';
 // import router from 'next/router';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useSpawnStore } from '../stores/spawnStore';
 
 export default function Room() {
   const [showDebug, setShowDebug] = useState(false);
@@ -24,9 +26,12 @@ export default function Room() {
   const [showDesktop, setShowDesktop] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const collisionMap = useRef(createBedroomCollision());
-  const playerPosition = useRef<GridPosition>({ x: 5, y: 5 });
+  const playerPosition = useRef<GridPosition>({ x: 1, y: 4 });
   const isMoving = useRef(false);
   const router = useRouter();
+  const setSpawnPosition = useSpawnStore(state => state.setPosition);
+  const searchParams = useSearchParams();
+  
 
   useEffect(() => {
     const handleGlobalClick = () => {
@@ -54,6 +59,15 @@ export default function Room() {
       window.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, [dialogMessage]);
+
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from === 'desktop') {
+      setSpawnPosition(0, 2);
+    } else {
+      setSpawnPosition(1, 4);
+    }
+  }, [searchParams, setSpawnPosition]);
 
   useEffect(() => {
     const handleGlobalClick = () => {

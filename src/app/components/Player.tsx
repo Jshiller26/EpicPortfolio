@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { createBedroomCollision } from '../utils/tileMap';
 import { GRID_SIZE, SCALE_FACTOR, ROOM } from '../constants/roomConstants';
 import type { Direction, GridPosition, PixelPosition, MovementRequest } from '../types/gameTypes';
+import { useSpawnStore } from '../stores/spawnStore';
 
 const SPRITE_WIDTH = 16 * SCALE_FACTOR;
 const SPRITE_HEIGHT = 20 * SCALE_FACTOR;
@@ -25,10 +26,11 @@ interface PlayerProps {
 }
 
 export default function Player({ onMove, movementRequest, onInteract, isDialogOpen }: PlayerProps) {
-  const [gridPosition, setGridPosition] = useState<GridPosition>({ x: 5, y: 5 });
+  const spawnPosition = useSpawnStore(state => state.position);
+  const [gridPosition, setGridPosition] = useState<GridPosition>(spawnPosition);
   const [pixelPosition, setPixelPosition] = useState<PixelPosition>({ 
-    x: 5 * GRID_SIZE, 
-    y: 5 * GRID_SIZE 
+    x: spawnPosition.x * GRID_SIZE, 
+    y: spawnPosition.y * GRID_SIZE 
   });
   const [direction, setDirection] = useState<Direction>('down');
   const [frame, setFrame] = useState(0);
