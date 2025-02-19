@@ -30,23 +30,28 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
 
   return (
     <div 
-      className="context-menu fixed z-50 w-64 bg-white shadow-lg rounded-md border border-gray-200 py-1"
+      className="context-menu fixed z-50 w-48 bg-white shadow-md rounded-none border border-gray-300"
       style={{ 
         left: x,
         top: y,
-        filter: 'drop-shadow(0 0 3px rgba(0, 0, 0, 0.1))'
+        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
       }}
     >
       {items.map((item, index) => (
         <React.Fragment key={index}>
           {item.divider ? (
-            <div className="h-px bg-gray-200 my-1" />
+            <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
           ) : (
             <button
-              className={`w-full px-4 py-1.5 text-left flex items-center space-x-2 text-sm
+              className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
                 ${item.disabled 
                   ? 'text-gray-400 cursor-default' 
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`}
+                  : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
+              style={{
+                fontSize: '12px',
+                lineHeight: '1',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+              }}
               onClick={() => {
                 if (!item.disabled && item.onClick) {
                   item.onClick();
@@ -55,9 +60,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               }}
               disabled={item.disabled}
             >
-              {item.icon && (
-                <img src={item.icon} alt="" className="w-4 h-4" />
-              )}
               <span>{item.label}</span>
             </button>
           )}

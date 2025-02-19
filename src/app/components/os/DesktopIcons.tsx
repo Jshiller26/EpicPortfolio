@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFileSystemStore } from '../../stores/fileSystemStore';
+import { useClipboardStore } from '../../stores/clipboardStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import { ContextMenu } from './ContextMenu';
 
@@ -24,6 +25,9 @@ const GRID_SIZE = 76;
 export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const desktop = useFileSystemStore(state => state.items['desktop']) as Folder;
   const items = useFileSystemStore(state => state.items);
+  const { moveItem, copyItem, deleteItem } = useFileSystemStore();
+  const { item: clipboardItem, operation: clipboardOperation, setClipboard, clear: clearClipboard } = useClipboardStore();
+  
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -47,8 +51,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
 
   const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
-    const item = items[itemId];
-    
     setContextMenu({
       visible: true,
       x: e.clientX,
@@ -57,23 +59,57 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     });
   };
 
+  const handleDesktopContextMenu = (e: React.MouseEvent) => {
+    // Only show paste option if we're right-clicking the desktop itself
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        itemId: null // null indicates desktop context menu
+      });
+    }
+  };
+
   const handleOpen = (itemId: string) => {
     onOpenWindow(`explorer-${itemId}`);
   };
 
   const handleCut = (itemId: string) => {
-    console.log('Cut:', itemId);
-    // Implement cut functionality
+    const item = items[itemId];
+    if (item) {
+      setClipboard(item, 'cut');
+    }
   };
 
   const handleCopy = (itemId: string) => {
-    console.log('Copy:', itemId);
-    // Implement copy functionality
+    const item = items[itemId];
+    if (item) {
+      setClipboard(item, 'copy');
+    }
+  };
+
+  const handlePaste = () => {
+    if (!clipboardItem) return;
+
+    if (clipboardOperation === 'cut') {
+      // Move the item
+      moveItem(clipboardItem.id, 'desktop');
+      clearClipboard();
+    } else if (clipboardOperation === 'copy') {
+      // Copy the item
+      copyItem(clipboardItem.id, 'desktop');
+      clearClipboard();
+    }
   };
 
   const handleDelete = (itemId: string) => {
-    console.log('Delete:', itemId);
-    // Implement delete functionality
+    deleteItem(itemId);
+    // Remove the position data for the deleted item
+    const newPositions = { ...iconPositions };
+    delete newPositions[itemId];
+    setIconPositions(newPositions);
   };
 
   const handleRename = (itemId: string) => {
@@ -86,8 +122,24 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     // Implement properties functionality
   };
 
-  const getContextMenuItems = (itemId: string) => {
-    const item = items[itemId];
+  const getContextMenuItems = (itemId: string | null) => {
+    // If itemId is null, we're showing the desktop context menu
+    if (itemId === null) {
+      return [
+        {
+          label: 'Paste',
+          onClick: handlePaste,
+          disabled: !clipboardItem
+        },
+        { divider: true },
+        {
+          label: 'Properties',
+          onClick: () => console.log('Desktop properties')
+        }
+      ];
+    }
+
+    // Otherwise, show the item context menu
     return [
       {
         label: 'Open',
@@ -159,6 +211,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   return (
     <div 
       className="absolute inset-0 overflow-hidden"
+      onContextMenu={handleDesktopContextMenu}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -168,7 +221,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         return (
           <div
             key={item.id}
-            className="absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10"
+            className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10
+              ${clipboardOperation === 'cut' && clipboardItem?.id === item.id ? 'opacity-50' : ''}`}
             style={{
               transform: `translate(${position.x}px, ${position.y}px)`,
               transition: isDragging ? 'none' : 'transform 0.1s ease-out'
@@ -194,7 +248,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         );
       })}
 
-      {contextMenu.visible && contextMenu.itemId && (
+      {contextMenu.visible && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
