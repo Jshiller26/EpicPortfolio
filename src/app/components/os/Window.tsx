@@ -3,6 +3,7 @@ import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 interface WindowProps {
   id: string;
@@ -24,7 +25,16 @@ export const Window: React.FC<WindowProps> = ({
   const [previousState, setPreviousState] = useState({ position, size });
   
   const { addMinimizedWindow, removeMinimizedWindow, minimizedWindows } = useWindowStore();
+  const fileSystem = useFileSystemStore();
   const rndRef = useRef<Rnd>(null);
+
+  // Extract the item ID from the window ID if it's a file explorer window
+  const getItemIdFromWindowId = () => {
+    if (id.startsWith('explorer-')) {
+      return id.replace('explorer-', '');
+    }
+    return null;
+  };
 
   useEffect(() => {
     const isMinimized = minimizedWindows.some(w => w.id === id);
@@ -47,6 +57,22 @@ export const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
+  // Set appropriate path when opening a file explorer window
+  useEffect(() => {
+    const itemId = getItemIdFromWindowId();
+    if (itemId && id.startsWith('explorer-')) {
+      // If this is a folder, navigate to it
+      const item = fileSystem.items[itemId];
+      if (item && item.type === 'folder') {
+        fileSystem.navigateToFolder(itemId);
+      } else if (item && item.parentId) {
+        // If it's a file, navigate to its parent folder and select the file
+        fileSystem.navigateToFolder(item.parentId);
+        fileSystem.selectItems([itemId]);
+      }
+    }
+  }, [id]);
+
   const getIconPath = () => {
     if (id.startsWith('explorer-')) {
       return '/images/desktop/icons8-folder.svg';
@@ -56,7 +82,9 @@ export const Window: React.FC<WindowProps> = ({
 
   const getWindowTitle = () => {
     if (id.startsWith('explorer-')) {
-      return 'File Explorer';
+      // Get the folder name from the current path
+      const pathParts = fileSystem.currentPath.split('\\');
+      return pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'File Explorer';
     }
     return 'Window';
   };
@@ -104,7 +132,9 @@ export const Window: React.FC<WindowProps> = ({
 
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
-      return <FileExplorer windowId={id} />;
+      const itemId = getItemIdFromWindowId();
+      const initialPath = itemId ? fileSystem.getPathToItem(itemId) || undefined : undefined;
+      return <FileExplorer windowId={id} initialPath={initialPath} />;
     }
     return <div>Window Content</div>;
   };
