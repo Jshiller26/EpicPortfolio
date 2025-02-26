@@ -1,14 +1,11 @@
-import { FileSystemState, Folder, FileSystemItem } from '../../../types/fileSystem';
+import { FileSystemState, Folder, File } from '../../../types/fileSystem';
 
-/**
- * Recursively copy an item and all its children
- */
 export const copyItemAndChildren = (
   id: string, 
   targetId: string, 
-  items: Record<string, FileSystemItem>,
+  items: Record<string, Folder | File>,
   idMap: Record<string, string> = {}
-): [Record<string, FileSystemItem>, string] => {
+): [Record<string, Folder | File>, string] => {
   const item = items[id];
   const targetFolder = items[targetId] as Folder;
   
@@ -38,7 +35,7 @@ export const copyItemAndChildren = (
     
     let newItems = {
       ...items,
-      [newId]: itemCopy
+      [newId]: itemCopy as Folder | File
     };
     
     // Copy each child
@@ -58,19 +55,16 @@ export const copyItemAndChildren = (
     return [newItems, newId];
   }
   
-  // For files, just return the copy
+  // For files just return the copy
   return [
     {
       ...items,
-      [newId]: itemCopy
+      [newId]: itemCopy as File
     },
     newId
   ];
 };
 
-/**
- * Copy an item to a target folder
- */
 export const copyItem = (
   state: FileSystemState,
   itemId: string, 
@@ -85,7 +79,7 @@ export const copyItem = (
       ...targetFolder,
       children: [...targetFolder.children, newId],
       modified: new Date()
-    };
+    } as Folder;
   }
   
   return { 
@@ -94,9 +88,6 @@ export const copyItem = (
   };
 };
 
-/**
- * Copy multiple items to clipboard
- */
 export const copyItems = (
   state: FileSystemState,
   itemIds: string[]
@@ -110,9 +101,6 @@ export const copyItems = (
   };
 };
 
-/**
- * Cut multiple items to clipboard
- */
 export const cutItems = (
   state: FileSystemState,
   itemIds: string[]
@@ -126,9 +114,6 @@ export const cutItems = (
   };
 };
 
-/**
- * Paste items from clipboard to target folder
- */
 export const pasteItems = (
   state: FileSystemState,
   targetFolderId: string
@@ -158,10 +143,6 @@ export const pasteItems = (
   };
 };
 
-/**
- * Move an item to a new folder
- * (Imported to avoid circular dependencies)
- */
 export const moveItem = (
   state: FileSystemState,
   itemId: string, 
@@ -191,7 +172,7 @@ export const moveItem = (
       ...oldParent,
       children: oldParent.children.filter(childId => childId !== itemId),
       modified: new Date()
-    };
+    } as Folder;
   }
 
   // Update the path for the item and all its children
@@ -229,7 +210,7 @@ export const moveItem = (
     ...targetFolder,
     children: [...targetFolder.children, itemId],
     modified: new Date()
-  };
+  } as Folder;
 
   return { 
     ...state,
