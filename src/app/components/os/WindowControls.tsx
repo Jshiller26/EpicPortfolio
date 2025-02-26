@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Minus, Square, X } from 'lucide-react';
 
 interface WindowControlsProps {

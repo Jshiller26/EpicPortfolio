@@ -9,7 +9,7 @@ import Player from './Player';
 import DialogBox from './DialogBox';
 import { createBedroomCollision } from '../utils/tileMap';
 import { findPath } from '../utils/pathfinding';
-import type { GridPosition, MovementRequest, Direction } from '../types/gameTypes';
+import type { GridPosition, MovementRequest } from '../types/gameTypes';
 import { Desktop } from './os/Desktop';
 // import router from 'next/router';
 import { useRouter } from 'next/navigation';

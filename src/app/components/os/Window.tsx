@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
@@ -24,7 +24,7 @@ export const Window: React.FC<WindowProps> = ({
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [previousState, setPreviousState] = useState({ position, size });
   
-  const { addMinimizedWindow, removeMinimizedWindow, minimizedWindows } = useWindowStore();
+  const { addMinimizedWindow, minimizedWindows } = useWindowStore();
   const fileSystem = useFileSystemStore();
   const rndRef = useRef<Rnd>(null);
 

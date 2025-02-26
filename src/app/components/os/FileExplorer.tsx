@@ -15,11 +15,10 @@ function isFolder(item: FileSystemItem): item is Folder {
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
-  windowId,
   initialPath = 'C:\\Desktop'
 }) => {
   const fileSystem = useFileSystemStore();
-  const [addressBarText, setAddressBarText] = useState(fileSystem.currentPath);
+  const [, setAddressBarText] = useState(fileSystem.currentPath);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([initialPath]);
   const [historyIndex, setHistoryIndex] = useState(0);
   
