@@ -44,31 +44,120 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   });
   
   const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
+  const [ready, setReady] = useState(false);
 
-  // Load icon positions from localStorage when component mounts
+  const isPositionOccupied = (x: number, y: number, excludeItemId?: string): boolean => {
+    return Object.entries(iconPositions).some(([id, pos]) => {
+      return pos.x === x && pos.y === y && id !== excludeItemId;
+    });
+  };
+
+  const findNextAvailablePosition = (): IconPosition => {
+    const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
+    let y = 0;
+    
+    // Find the first available spot going down the right edge
+    while (isPositionOccupied(rightEdgeX, y)) {
+      y += GRID_SIZE;
+    }
+    
+    return { x: rightEdgeX, y };
+  };
+
+  const computeInitialPositions = (savedPositions: Record<string, IconPosition> = {}) => {
+    const positions: Record<string, IconPosition> = {};
+    let posY = 0;
+    
+    // Right edge position for icons
+    const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
+    
+    // Process all desktop items and give them positions
+    if (desktop?.children) {
+      desktop.children.forEach(itemId => {
+        // If the item has a saved position, use it
+        if (savedPositions[itemId]) {
+          positions[itemId] = savedPositions[itemId];
+          return;
+        }
+        
+        // Otherwise place it at the right edge
+        while (Object.values(positions).some(pos => pos.x === rightEdgeX && pos.y === posY)) {
+          posY += GRID_SIZE;
+        }
+        
+        positions[itemId] = { x: rightEdgeX, y: posY };
+        posY += GRID_SIZE;
+      });
+    }
+    
+    return positions;
+  };
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !ready) {
+      let savedPositions = {};
+      let initialPositions = {};
+      
       try {
+        // Try to load saved positions from localStorage
         const saved = localStorage.getItem('desktopIconPositions');
         if (saved) {
-          setIconPositions(JSON.parse(saved));
+          savedPositions = JSON.parse(saved);
         }
+        
+        initialPositions = computeInitialPositions(savedPositions);
+        
+        setIconPositions(initialPositions);
       } catch (error) {
         console.error('Error loading icon positions:', error);
+        
+        initialPositions = computeInitialPositions();
+        setIconPositions(initialPositions);
       }
+      
+      setReady(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (ready && desktop?.children?.length > 0) {
+      const needsPositioning = desktop.children.some(id => !iconPositions[id]);
+      
+      if (needsPositioning) {
+        setIconPositions(prev => {
+          const updatedPositions = { ...prev };
+          let posY = 0;
+          
+          const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
+          
+          desktop.children.forEach(itemId => {
+            if (updatedPositions[itemId]) return;
+            
+            // Find next available position
+            while (Object.values(updatedPositions).some(pos => pos.x === rightEdgeX && pos.y === posY)) {
+              posY += GRID_SIZE;
+            }
+            
+            updatedPositions[itemId] = { x: rightEdgeX, y: posY };
+            posY += GRID_SIZE;
+          });
+          
+          return updatedPositions;
+        });
+      }
+    }
+  }, [ready, desktop?.children, iconPositions]);
   
   // Save icon positions to localStorage when they change
   useEffect(() => {
-    if (typeof window !== 'undefined' && Object.keys(iconPositions).length > 0) {
+    if (typeof window !== 'undefined' && ready && Object.keys(iconPositions).length > 0) {
       try {
         localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
       } catch (error) {
         console.error('Error saving icon positions:', error);
       }
     }
-  }, [iconPositions]);
+  }, [iconPositions, ready]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -98,10 +187,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       document.removeEventListener('mousedown', handleClick);
     };
   }, [isRenaming, contextMenu.visible]);
-
-  const desktopItems = desktop?.type === 'folder' 
-    ? desktop.children.map(id => items[id])
-    : [];
 
   const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
@@ -376,10 +461,58 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
     const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
     
-    setIconPositions(prev => ({
-      ...prev,
-      [itemId]: { x, y }
-    }));
+    // Check if the position is already occupied by another icon
+    if (isPositionOccupied(x, y, itemId)) {
+      // Find the next available position nearby
+      let newX = x;
+      let newY = y;
+      let found = false;
+      
+      // Try positions in a spiral pattern around the drop target
+      for (let radius = 1; radius <= 5 && !found; radius++) {
+        newY = y + (GRID_SIZE * radius);
+        if (!isPositionOccupied(x, newY, itemId)) {
+          found = true;
+          break;
+        }
+        
+        newX = x + (GRID_SIZE * radius);
+        if (!isPositionOccupied(newX, y, itemId)) {
+          found = true;
+          break;
+        }
+        
+        newY = y - (GRID_SIZE * radius);
+        if (!isPositionOccupied(x, newY, itemId)) {
+          found = true;
+          break;
+        }
+        
+        newX = x - (GRID_SIZE * radius);
+        if (!isPositionOccupied(newX, y, itemId)) {
+          found = true;
+          break;
+        }
+      }
+      
+      // If we couldn't find an empty spot nearby, use the right edge
+      if (!found) {
+        const nextPos = findNextAvailablePosition();
+        newX = nextPos.x;
+        newY = nextPos.y;
+      }
+      
+      setIconPositions(prev => ({
+        ...prev,
+        [itemId]: { x: newX, y: newY }
+      }));
+    } else {
+      // Position is free
+      setIconPositions(prev => ({
+        ...prev,
+        [itemId]: { x, y }
+      }));
+    }
   };
 
   const getIconForItem = (item: FileSystemItem): string => {
@@ -415,6 +548,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
+  if (!ready) {
+    return null;
+  }
+
   return (
     <div 
       className="absolute inset-0 overflow-hidden"
@@ -422,23 +559,25 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {desktopItems.map((item: File | Folder) => {
-        const position = iconPositions[item.id] || { x: 0, y: 0 };
+      {desktop?.type === 'folder' && desktop.children.map((itemId) => {
+        const item = items[itemId];
+        const position = iconPositions[itemId] || findNextAvailablePosition();
         
         return (
           <div
-            key={item.id}
+            key={itemId}
             className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10
-              ${clipboard.operation === 'cut' && clipboard.item?.id === item.id ? 'opacity-50' : ''}`}
+              ${clipboard.operation === 'cut' && clipboard.item?.id === itemId ? 'opacity-50' : ''}`}
             style={{
               transform: `translate(${position.x}px, ${position.y}px)`,
+              // Only apply transition for dragging, not during initialization
               transition: isDragging ? 'none' : 'transform 0.1s ease-out'
             }}
             draggable="true"
-            onContextMenu={(e) => handleContextMenu(e, item.id)}
-            onDragStart={(e) => handleDragStart(e, item.id)}
+            onContextMenu={(e) => handleContextMenu(e, itemId)}
+            onDragStart={(e) => handleDragStart(e, itemId)}
             onDragEnd={handleDragEnd}
-            onDoubleClick={() => handleOpen(item.id)}
+            onDoubleClick={() => handleOpen(itemId)}
           >
             <div className="w-8 h-8 flex items-center justify-center mb-1">
               <img
@@ -449,7 +588,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
               />
             </div>
             
-            {isRenaming === item.id ? (
+            {isRenaming === itemId ? (
               <input
                 ref={inputRef}
                 type="text"
