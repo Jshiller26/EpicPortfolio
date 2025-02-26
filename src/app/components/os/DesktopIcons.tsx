@@ -3,6 +3,7 @@ import { useFileSystemStore } from '../../stores/fileSystemStore';
 import { useClipboardStore } from '../../stores/clipboardStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import { ContextMenu } from './ContextMenu';
+import { ContextMenuItem } from '../../types/ui/ContextMenu';
 
 interface IconPosition {
   x: number;
@@ -211,7 +212,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   };
 
   const handleCreateNewFolder = () => {
-    let baseName = 'New Folder';
+    const baseName = 'New Folder';
     let counter = 1;
     let name = baseName;
     
@@ -228,7 +229,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   };
 
   const handleCreateTextFile = () => {
-    let baseName = 'New Text Document';
+    const baseName = 'New Text Document';
     let counter = 1;
     let name = `${baseName}.txt`;
     
@@ -249,7 +250,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     console.log('Properties:', itemId);
   };
 
-  const getContextMenuItems = (itemId: string | null) => {
+  const getContextMenuItems = (itemId: string | null): ContextMenuItem[] => {
     // If itemId is null, we're showing the desktop context menu
     if (itemId === null) {
       return [
@@ -331,7 +332,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     e.dataTransfer.setData('text/plain', itemId);
   };
 
-  const handleDragEnd = (e: React.DragEvent) => {
+  const handleDragEnd = () => {
     setIsDragging(false);
   };
 
@@ -458,3 +459,4 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       )}
     </div>
   );
+};

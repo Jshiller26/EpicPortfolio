@@ -15,7 +15,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [widgetsOpen, setWidgetsOpen] = useState(false);
+  const [, setWidgetsOpen] = useState(false);
   const [showShutdownDialog, setShowShutdownDialog] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
@@ -47,12 +47,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     setWidgetsOpen(false);
   };
 
-  const toggleWidgets = () => {
-    setWidgetsOpen(!widgetsOpen);
-    setStartMenuOpen(false);
-    setSearchOpen(false);
-  };
-
   const handleShutdown = () => {
     setShowShutdownDialog(true);
   };
@@ -71,7 +65,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     }, 500);
   };
 
-  const handleGlobalClick = (e: React.MouseEvent) => {
+  const handleGlobalClick = () => {
     if (showShutdownDialog) {
       handleDialogClose();
     }

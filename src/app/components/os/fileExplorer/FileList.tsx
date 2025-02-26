@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileSystemItem, File, Folder } from '../../../types/fileSystem';
+import { FileSystemItem } from '../../../types/fileSystem';
 import FileListItem from './FileListItem';
 
 interface FileListProps {
