@@ -1,4 +1,5 @@
 import { FileSystemState, Folder, File } from '../../../types/fileSystem';
+import { moveItem } from './moveOperations';
 
 export const copyItemAndChildren = (
   id: string, 
@@ -140,80 +141,5 @@ export const pasteItems = (
   return {
     ...newState,
     clipboard: { items: [], operation: null }
-  };
-};
-
-export const moveItem = (
-  state: FileSystemState,
-  itemId: string, 
-  targetFolderId: string
-): FileSystemState => {
-  const newItems = { ...state.items };
-  const item = newItems[itemId];
-  const targetFolder = newItems[targetFolderId] as Folder;
-  
-  if (!item || !targetFolder || targetFolder.type !== 'folder') return state;
-  
-  // Check if an item with the same name already exists in the target folder
-  const nameExists = targetFolder.children.some(childId => {
-    const child = newItems[childId];
-    return child.name.toLowerCase() === item.name.toLowerCase() && child.type === item.type;
-  });
-  
-  if (nameExists) {
-    console.error('An item with the same name already exists in the target folder');
-    return state;
-  }
-
-  // Remove from old parent
-  if (item.parentId) {
-    const oldParent = newItems[item.parentId] as Folder;
-    newItems[item.parentId] = {
-      ...oldParent,
-      children: oldParent.children.filter(childId => childId !== itemId),
-      modified: new Date()
-    } as Folder;
-  }
-
-  // Update the path for the item and all its children
-  const updatePaths = (id: string, newParentPath: string) => {
-    const currentItem = newItems[id];
-    if (!currentItem) return;
-    
-    const newPath = `${newParentPath}\\${currentItem.name}`;
-    newItems[id] = {
-      ...currentItem,
-      path: newPath,
-      modified: new Date()
-    };
-    
-    // Recursively update children if it's a folder
-    if (currentItem.type === 'folder') {
-      const folder = currentItem as Folder;
-      folder.children.forEach(childId => {
-        updatePaths(childId, newPath);
-      });
-    }
-  };
-  
-  // Update paths
-  updatePaths(itemId, targetFolder.path);
-  
-  // Update item's parent
-  newItems[itemId] = {
-    ...newItems[itemId],
-    parentId: targetFolderId
-  };
-
-  // Add to new parent
-  newItems[targetFolderId] = {
-    ...targetFolder,
-    children: [...targetFolder.children, itemId],
-    modified: new Date()
-  } as Folder;
-
-  return { 
-    ...state,
-    items: newItems
   };
 };
