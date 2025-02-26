@@ -24,10 +24,12 @@ export const Window: React.FC<WindowProps> = ({
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [previousState, setPreviousState] = useState({ position, size });
+  const [initialPath, setInitialPath] = useState<string | undefined>(undefined);
   
   const { addMinimizedWindow, minimizedWindows } = useWindowStore();
   const fileSystem = useFileSystemStore();
   const rndRef = useRef<Rnd>(null);
+  const navigationCompletedRef = useRef(false);
 
   // Extract the item ID from the window ID if it's a file explorer window
   const getItemIdFromWindowId = () => {
@@ -60,19 +62,18 @@ export const Window: React.FC<WindowProps> = ({
 
   // Set appropriate path when opening a file explorer window
   useEffect(() => {
+    if (navigationCompletedRef.current) return;
+    
     const itemId = getItemIdFromWindowId();
     if (itemId && id.startsWith('explorer-')) {
-      // If this is a folder, navigate to it
-      const item = fileSystem.items[itemId];
-      if (item && item.type === 'folder') {
-        fileSystem.navigateToFolder(itemId);
-      } else if (item && item.parentId) {
-        // If it's a file, navigate to its parent folder and select the file
-        fileSystem.navigateToFolder(item.parentId);
-        fileSystem.selectItems([itemId]);
+      // Get the path for the item
+      const path = fileSystem.getPathToItem(itemId);
+      if (path) {
+        setInitialPath(path);
+        navigationCompletedRef.current = true;
       }
     }
-  }, [id, fileSystem, getItemIdFromWindowId]);
+  }, [id, fileSystem]);
 
   const getIconPath = () => {
     if (id.startsWith('explorer-')) {
@@ -133,9 +134,7 @@ export const Window: React.FC<WindowProps> = ({
 
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
-      const itemId = getItemIdFromWindowId();
-      const initialPath = itemId ? fileSystem.getPathToItem(itemId) || undefined : undefined;
-      return <FileExplorer windowId={id} initialPath={initialPath} />;
+      return <FileExplorer initialPath={initialPath} />;
     }
     return <div>Window Content</div>;
   };
@@ -193,6 +192,7 @@ export const Window: React.FC<WindowProps> = ({
               width={16}
               height={16}
               className="w-4 h-4"
+              unoptimized={true}
             />
             <span className="text-sm text-gray-700">{getWindowTitle()}</span>
           </div>
