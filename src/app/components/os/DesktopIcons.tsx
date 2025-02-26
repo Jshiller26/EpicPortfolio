@@ -43,16 +43,34 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     itemId: null
   });
   
-  const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>(() => {
-    const saved = localStorage.getItem('desktopIconPositions');
-    return saved ? JSON.parse(saved) : {};
-  });
-  
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
 
+  // Load icon positions from localStorage when component mounts
   useEffect(() => {
-    localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('desktopIconPositions');
+        if (saved) {
+          setIconPositions(JSON.parse(saved));
+        }
+      } catch (error) {
+        console.error('Error loading icon positions:', error);
+      }
+    }
+  }, []);
+  
+  // Save icon positions to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Object.keys(iconPositions).length > 0) {
+      try {
+        localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
+      } catch (error) {
+        console.error('Error saving icon positions:', error);
+      }
+    }
   }, [iconPositions]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -63,6 +81,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   
   // Listen for clicks outside to cancel rename operations and context menus
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleClick = (e: MouseEvent) => {
       if (isRenaming && inputRef.current && !inputRef.current.contains(e.target as Node)) {
         handleRenameComplete();
