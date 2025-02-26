@@ -74,7 +74,7 @@ const DialogBox = ({ message, onClose }: { message: string; onClose: () => void 
       >
         {/* Background Image */}
         <Image
-          src="/images/pokemonDialogBox.png"
+          src="/images/PokemonDialogBox.png"
           alt="Dialog Box Background"
           fill
           className="[image-rendering:pixelated]"

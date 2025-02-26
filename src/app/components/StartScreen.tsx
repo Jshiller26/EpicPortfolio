@@ -76,7 +76,7 @@ export default function StartScreen() {
             : 'opacity-100'
         }`}
         style={{
-          backgroundImage: 'url("/images/rayquazaanimation/emeraldBackgroundHD.png")',
+          backgroundImage: 'url("/images/rayquazaAnimation/emeraldBackgroundHD.png")',
         }}
       />
       <CloudBackground animationState={animationState} />
@@ -93,7 +93,7 @@ export default function StartScreen() {
           <div className="relative">
             <div className={`relative ${animationState === 'shine' || animationState === 'initial' ? 'overflow-hidden bg-black' : ''}`}>
               <Image
-                src="/images/pokemonNameCurve5.png"
+                src="/images/PokemonNameCurve5.png"
                 alt="Joe Shiller"
                 width={1730}
                 height={578}
