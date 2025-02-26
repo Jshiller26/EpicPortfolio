@@ -32,18 +32,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     ? currentFolder.children.map(id => fileSystem.items[id])
     : [];
 
-  useEffect(() => {
-    // Initialize the explorer with the initialPath
-    if (initialPath && initialPath !== fileSystem.currentPath) {
-      navigateToPath(initialPath, true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Update address bar when path changes
-    setAddressBarText(fileSystem.currentPath);
-  }, [fileSystem.currentPath]);
-
   const navigateToPath = (path: string, resetHistory = false) => {
     // Check if the path exists in the file system
     const pathExists = Object.values(fileSystem.items).some(item => item.path === path);
@@ -67,6 +55,18 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setHistoryIndex(newHistory.length - 1);
     }
   };
+
+  useEffect(() => {
+    // Initialize the explorer with the initialPath
+    if (initialPath && initialPath !== fileSystem.currentPath) {
+      navigateToPath(initialPath, true);
+    }
+  }, [initialPath, fileSystem.currentPath, navigateToPath]);
+
+  useEffect(() => {
+    // Update address bar when path changes
+    setAddressBarText(fileSystem.currentPath);
+  }, [fileSystem.currentPath]);
 
   const navigateBack = () => {
     if (historyIndex > 0) {
@@ -109,7 +109,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   };
 
   const handleSearch = (query: string) => {
-    // Implement search functionality here
+    // Implement search
     console.log('Searching for:', query);
   };
 
