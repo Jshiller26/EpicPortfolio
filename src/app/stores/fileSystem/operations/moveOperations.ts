@@ -1,11 +1,11 @@
-import { FileSystemState, Folder, FileSystemItem } from '../../../types/fileSystem';
+import { FileSystemState, Folder, File } from '../../../types/fileSystem';
 import { checkNameConflict } from '../utils/pathUtils';
 
 export const updatePaths = (
   id: string, 
   newParentPath: string,
-  items: Record<string, FileSystemItem>
-): Record<string, FileSystemItem> => {
+  items: Record<string, Folder | File>
+): Record<string, Folder | File> => {
   const updatedItems = { ...items };
   const currentItem = updatedItems[id];
   if (!currentItem) return updatedItems;
@@ -17,7 +17,7 @@ export const updatePaths = (
     modified: new Date()
   };
   
-  // Recursively update children if it's a folder
+  // Recursively update children if its a folder
   if (currentItem.type === 'folder') {
     const folder = currentItem as Folder;
     folder.children.forEach(childId => {
@@ -52,7 +52,7 @@ export const moveItem = (
       ...oldParent,
       children: oldParent.children.filter(childId => childId !== itemId),
       modified: new Date()
-    };
+    } as Folder;
   }
   
   // Update paths for item and its children
@@ -69,7 +69,7 @@ export const moveItem = (
     ...targetFolder,
     children: [...targetFolder.children, itemId],
     modified: new Date()
-  };
+  } as Folder;
 
   return { 
     ...state,
