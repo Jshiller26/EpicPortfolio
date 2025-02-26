@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FileSystemState, Folder, File, FileSystemItem } from '../types/fileSystem';
+import { FileSystemState, FileSystemItem } from '../types/fileSystem';
 import initialState from './fileSystem/initialState';
 import {
   createFolder,

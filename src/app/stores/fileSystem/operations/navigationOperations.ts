@@ -1,4 +1,4 @@
-import { FileSystemState, Folder, FileSystemItem } from '../../../types/fileSystem';
+import { FileSystemState, FileSystemItem } from '../../../types/fileSystem';
 
 export const setCurrentPath = (
   state: FileSystemState,

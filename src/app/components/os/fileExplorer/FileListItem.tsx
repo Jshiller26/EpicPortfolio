@@ -1,5 +1,6 @@
 import React from 'react';
-import { FileSystemItem, File, Folder } from '../../../types/fileSystem';
+import Image from 'next/image';
+import { FileSystemItem } from '../../../types/fileSystem';
 import { formatFileSize, getItemTypeString } from '../../../stores/fileSystem/utils/pathUtils';
 
 interface FileListItemProps {
@@ -15,15 +16,19 @@ const FileListItem: React.FC<FileListItemProps> = ({ item, onDoubleClick }) => {
     >
       <td className="px-4 py-1 flex items-center gap-2">
         {item.type === 'folder' ? (
-          <img
+          <Image
             src="/images/desktop/icons8-folder.svg" 
             alt="folder"
+            width={16}
+            height={16}
             className="w-4 h-4"
           />
         ) : (
-          <img
+          <Image
             src="/images/desktop/icons8-file.svg"
             alt="file"
+            width={16}
+            height={16}
             className="w-4 h-4"
           />
         )}

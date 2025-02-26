@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
+import Image from 'next/image';
 
 interface WindowProps {
   id: string;
@@ -24,7 +25,7 @@ export const Window: React.FC<WindowProps> = ({
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [previousState, setPreviousState] = useState({ position, size });
   
-  const { addMinimizedWindow, removeMinimizedWindow, minimizedWindows } = useWindowStore();
+  const { addMinimizedWindow, minimizedWindows } = useWindowStore();
   const fileSystem = useFileSystemStore();
   const rndRef = useRef<Rnd>(null);
 
@@ -71,7 +72,7 @@ export const Window: React.FC<WindowProps> = ({
         fileSystem.selectItems([itemId]);
       }
     }
-  }, [id]);
+  }, [id, fileSystem, getItemIdFromWindowId]);
 
   const getIconPath = () => {
     if (id.startsWith('explorer-')) {
@@ -186,9 +187,11 @@ export const Window: React.FC<WindowProps> = ({
         {/* Window Title Bar */}
         <div className="h-9 bg-white flex items-center justify-between select-none">
           <div className="flex items-center space-x-2 px-3">
-            <img
+            <Image
               src={getIconPath()}
               alt="icon"
+              width={16}
+              height={16}
               className="w-4 h-4"
             />
             <span className="text-sm text-gray-700">{getWindowTitle()}</span>

@@ -15,11 +15,10 @@ function isFolder(item: FileSystemItem): item is Folder {
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
-  windowId,
   initialPath = 'C:\\Desktop'
 }) => {
   const fileSystem = useFileSystemStore();
-  const [addressBarText, setAddressBarText] = useState(fileSystem.currentPath);
+  const [, setAddressBarText] = useState(fileSystem.currentPath);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([initialPath]);
   const [historyIndex, setHistoryIndex] = useState(0);
   
@@ -32,18 +31,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const currentItems = currentFolder && isFolder(currentFolder)
     ? currentFolder.children.map(id => fileSystem.items[id])
     : [];
-
-  useEffect(() => {
-    // Initialize the explorer with the initialPath
-    if (initialPath && initialPath !== fileSystem.currentPath) {
-      navigateToPath(initialPath, true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Update address bar when path changes
-    setAddressBarText(fileSystem.currentPath);
-  }, [fileSystem.currentPath]);
 
   const navigateToPath = (path: string, resetHistory = false) => {
     // Check if the path exists in the file system
@@ -68,6 +55,18 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setHistoryIndex(newHistory.length - 1);
     }
   };
+
+  useEffect(() => {
+    // Initialize the explorer with the initialPath
+    if (initialPath && initialPath !== fileSystem.currentPath) {
+      navigateToPath(initialPath, true);
+    }
+  }, [initialPath, fileSystem.currentPath, navigateToPath]);
+
+  useEffect(() => {
+    // Update address bar when path changes
+    setAddressBarText(fileSystem.currentPath);
+  }, [fileSystem.currentPath]);
 
   const navigateBack = () => {
     if (historyIndex > 0) {
@@ -110,7 +109,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   };
 
   const handleSearch = (query: string) => {
-    // Implement search functionality here
+    // Implement search
     console.log('Searching for:', query);
   };
 

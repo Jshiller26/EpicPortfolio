@@ -54,7 +54,6 @@ const CloudBackground = ({ animationState }: CloudBackgroundProps) => {
     const spawnInterval = setInterval(() => {
       setClouds(prevClouds => {
         const currentTime = Date.now();
-        const relativeTime = (currentTime - startTimeRef.current) / 1000;
         
         const activeClouds = prevClouds.filter(cloud => {
           const cloudAge = (currentTime - cloud.createdAt) / 1000;
