@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 interface TaskbarProps {
   openWindows: string[];
@@ -17,7 +18,15 @@ const iconMap: { [key: string]: string } = {
   edge: '/images/desktop/icons8-microsoft-edge.svg',
   vscode: '/images/desktop/icons8-visual-studio-code-2019.svg',
   folder: '/images/desktop/icons8-folder.svg',
-  'explorer-1': '/images/desktop/icons8-folder.svg',
+  text: '/images/desktop/icons8-text-file.svg',
+  image: '/images/desktop/icons8-image.svg',
+  pdf: '/images/desktop/icons8-pdf.svg',
+  js: '/images/desktop/icons8-js.svg',
+  html: '/images/desktop/icons8-html.svg',
+  css: '/images/desktop/icons8-css.svg',
+  json: '/images/desktop/icons8-json.svg',
+  md: '/images/desktop/icons8-markdown.svg',
+  file: '/images/desktop/icons8-file.svg',
 };
 
 export const Taskbar: React.FC<TaskbarProps> = ({
@@ -31,6 +40,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const [currentDate, setCurrentDate] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
   const { minimizedWindows, removeMinimizedWindow } = useWindowStore();
+  const fileSystem = useFileSystemStore();
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -59,6 +69,48 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       removeMinimizedWindow(windowId);
     }
     onWindowSelect(windowId);
+  };
+
+  const getIconForWindow = (windowId: string) => {
+    const minimizedWindow = minimizedWindows.find(w => w.id === windowId);
+    if (minimizedWindow && minimizedWindow.icon) {
+      return minimizedWindow.icon;
+    }
+
+    if (windowId.startsWith('explorer-')) {
+      return iconMap.folder;
+    } else if (windowId.startsWith('editor-')) {
+      const itemId = windowId.replace('editor-', '');
+      const item = fileSystem.items[itemId];
+      
+      if (item && item.type === 'file') {
+        const extension = item.extension?.toLowerCase();
+        if (extension) {
+          if (iconMap[extension]) {
+            return iconMap[extension];
+          }
+          
+          switch(extension) {
+            case 'txt': return iconMap.text;
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'svg': return iconMap.image;
+            case 'pdf': return iconMap.pdf;
+            default: return iconMap.file;
+          }
+        }
+      }
+      return iconMap.text;
+    } else if (windowId.startsWith('image-')) {
+      return iconMap.image;
+    } else if (windowId.startsWith('pdf-')) {
+      return iconMap.pdf;
+    }
+
+    // Default icon
+    return iconMap.folder;
   };
 
   return (
@@ -179,6 +231,9 @@ export const Taskbar: React.FC<TaskbarProps> = ({
               return null;
             }
             
+            // Get the appropriate icon for this window
+            const iconSrc = getIconForWindow(windowId);
+            
             return (
               <div key={windowId} className="relative">
                 <button
@@ -189,7 +244,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                   }`}
                 >
                   <img 
-                    src={iconMap[windowId] || iconMap.folder}
+                    src={iconSrc}
                     alt={windowId}
                     className="w-5 h-5"
                   />
