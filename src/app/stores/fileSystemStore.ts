@@ -30,8 +30,8 @@ export const useFileSystemStore = create<FileSystemState & {
   getPathToItem: (itemId: string) => string | null;
   
   // Creation operations
-  createFolder: (name: string, parentId: string) => void;
-  createFile: (name: string, parentId: string, content?: string, size?: number) => void;
+  createFolder: (name: string, parentId: string) => string;
+  createFile: (name: string, parentId: string, content?: string, size?: number) => string;
   
   // Deletion operations
   deleteItem: (itemId: string) => void;
@@ -58,9 +58,47 @@ export const useFileSystemStore = create<FileSystemState & {
   getPathToItem: (itemId) => getPathToItem(get(), itemId),
   
   // Creation operations
-  createFolder: (name, parentId) => set(state => createFolder(state, name, parentId)),
-  createFile: (name, parentId, content = '', size = 0) => 
-    set(state => createFile(state, name, parentId, content, size)),
+  createFolder: (name, parentId) => {
+    let folderId = '';
+    set(state => {
+      const newState = createFolder(state, name, parentId);
+      // Find the ID of the newly created folder
+      if (state.items[parentId]?.type === 'folder') {
+        const parent = newState.items[parentId];
+        if (parent.type === 'folder') {
+          const newChildIds = parent.children.filter(
+            id => !state.items[parentId].children.includes(id)
+          );
+          if (newChildIds.length === 1) {
+            folderId = newChildIds[0];
+          }
+        }
+      }
+      return newState;
+    });
+    return folderId;
+  },
+  
+  createFile: (name, parentId, content = '', size = 0) => {
+    let fileId = '';
+    set(state => {
+      const newState = createFile(state, name, parentId, content, size);
+      // Find the ID of the newly created file
+      if (state.items[parentId]?.type === 'folder') {
+        const parent = newState.items[parentId];
+        if (parent.type === 'folder') {
+          const newChildIds = parent.children.filter(
+            id => !state.items[parentId].children.includes(id)
+          );
+          if (newChildIds.length === 1) {
+            fileId = newChildIds[0];
+          }
+        }
+      }
+      return newState;
+    });
+    return fileId;
+  },
   
   // Deletion operations
   deleteItem: (itemId) => set(state => deleteItem(state, itemId)),

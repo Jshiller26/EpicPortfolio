@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFileSystemStore } from '../../stores/fileSystemStore';
-import { FileSystemItem, Folder } from '../../types/fileSystem';
+import { useWindowStore } from '../../stores/windowStore';
+import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import NavigationBar from './fileExplorer/NavigationBar';
-import SearchBar from './fileExplorer/SearchBar';
 import FileList from './fileExplorer/FileList';
 
 interface FileExplorerProps {
@@ -14,11 +14,16 @@ function isFolder(item: FileSystemItem): item is Folder {
   return item.type === 'folder';
 }
 
+function isFile(item: FileSystemItem): item is File {
+  return item.type === 'file';
+}
+
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
   initialPath,
   windowId
 }) => {
   const fileSystem = useFileSystemStore();
+  const openWindow = useWindowStore(state => state.openWindow);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const initializedRef = useRef(false);
@@ -44,7 +49,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       
       if (folder && folder.type === 'folder') {
         pathToUse = folder.path;
-      } else {
       }
     }
     
@@ -67,6 +71,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       initializedRef.current = true;
     }
   }, [initialPath, windowId, fileSystem]);
+
   const navigateToPath = (path: string, resetHistory = false) => {
     // Check if the path exists in the file system
     const pathExists = Object.values(fileSystem.items).some(item => item.path === path);
@@ -122,24 +127,40 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     }, 10);
   };
 
+  // Helper function to check if a file is a text file
+  const isTextFile = (file: File): boolean => {
+    const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
+    return textExtensions.includes(file.extension.toLowerCase());
+  };
+
   const handleItemDoubleClick = (item: FileSystemItem) => {
     if (isFolder(item)) {
       // Navigate into the folder
       navigateToPath(item.path);
-    } else {
-      console.log('Opening file:', item.name);
-      // Add different viewer based on file extension
+    } else if (isFile(item)) {
+      // Handle opening different file types
+      console.log('Opening file:', item.name, 'with extension:', item.extension);
+      
+      // Handle text files with the editor
+      if (isTextFile(item)) {
+        openWindow(`editor-${item.id}`);
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.extension.toLowerCase())) {
+        // Open image viewer
+        openWindow(`image-${item.id}`);
+      } else if (item.extension.toLowerCase() === 'pdf') {
+        // Open PDF viewer
+        openWindow(`pdf-${item.id}`);
+      } else {
+        // For unknown file types, show a message or default handler
+        console.log('Unknown file type');
+        alert(`File type .${item.extension} is not supported.`);
+      }
     }
-  };
-
-  const handleSearch = (query: string) => {
-    // Implement search
-    console.log('Searching for:', query);
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Navigation and Search Bar */}
+      {/* Navigation Bar */}
       <div className="flex flex-col">
         <NavigationBar
           currentPath={currentPath}
@@ -152,15 +173,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           refreshCurrentFolder={refreshCurrentFolder}
           navigateToPath={navigateToPath}
         />
-        <div className="px-2 py-1 border-b border-gray-200">
-          <SearchBar onSearch={handleSearch} />
-        </div>
       </div>
       
       {/* File List */}
       <FileList
         items={currentItems}
         onItemDoubleClick={handleItemDoubleClick}
+        currentFolderId={currentFolder?.id}
       />
     </div>
   );

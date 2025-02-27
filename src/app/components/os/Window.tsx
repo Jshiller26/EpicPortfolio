@@ -1,10 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import Image from 'next/image';
+import TextEditor from './TextEditor';
+import BlankTextEditor from './BlankTextEditor';
+import { File } from '@/app/types/fileSystem';
 
 interface WindowProps {
   id: string;
@@ -37,7 +40,16 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
     if (id.startsWith('explorer-')) {
       return '/images/desktop/icons8-folder.svg';
     } else if (id.startsWith('editor-')) {
-      return '/images/desktop/icons8-text-file.svg';
+      const fileId = id.replace('editor-', '');
+      const file = fileSystem.items[fileId] as File;
+      
+      if (file && file.extension.toLowerCase() === 'txt') {
+        return '/images/desktop/icons8-text-file.svg';
+      } else {
+        return '/images/desktop/icons8-file.svg';
+      }
+    } else if (id.startsWith('vscode-')) {
+      return '/images/desktop/icons8-vscode.svg';
     } else if (id.startsWith('image-')) {
       return '/images/desktop/icons8-image.svg';
     } else if (id.startsWith('pdf-')) {
@@ -63,6 +75,8 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       const fileId = id.replace('editor-', '');
       const file = fileSystem.items[fileId];
       return file ? file.name : 'Text Editor';
+    } else if (id.startsWith('vscode-')) {
+      return 'Visual Studio Code - Untitled.txt';
     } else if (id.startsWith('image-')) {
       const fileId = id.replace('image-', '');
       const file = fileSystem.items[fileId];
@@ -90,17 +104,33 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   const handleClose = () => {
     closeWindow(id);
   };
+
+  const isTextFile = (file: File): boolean => {
+    const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
+    return textExtensions.includes(file.extension.toLowerCase());
+  };
   
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
       // Pass the window ID to FileExplorer so it can determine the correct path
-      console.log(`Opening FileExplorer with windowId: ${id}`);
       return <FileExplorer windowId={id} />;
     } else if (id.startsWith('editor-')) {
-      // Text editor goes here
-      return <div className="p-4">Text Editor Content</div>;
+      const fileId = id.replace('editor-', '');
+      const file = fileSystem.items[fileId] as File;
+      
+      if (file && file.type === 'file') {
+        if (isTextFile(file)) {
+          return <TextEditor fileId={fileId} />;
+        } else {
+          return <div className="p-4">This file type is not supported by the text editor.</div>;
+        }
+      }
+      return <div className="p-4">File not found.</div>;
+    } else if (id.startsWith('vscode-')) {
+      // Blank VS Code editor
+      return <BlankTextEditor windowId={id} />;
     } else if (id.startsWith('image-')) {
-      // Image viewer goes
+      // Image viewer goes here
       return <div className="p-4">Image Viewer Content</div>;
     } else if (id.startsWith('pdf-')) {
       // PDF viewer goes here
@@ -114,6 +144,8 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
     height: window.innerHeight - 48, // Subtract taskbar height
   };
   const maximizedPosition = { x: 0, y: 0 };
+  
+  const isEditorWindow = id.startsWith('editor-') || id.startsWith('vscode-');
   
   return (
     <Rnd
@@ -153,14 +185,16 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       }}
     >
       <div 
-        className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border ${
+        className={`flex flex-col h-full ${isEditorWindow ? 'bg-[#1e1e1e]' : 'bg-white'} shadow-lg overflow-hidden border ${
           isActive ? 'border-blue-400' : 'border-gray-200'
         } ${isMaximized ? '' : 'rounded-lg'}`}
       >
         {/* Window Title Bar */}
         <div 
           className={`h-9 flex items-center justify-between select-none ${
-            isActive ? 'bg-white' : 'bg-gray-50'
+            isActive 
+              ? isEditorWindow ? 'bg-[#333333] text-white' : 'bg-white' 
+              : isEditorWindow ? 'bg-[#252525] text-gray-300' : 'bg-gray-50'
           }`}
         >
           <div className="flex items-center space-x-2 px-3">
@@ -172,20 +206,20 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
               className="w-4 h-4"
               unoptimized={true}
             />
-            <span className="text-sm text-gray-700">{getWindowTitle()}</span>
+            <span className={`text-sm ${isEditorWindow ? 'text-gray-300' : 'text-gray-700'}`}>{getWindowTitle()}</span>
           </div>
           <div className="flex h-full">
             <button 
-              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
+              className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
               onClick={handleMinimize}
             >
-              <Minus size={16} className="text-gray-600" />
+              <Minus size={16} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
             </button>
             <button 
-              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
+              className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
               onClick={handleMaximize}
             >
-              <Square size={14} className="text-gray-600 rounded-sm" />
+              <Square size={14} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
             </button>
             <button 
               className="px-4 hover:bg-red-500 flex items-center justify-center h-full group"

@@ -44,12 +44,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   });
   
   const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
+  const [vsCodePosition, setVsCodePosition] = useState<IconPosition>({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
 
   const isPositionOccupied = (x: number, y: number, excludeItemId?: string): boolean => {
-    return Object.entries(iconPositions).some(([id, pos]) => {
+    const desktopOccupied = Object.entries(iconPositions).some(([id, pos]) => {
       return pos.x === x && pos.y === y && id !== excludeItemId;
     });
+    
+    const vsCodeOccupied = vsCodePosition.x === x && vsCodePosition.y === y && excludeItemId !== 'vscode';
+    
+    return desktopOccupied || vsCodeOccupied;
   };
 
   const findNextAvailablePosition = (): IconPosition => {
@@ -97,6 +102,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (typeof window !== 'undefined' && !ready) {
       let savedPositions = {};
       let initialPositions = {};
+      let savedVsCodePosition = { x: 0, y: 0 };
       
       try {
         // Try to load saved positions from localStorage
@@ -105,14 +111,23 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           savedPositions = JSON.parse(saved);
         }
         
+        const savedVsCode = localStorage.getItem('vsCodeIconPosition');
+        if (savedVsCode) {
+          savedVsCodePosition = JSON.parse(savedVsCode);
+        } else {
+          savedVsCodePosition = { x: 0, y: 0 };
+        }
+        
         initialPositions = computeInitialPositions(savedPositions);
         
         setIconPositions(initialPositions);
+        setVsCodePosition(savedVsCodePosition);
       } catch (error) {
         console.error('Error loading icon positions:', error);
         
         initialPositions = computeInitialPositions();
         setIconPositions(initialPositions);
+        setVsCodePosition({ x: 0, y: 0 });
       }
       
       setReady(true);
@@ -150,14 +165,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   
   // Save icon positions to localStorage when they change
   useEffect(() => {
-    if (typeof window !== 'undefined' && ready && Object.keys(iconPositions).length > 0) {
+    if (typeof window !== 'undefined' && ready) {
       try {
-        localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
+        if (Object.keys(iconPositions).length > 0) {
+          localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
+        }
+        localStorage.setItem('vsCodeIconPosition', JSON.stringify(vsCodePosition));
       } catch (error) {
         console.error('Error saving icon positions:', error);
       }
     }
-  }, [iconPositions, ready]);
+  }, [iconPositions, vsCodePosition, ready]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -196,6 +214,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       x: e.clientX,
       y: e.clientY,
       itemId
+    });
+  };
+
+  const handleVsCodeContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      itemId: 'vscode'
     });
   };
 
@@ -256,6 +285,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           }
       }
     }
+  };
+
+  const handleOpenVsCode = () => {
+    onOpenWindow('vscode-new');
   };
 
   const handleCut = (itemId: string) => {
@@ -405,6 +438,26 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       ];
     }
 
+    // VS Code specific context menu
+    if (itemId === 'vscode') {
+      return [
+        {
+          label: 'Open',
+          onClick: handleOpenVsCode
+        },
+        { divider: true },
+        {
+          label: 'Create New File',
+          onClick: handleOpenVsCode
+        },
+        { divider: true },
+        {
+          label: 'Properties',
+          onClick: () => console.log('VS Code properties')
+        }
+      ];
+    }
+
     // Otherwise, show the item context menu
     return [
       {
@@ -444,6 +497,12 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     e.dataTransfer.setData('text/plain', itemId);
   };
 
+  const handleVsCodeDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', 'vscode');
+  };
+
   const handleDragEnd = () => {
     setIsDragging(false);
   };
@@ -467,6 +526,37 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     
     const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
     const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
+    
+    if (itemId === 'vscode') {
+      // Handle VS Code icon drop
+      if (!isPositionOccupied(x, y, 'vscode')) {
+        setVsCodePosition({ x, y });
+      } else {
+        // Find next available position
+        let newX = x;
+        let newY = y;
+        for (let radius = 1; radius <= 5; radius++) {
+          const positions = [
+            { x, y: y + (GRID_SIZE * radius) },
+            { x: x + (GRID_SIZE * radius), y },
+            { x, y: y - (GRID_SIZE * radius) },
+            { x: x - (GRID_SIZE * radius), y }
+          ];
+          
+          for (const pos of positions) {
+            if (!isPositionOccupied(pos.x, pos.y, 'vscode')) {
+              newX = pos.x;
+              newY = pos.y;
+              radius = 6; // Break out of outer loop
+              break;
+            }
+          }
+        }
+        
+        setVsCodePosition({ x: newX, y: newY });
+      }
+      return;
+    }
     
     // Check if the position is already occupied by another icon
     if (isPositionOccupied(x, y, itemId)) {
@@ -566,6 +656,33 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* VS Code Icon */}
+      <div
+        className="absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10"
+        style={{
+          transform: `translate(${vsCodePosition.x}px, ${vsCodePosition.y}px)`,
+          transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+        }}
+        draggable="true"
+        onContextMenu={handleVsCodeContextMenu}
+        onDragStart={handleVsCodeDragStart}
+        onDragEnd={handleDragEnd}
+        onDoubleClick={handleOpenVsCode}
+      >
+        <div className="w-8 h-8 flex items-center justify-center mb-1">
+          <img
+            src="/images/desktop/icons8-vscode.svg"
+            alt="Visual Studio Code"
+            className="w-8 h-8 pointer-events-none"
+            draggable="false"
+          />
+        </div>
+        <div className="text-[11px] text-white text-center leading-tight max-w-[72px] px-1 [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
+          VS Code
+        </div>
+      </div>
+
+      {/* Desktop Items */}
       {desktop?.type === 'folder' && desktop.children.map((itemId) => {
         const item = items[itemId];
         const position = iconPositions[itemId] || findNextAvailablePosition();
