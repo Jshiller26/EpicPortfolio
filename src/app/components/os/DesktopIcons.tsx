@@ -213,8 +213,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   };
 
   const handleOpen = (itemId: string) => {
-    if (items[itemId].type === 'folder') {
-      onOpenWindow(`explorer-${itemId}`);
+    const item = items[itemId];
+    if (!item) return;
+    
+    if (item.type === 'folder') {
+      const windowId = `explorer-${itemId}`;
+      
+      onOpenWindow(windowId);
     } else {
       // Handle file opening based on file type
       const file = items[itemId] as File;
@@ -246,7 +251,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         default:
           // Default file handler
           console.log(`Opening file: ${file.name}`);
-          onOpenWindow(`explorer-${file.parentId}`);
+          if (file.parentId) {
+            onOpenWindow(`explorer-${file.parentId}`);
+          }
       }
     }
   };

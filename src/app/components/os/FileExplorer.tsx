@@ -7,6 +7,7 @@ import FileList from './fileExplorer/FileList';
 
 interface FileExplorerProps {
   initialPath?: string;
+  windowId?: string;
 }
 
 function isFolder(item: FileSystemItem): item is Folder {
@@ -14,16 +15,18 @@ function isFolder(item: FileSystemItem): item is Folder {
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
-  initialPath = 'C:\\Desktop'
+  initialPath,
+  windowId
 }) => {
   const fileSystem = useFileSystemStore();
-  const [navigationHistory, setNavigationHistory] = useState<string[]>([initialPath]);
+  const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const initializedRef = useRef(false);
   
-  // Get the current folder based on the current path
+  const [localPath, setLocalPath] = useState<string>('');  
+  const currentPath = localPath || fileSystem.currentPath;
   const currentFolder = Object.values(fileSystem.items).find(
-    item => item.path === fileSystem.currentPath
+    item => item.path === currentPath
   );
   
   // Get items in the current folder
@@ -31,6 +34,39 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     ? currentFolder.children.map(id => fileSystem.items[id]).filter(Boolean)
     : [];
 
+  useEffect(() => {
+    if (initializedRef.current) return;    
+    let pathToUse = initialPath;
+    
+    if (windowId && windowId.startsWith('explorer-')) {
+      const folderId = windowId.replace('explorer-', '');
+      const folder = fileSystem.items[folderId];
+      
+      if (folder && folder.type === 'folder') {
+        pathToUse = folder.path;
+      } else {
+      }
+    }
+    
+    if (!pathToUse) {
+      pathToUse = 'C:\\Desktop';
+    }
+    
+    const pathExists = Object.values(fileSystem.items).some(item => item.path === pathToUse);
+    
+    if (pathExists) {
+      setLocalPath(pathToUse);
+      setNavigationHistory([pathToUse]);
+      setHistoryIndex(0);
+      initializedRef.current = true;
+    } else {
+      const desktopPath = 'C:\\Desktop';
+      setLocalPath(desktopPath);
+      setNavigationHistory([desktopPath]);
+      setHistoryIndex(0);
+      initializedRef.current = true;
+    }
+  }, [initialPath, windowId, fileSystem]);
   const navigateToPath = (path: string, resetHistory = false) => {
     // Check if the path exists in the file system
     const pathExists = Object.values(fileSystem.items).some(item => item.path === path);
@@ -40,50 +76,23 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       return;
     }
     
-    // Update the current path in the file system
-    fileSystem.setCurrentPath(path);
+    setLocalPath(path);
     
-    // Update navigation history if this is a new navigation (not back/forward)
     if (resetHistory) {
       setNavigationHistory([path]);
       setHistoryIndex(0);
     } else {
-      // Remove any forward history if we're navigating from a back state
       const newHistory = [...navigationHistory.slice(0, historyIndex + 1), path];
       setNavigationHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
     }
   };
 
-  // Initialize with initialPath only once
-  useEffect(() => {
-    if (!initializedRef.current && initialPath) {
-      // Verify the path exists
-      const pathExists = Object.values(fileSystem.items).some(item => item.path === initialPath);
-      
-      if (pathExists) {
-        // Set the path directly
-        fileSystem.setCurrentPath(initialPath);
-        setNavigationHistory([initialPath]);
-        setHistoryIndex(0);
-        initializedRef.current = true;
-      } else {
-        console.error(`Initial path not found: ${initialPath}`);
-        // Fall back to Desktop
-        const desktopPath = 'C:\\Desktop';
-        fileSystem.setCurrentPath(desktopPath);
-        setNavigationHistory([desktopPath]);
-        setHistoryIndex(0);
-        initializedRef.current = true;
-      }
-    }
-  }, [initialPath, fileSystem]);
-
   const navigateBack = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      fileSystem.setCurrentPath(navigationHistory[newIndex]);
+      setLocalPath(navigationHistory[newIndex]);
     }
   };
 
@@ -91,7 +100,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     if (historyIndex < navigationHistory.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      fileSystem.setCurrentPath(navigationHistory[newIndex]);
+      setLocalPath(navigationHistory[newIndex]);
     }
   };
 
@@ -106,10 +115,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   const refreshCurrentFolder = () => {
     // Trigger a re-render of the current folder contents
-    const currentPath = fileSystem.currentPath;
-    fileSystem.setCurrentPath('');
+    const currentPath = localPath;
+    setLocalPath('');
     setTimeout(() => {
-      fileSystem.setCurrentPath(currentPath);
+      setLocalPath(currentPath);
     }, 10);
   };
 
@@ -133,7 +142,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* Navigation and Search Bar */}
       <div className="flex flex-col">
         <NavigationBar
-          currentPath={fileSystem.currentPath}
+          currentPath={currentPath}
           historyIndex={historyIndex}
           navigationHistory={navigationHistory}
           hasParent={!!currentFolder?.parentId}

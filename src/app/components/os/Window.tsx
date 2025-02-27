@@ -36,15 +36,41 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   const getIconPath = () => {
     if (id.startsWith('explorer-')) {
       return '/images/desktop/icons8-folder.svg';
+    } else if (id.startsWith('editor-')) {
+      return '/images/desktop/icons8-text-file.svg';
+    } else if (id.startsWith('image-')) {
+      return '/images/desktop/icons8-image.svg';
+    } else if (id.startsWith('pdf-')) {
+      return '/images/desktop/icons8-pdf.svg';
     }
     return '/images/desktop/icons8-window.svg';
   };
   
   const getWindowTitle = () => {
     if (id.startsWith('explorer-')) {
-      // Get the folder name from the current path
+      // Get the folder name for the path currently being shown
+      const folderId = id.replace('explorer-', '');
+      const folder = fileSystem.items[folderId];
+      
+      if (folder && folder.type === 'folder') {
+        return folder.name;
+      }
+      
+      // Fallback to the path
       const pathParts = fileSystem.currentPath.split('\\');
       return pathParts.length > 0 ? pathParts[pathParts.length - 1] : 'File Explorer';
+    } else if (id.startsWith('editor-')) {
+      const fileId = id.replace('editor-', '');
+      const file = fileSystem.items[fileId];
+      return file ? file.name : 'Text Editor';
+    } else if (id.startsWith('image-')) {
+      const fileId = id.replace('image-', '');
+      const file = fileSystem.items[fileId];
+      return file ? file.name : 'Image Viewer';
+    } else if (id.startsWith('pdf-')) {
+      const fileId = id.replace('pdf-', '');
+      const file = fileSystem.items[fileId];
+      return file ? file.name : 'PDF Viewer';
     }
     return 'Window';
   };
@@ -67,7 +93,18 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
-      return <FileExplorer />;
+      // Pass the window ID to FileExplorer so it can determine the correct path
+      console.log(`Opening FileExplorer with windowId: ${id}`);
+      return <FileExplorer windowId={id} />;
+    } else if (id.startsWith('editor-')) {
+      // Text editor goes here
+      return <div className="p-4">Text Editor Content</div>;
+    } else if (id.startsWith('image-')) {
+      // Image viewer goes
+      return <div className="p-4">Image Viewer Content</div>;
+    } else if (id.startsWith('pdf-')) {
+      // PDF viewer goes here
+      return <div className="p-4">PDF Viewer Content</div>;
     }
     return <div className="p-4">Window Content</div>;
   };
