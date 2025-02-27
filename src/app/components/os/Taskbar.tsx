@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWindowStore } from '@/app/stores/windowStore';
-import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 interface TaskbarProps {
-  openWindows: string[];
-  activeWindow: string | null;
   onWindowSelect: (windowId: string) => void;
   onClose: () => void;
   onStartClick: () => void;
@@ -30,17 +27,22 @@ const iconMap: { [key: string]: string } = {
 };
 
 export const Taskbar: React.FC<TaskbarProps> = ({
-  openWindows,
-  activeWindow,
   onWindowSelect,
+  onClose,
   onStartClick,
+  onSearchClick,
   isStartOpen,
+  isSearchOpen,
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
-  const { minimizedWindows, removeMinimizedWindow } = useWindowStore();
-  const fileSystem = useFileSystemStore();
+  
+  const windows = useWindowStore(state => state.windows);
+  const activeWindowId = useWindowStore(state => state.activeWindowId);
+  
+  const openWindowIds = Object.keys(windows);
+  const minimizedWindowIds = openWindowIds.filter(id => windows[id].isMinimized);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -60,58 +62,30 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const isWindowMinimized = (windowId: string) => {
-    return minimizedWindows.some(w => w.id === windowId);
-  };
-
-  const handleIconClick = (windowId: string) => {
-    if (isWindowMinimized(windowId)) {
-      removeMinimizedWindow(windowId);
-    }
-    onWindowSelect(windowId);
-  };
-
   const getIconForWindow = (windowId: string) => {
-    const minimizedWindow = minimizedWindows.find(w => w.id === windowId);
-    if (minimizedWindow && minimizedWindow.icon) {
-      return minimizedWindow.icon;
-    }
-
     if (windowId.startsWith('explorer-')) {
       return iconMap.folder;
     } else if (windowId.startsWith('editor-')) {
-      const itemId = windowId.replace('editor-', '');
-      const item = fileSystem.items[itemId];
-      
-      if (item && item.type === 'file') {
-        const extension = item.extension?.toLowerCase();
-        if (extension) {
-          if (iconMap[extension]) {
-            return iconMap[extension];
-          }
-          
-          switch(extension) {
-            case 'txt': return iconMap.text;
-            case 'jpg':
-            case 'jpeg':
-            case 'png':
-            case 'gif':
-            case 'svg': return iconMap.image;
-            case 'pdf': return iconMap.pdf;
-            default: return iconMap.file;
-          }
-        }
-      }
       return iconMap.text;
     } else if (windowId.startsWith('image-')) {
       return iconMap.image;
     } else if (windowId.startsWith('pdf-')) {
       return iconMap.pdf;
+    } else if (windowId.startsWith('chrome-')) {
+      return iconMap.chrome;
+    } else if (windowId.startsWith('edge-')) {
+      return iconMap.edge;
+    } else if (windowId.startsWith('vscode-')) {
+      return iconMap.vscode;
     }
 
     // Default icon
-    return iconMap.folder;
+    return iconMap.file;
   };
+
+  // Determine pinned apps and running apps for the taskbar
+  const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
+  const runningApps = openWindowIds.filter(id => !pinnedApps.includes(id));
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg flex items-center px-3 z-50">
@@ -150,97 +124,50 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
         {/* Pinned apps */}
         <div className="flex space-x-1">
-          {/* Edge */}
-          <div className="relative">
-            <button 
-              data-taskbar-id="edge-1"
-              className="p-2 rounded-md hover:bg-black/10"
-              onClick={() => handleIconClick('edge-1')}
-            >
-              <img 
-                src={iconMap.edge}
-                alt="Edge"
-                className="w-5 h-5"
-              />
-            </button>
-            {isWindowMinimized('edge-1') && (
-              <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-            )}
-          </div>
-
-          {/* Chrome */}
-          <div className="relative">
-            <button 
-              data-taskbar-id="chrome-1"
-              className="p-2 rounded-md hover:bg-black/10"
-              onClick={() => handleIconClick('chrome-1')}
-            >
-              <img 
-                src={iconMap.chrome}
-                alt="Chrome"
-                className="w-5 h-5"
-              />
-            </button>
-            {isWindowMinimized('chrome-1') && (
-              <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-            )}
-          </div>
-
-          {/* VS Code */}
-          <div className="relative">
-            <button 
-              data-taskbar-id="vscode-1"
-              className="p-2 rounded-md hover:bg-black/10"
-              onClick={() => handleIconClick('vscode-1')}
-            >
-              <img 
-                src={iconMap.vscode}
-                alt="VS Code"
-                className="w-5 h-5"
-              />
-            </button>
-            {isWindowMinimized('vscode-1') && (
-              <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-            )}
-          </div>
-
-          {/* File Explorer */}
-          <div className="relative">
-            <button 
-              data-taskbar-id="explorer-1"
-              className="p-2 rounded-md hover:bg-black/10"
-              onClick={() => handleIconClick('explorer-1')}
-            >
-              <img 
-                src={iconMap.folder}
-                alt="File Explorer"
-                className="w-5 h-5"
-              />
-            </button>
-            {isWindowMinimized('explorer-1') && (
-              <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-            )}
-          </div>
+          {pinnedApps.map((appId) => {
+            const isOpen = openWindowIds.includes(appId);
+            const isActive = activeWindowId === appId;
+            const isMinimized = minimizedWindowIds.includes(appId);
+            
+            return (
+              <div key={appId} className="relative">
+                <button 
+                  data-taskbar-id={appId}
+                  className={`p-2 rounded-md hover:bg-black/10 ${isActive ? 'bg-black/10' : ''}`}
+                  onClick={() => onWindowSelect(appId)}
+                >
+                  <img 
+                    src={getIconForWindow(appId)}
+                    alt={appId}
+                    className="w-5 h-5"
+                  />
+                </button>
+                {isOpen && (
+                  <div 
+                    className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${
+                      isActive ? 'bg-blue-500' : 'bg-gray-500'
+                    } rounded-full`}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Running apps (that aren't pinned) */}
         <div className="flex items-center space-x-1">
-          {openWindows.map((windowId) => {
-            // Skip if the window is one of our pinned apps
-            if (['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'].includes(windowId)) {
-              return null;
-            }
-            
-            // Get the appropriate icon for this window
+          {runningApps.map((windowId) => {
+            const isActive = activeWindowId === windowId;
+            const isMinimized = minimizedWindowIds.includes(windowId);
             const iconSrc = getIconForWindow(windowId);
             
             return (
               <div key={windowId} className="relative">
                 <button
                   data-taskbar-id={windowId}
-                  onClick={() => handleIconClick(windowId)}
+                  onClick={() => onWindowSelect(windowId)}
                   className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
-                    activeWindow === windowId ? 'bg-black/10' : ''
+                    isActive ? 'bg-black/10' : ''
                   }`}
                 >
                   <img 
@@ -249,9 +176,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                     className="w-5 h-5"
                   />
                 </button>
-                {isWindowMinimized(windowId) && (
-                  <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-                )}
+                <div 
+                  className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${
+                    isActive ? 'bg-blue-500' : 'bg-gray-500'
+                  } rounded-full`}
+                />
               </div>
             );
           })}

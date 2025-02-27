@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
@@ -8,80 +8,38 @@ import Image from 'next/image';
 
 interface WindowProps {
   id: string;
-  isActive: boolean;
-  onClose: () => void;
-  onFocus: () => void;
 }
 
-export const Window: React.FC<WindowProps> = ({
-  id,
-  isActive,
-  onClose,
-  onFocus,
-}) => {
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [isMinimizing, setIsMinimizing] = useState(false);
-  const [position, setPosition] = useState({ x: 100, y: 100 });
-  const [size, setSize] = useState({ width: 800, height: 600 });
-  const [previousState, setPreviousState] = useState({ position, size });
-  const [initialPath, setInitialPath] = useState<string | undefined>(undefined);
-  
-  const { addMinimizedWindow, minimizedWindows } = useWindowStore();
-  const fileSystem = useFileSystemStore();
+export const Window: React.FC<WindowProps> = ({ id }) => {
   const rndRef = useRef<Rnd>(null);
-  const navigationCompletedRef = useRef(false);
-
-  // Extract the item ID from the window ID if it's a file explorer window
-  const getItemIdFromWindowId = () => {
-    if (id.startsWith('explorer-')) {
-      return id.replace('explorer-', '');
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    const isMinimized = minimizedWindows.some(w => w.id === id);
-    if (!isMinimized && isMinimizing) {
-      setIsMinimizing(false);
-      if (rndRef.current?.resizableElement.current) {
-        rndRef.current.resizableElement.current.style.transform = 'none';
-      }
-    }
-  }, [minimizedWindows, id, isMinimizing]);
-
-  useEffect(() => {
-    if (isMaximized) {
-      const taskbarHeight = 48;
-      setPosition({ x: 0, y: 0 });
-      setSize({
-        width: window.innerWidth,
-        height: window.innerHeight - taskbarHeight
-      });
-    }
-  }, [isMaximized]);
-
-  // Set appropriate path when opening a file explorer window
-  useEffect(() => {
-    if (navigationCompletedRef.current) return;
-    
-    const itemId = getItemIdFromWindowId();
-    if (itemId && id.startsWith('explorer-')) {
-      // Get the path for the item
-      const path = fileSystem.getPathToItem(itemId);
-      if (path) {
-        setInitialPath(path);
-        navigationCompletedRef.current = true;
-      }
-    }
-  }, [id, fileSystem]);
-
+  const fileSystem = useFileSystemStore();
+  
+  // Get all window information from the store
+  const windowState = useWindowStore(state => state.windows[id]);
+  const activeWindowId = useWindowStore(state => state.activeWindowId);
+  const updateWindowPosition = useWindowStore(state => state.updateWindowPosition);
+  const updateWindowSize = useWindowStore(state => state.updateWindowSize);
+  const setActiveWindow = useWindowStore(state => state.setActiveWindow);
+  const minimizeWindow = useWindowStore(state => state.minimizeWindow);
+  const maximizeWindow = useWindowStore(state => state.maximizeWindow);
+  const unmaximizeWindow = useWindowStore(state => state.unmaximizeWindow);
+  const closeWindow = useWindowStore(state => state.closeWindow);
+  
+  // Check if window exists
+  if (!windowState) return null;
+  
+  const { isMinimized, isMaximized, position, size, zIndex } = windowState;
+  const isActive = activeWindowId === id;
+  
+  if (isMinimized) return null;
+  
   const getIconPath = () => {
     if (id.startsWith('explorer-')) {
       return '/images/desktop/icons8-folder.svg';
     }
     return '/images/desktop/icons8-window.svg';
   };
-
+  
   const getWindowTitle = () => {
     if (id.startsWith('explorer-')) {
       // Get the folder name from the current path
@@ -90,80 +48,59 @@ export const Window: React.FC<WindowProps> = ({
     }
     return 'Window';
   };
-
-  const handleMinimize = async () => {
-    if (rndRef.current) {
-      const rndNode = rndRef.current.resizableElement.current;
-      const taskbarIcon = document.querySelector(`[data-taskbar-id="${id}"]`);
-      
-      if (taskbarIcon && rndNode) {
-        const windowRect = rndNode.getBoundingClientRect();
-        const iconRect = taskbarIcon.getBoundingClientRect();
-        
-        setIsMinimizing(true);
-        
-        addMinimizedWindow({
-          id,
-          title: getWindowTitle(),
-          icon: getIconPath(),
-        });
-
-        const scaleX = iconRect.width / windowRect.width;
-        const scaleY = iconRect.height / windowRect.height;
-        const translateX = iconRect.left - windowRect.left;
-        const translateY = iconRect.top - windowRect.top;
-
-        rndNode.style.transition = 'transform 0.3s ease-in-out';
-        rndNode.style.transform = 
-          `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
-
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-    }
+  
+  const handleMinimize = () => {
+    minimizeWindow(id);
   };
-
+  
   const handleMaximize = () => {
-    if (!isMaximized) {
-      setPreviousState({ position, size });
+    if (isMaximized) {
+      unmaximizeWindow(id);
     } else {
-      setPosition(previousState.position);
-      setSize(previousState.size);
+      maximizeWindow(id);
     }
-    setIsMaximized(!isMaximized);
   };
-
+  
+  const handleClose = () => {
+    closeWindow(id);
+  };
+  
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
-      return <FileExplorer initialPath={initialPath} />;
+      return <FileExplorer />;
     }
-    return <div>Window Content</div>;
+    return <div className="p-4">Window Content</div>;
   };
-
-  if (isMinimizing && minimizedWindows.some(w => w.id === id)) return null;
-
+  
+  const maximizedSize = {
+    width: window.innerWidth,
+    height: window.innerHeight - 48, // Subtract taskbar height
+  };
+  const maximizedPosition = { x: 0, y: 0 };
+  
   return (
     <Rnd
       ref={rndRef}
-      position={position}
-      size={size}
+      position={isMaximized ? maximizedPosition : position}
+      size={isMaximized ? maximizedSize : size}
       minWidth={400}
       minHeight={300}
+      style={{ zIndex }}
       onDragStop={(e, d) => {
         if (!isMaximized) {
-          setPosition({ x: d.x, y: d.y });
+          updateWindowPosition(id, { x: d.x, y: d.y });
         }
       }}
       onResize={(e, direction, ref, delta, position) => {
         if (!isMaximized) {
-          setPosition(position);
-          setSize({
+          updateWindowSize(id, {
             width: ref.offsetWidth,
             height: ref.offsetHeight,
           });
+          updateWindowPosition(id, position);
         }
       }}
-      className={`${isActive ? 'z-50' : 'z-0'}`}
-      onMouseDown={onFocus}
+      onMouseDown={() => setActiveWindow(id)}
       disableDragging={isMaximized}
       enableResizing={!isMaximized}
       bounds="window"
@@ -179,12 +116,16 @@ export const Window: React.FC<WindowProps> = ({
       }}
     >
       <div 
-        className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border border-gray-200 ${
-          isMaximized ? '' : 'rounded-lg'
-        }`}
+        className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border ${
+          isActive ? 'border-blue-400' : 'border-gray-200'
+        } ${isMaximized ? '' : 'rounded-lg'}`}
       >
         {/* Window Title Bar */}
-        <div className="h-9 bg-white flex items-center justify-between select-none">
+        <div 
+          className={`h-9 flex items-center justify-between select-none ${
+            isActive ? 'bg-white' : 'bg-gray-50'
+          }`}
+        >
           <div className="flex items-center space-x-2 px-3">
             <Image
               src={getIconPath()}
@@ -211,7 +152,7 @@ export const Window: React.FC<WindowProps> = ({
             </button>
             <button 
               className="px-4 hover:bg-red-500 flex items-center justify-center h-full group"
-              onClick={onClose}
+              onClick={handleClose}
             >
               <X size={16} className="text-gray-600 group-hover:text-white" />
             </button>

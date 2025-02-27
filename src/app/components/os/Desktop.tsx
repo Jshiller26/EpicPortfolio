@@ -5,14 +5,13 @@ import { Window } from './Window';
 import { BackButton } from './BackButton';
 import DialogBox from '../DialogBox';
 import { useRouter } from 'next/navigation';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface DesktopProps {
   onClose: () => void;
 }
 
 export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
-  const [openWindows, setOpenWindows] = useState<string[]>([]);
-  const [activeWindow, setActiveWindow] = useState<string | null>(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, setWidgetsOpen] = useState(false);
@@ -20,21 +19,16 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [isFading, setIsFading] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const router = useRouter();
-
-  const handleOpenWindow = (windowId: string) => {
-    if (!openWindows.includes(windowId)) {
-      setOpenWindows([...openWindows, windowId]);
-    }
-    setActiveWindow(windowId);
-  };
-
-  const handleCloseWindow = (windowId: string) => {
-    setOpenWindows(openWindows.filter(id => id !== windowId));
-    if (activeWindow === windowId) {
-      setActiveWindow(null);
-    }
-  };
-
+  
+  // Get window information from the store
+  const windows = useWindowStore(state => state.windows);
+  const activeWindowId = useWindowStore(state => state.activeWindowId);
+  const openWindow = useWindowStore(state => state.openWindow);
+  const restoreWindow = useWindowStore(state => state.restoreWindow);
+  
+  // Get window IDs for rendering
+  const windowIds = Object.keys(windows);
+  
   const toggleStartMenu = () => {
     setStartMenuOpen(!startMenuOpen);
     setSearchOpen(false);
@@ -70,7 +64,31 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
       handleDialogClose();
     }
   };
-
+  
+  // Handle opening a desktop icon
+  const handleOpenIcon = (windowId: string) => {
+    openWindow(windowId);
+  };
+  
+  // Handle taskbar icon click
+  const handleTaskbarClick = (windowId: string) => {
+    const window = windows[windowId];
+    
+    if (!window) {
+      // Window doesn't exist, create it
+      openWindow(windowId);
+    } else if (window.isMinimized) {
+      // Window is minimized, restore it
+      restoreWindow(windowId);
+    } else if (activeWindowId === windowId) {
+      // Window is active, minimize it
+      useWindowStore.getState().minimizeWindow(windowId);
+    } else {
+      // Window exists but isn't active, make it active
+      useWindowStore.getState().setActiveWindow(windowId);
+    }
+  };
+  
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden" onClick={handleGlobalClick}>
       {/* Windows 11 wallpaper background */}
@@ -88,18 +106,13 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
       {/* Desktop Content */}
       <div className="h-full w-full relative">
         {/* Desktop Icons Grid */}
-          <DesktopIcons onOpenWindow={handleOpenWindow} />
+        <DesktopIcons onOpenWindow={handleOpenIcon} />
 
         {/* Windows */}
         <div className="absolute inset-0 pointer-events-none">
-          {openWindows.map((windowId) => (
+          {windowIds.map((windowId) => (
             <div key={windowId} className="pointer-events-auto">
-              <Window
-                id={windowId}
-                isActive={activeWindow === windowId}
-                onClose={() => handleCloseWindow(windowId)}
-                onFocus={() => setActiveWindow(windowId)}
-              />
+              <Window id={windowId} />
             </div>
           ))}
         </div>
@@ -121,9 +134,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
         {/* Taskbar */}
         <div className="absolute bottom-0 left-0 right-0">
           <Taskbar
-            openWindows={openWindows}
-            activeWindow={activeWindow}
-            onWindowSelect={setActiveWindow}
+            onWindowSelect={handleTaskbarClick}
             onClose={onClose}
             onStartClick={toggleStartMenu}
             onSearchClick={toggleSearch}
@@ -147,7 +158,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             aria-hidden="true"
           />
         )}
-
       </div>
     </div>
   );
