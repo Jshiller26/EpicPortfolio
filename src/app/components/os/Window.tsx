@@ -39,7 +39,14 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
     if (id.startsWith('explorer-')) {
       return '/images/desktop/icons8-folder.svg';
     } else if (id.startsWith('editor-')) {
-      return '/images/desktop/icons8-text-file.svg';
+      const fileId = id.replace('editor-', '');
+      const file = fileSystem.items[fileId] as File;
+      
+      if (file && file.extension.toLowerCase() === 'txt') {
+        return '/images/desktop/icons8-text-file.svg';
+      } else {
+        return '/images/desktop/icons8-file.svg';
+      }
     } else if (id.startsWith('image-')) {
       return '/images/desktop/icons8-image.svg';
     } else if (id.startsWith('pdf-')) {
@@ -168,14 +175,16 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       }}
     >
       <div 
-        className={`flex flex-col h-full bg-white shadow-lg overflow-hidden border ${
+        className={`flex flex-col h-full ${id.startsWith('editor-') ? 'bg-[#1e1e1e]' : 'bg-white'} shadow-lg overflow-hidden border ${
           isActive ? 'border-blue-400' : 'border-gray-200'
         } ${isMaximized ? '' : 'rounded-lg'}`}
       >
         {/* Window Title Bar */}
         <div 
           className={`h-9 flex items-center justify-between select-none ${
-            isActive ? 'bg-white' : 'bg-gray-50'
+            isActive 
+              ? id.startsWith('editor-') ? 'bg-[#333333] text-white' : 'bg-white' 
+              : id.startsWith('editor-') ? 'bg-[#252525] text-gray-300' : 'bg-gray-50'
           }`}
         >
           <div className="flex items-center space-x-2 px-3">
@@ -187,20 +196,20 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
               className="w-4 h-4"
               unoptimized={true}
             />
-            <span className="text-sm text-gray-700">{getWindowTitle()}</span>
+            <span className={`text-sm ${id.startsWith('editor-') ? 'text-gray-300' : 'text-gray-700'}`}>{getWindowTitle()}</span>
           </div>
           <div className="flex h-full">
             <button 
-              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
+              className={`px-4 ${id.startsWith('editor-') ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
               onClick={handleMinimize}
             >
-              <Minus size={16} className="text-gray-600" />
+              <Minus size={16} className={id.startsWith('editor-') ? 'text-gray-300' : 'text-gray-600'} />
             </button>
             <button 
-              className="px-4 hover:bg-gray-100 flex items-center justify-center h-full"
+              className={`px-4 ${id.startsWith('editor-') ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
               onClick={handleMaximize}
             >
-              <Square size={14} className="text-gray-600 rounded-sm" />
+              <Square size={14} className={id.startsWith('editor-') ? 'text-gray-300' : 'text-gray-600'} />
             </button>
             <button 
               className="px-4 hover:bg-red-500 flex items-center justify-center h-full group"
