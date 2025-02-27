@@ -102,7 +102,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
     
     // Configure editor
     monaco.editor.defineTheme('customTheme', {
-      base: 'vs',
+      base: 'vs-dark',
       inherit: true,
       rules: [],
       colors: {
@@ -111,11 +111,22 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
         'editorLineNumber.foreground': '#858585',
         'editorLineNumber.activeForeground': '#c6c6c6',
         'editor.selectionBackground': '#264f78',
-        'editor.inactiveSelectionBackground': '#3a3d41'
+        'editor.inactiveSelectionBackground': '#3a3d41',
+        'editor.lineHighlightBackground': '#2a2d2e',
+        'editor.lineHighlightBorder': '#2a2d2e00'
       }
     });
     
     monaco.editor.setTheme('customTheme');
+    
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .monaco-editor .current-line {
+        border-width: 0 !important;
+        background-color: rgba(42, 45, 46, 0.3) !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
   };
 
   if (!file) {
@@ -125,8 +136,9 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
   const lineCount = content.split('\n').length;
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#1e1e1e] text-white">
-      <div className="flex-grow relative">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#1e1e1e] text-white relative">
+      {/* Editor takes all available space minus the status bar height */}
+      <div className="absolute inset-0 bottom-9">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <span className="text-gray-500">Loading editor...</span>
@@ -154,14 +166,17 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
               glyphMargin: false,
               folding: true,
               lineDecorationsWidth: 10,
-              lineNumbersMinChars: 3
+              lineNumbersMinChars: 3,
+              renderLineHighlight: 'line',
+              renderLineHighlightOnlyWhenFocus: false,
+              lineHeight: 1.5
             }}
           />
         )}
       </div>
       
-      {/* Combined status bar with all information and save button */}
-      <div className="px-4 py-2 bg-[#007acc] text-white flex items-center justify-between">
+      {/* Fixed status bar at the bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-9 bg-[#007acc] text-white flex items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <div className="text-xs">{file.name} - {language}</div>
           <div className="text-xs">
