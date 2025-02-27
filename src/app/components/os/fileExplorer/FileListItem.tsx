@@ -6,13 +6,15 @@ import { formatFileSize, getItemTypeString } from '../../../stores/fileSystem/ut
 interface FileListItemProps {
   item: FileSystemItem;
   onDoubleClick: (item: FileSystemItem) => void;
+  onContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
 }
 
-const FileListItem: React.FC<FileListItemProps> = ({ item, onDoubleClick }) => {
+const FileListItem: React.FC<FileListItemProps> = ({ item, onDoubleClick, onContextMenu }) => {
   return (
     <tr
       className="hover:bg-gray-100 cursor-pointer"
       onDoubleClick={() => onDoubleClick(item)}
+      onContextMenu={(e) => onContextMenu(e, item)}
     >
       <td className="px-4 py-1 flex items-center gap-2">
         {item.type === 'folder' ? (
@@ -22,6 +24,7 @@ const FileListItem: React.FC<FileListItemProps> = ({ item, onDoubleClick }) => {
             width={16}
             height={16}
             className="w-4 h-4"
+            unoptimized={true}
           />
         ) : (
           <Image
@@ -30,6 +33,7 @@ const FileListItem: React.FC<FileListItemProps> = ({ item, onDoubleClick }) => {
             width={16}
             height={16}
             className="w-4 h-4"
+            unoptimized={true}
           />
         )}
         <span className="text-gray-700">{item.name}</span>

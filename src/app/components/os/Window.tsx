@@ -1,10 +1,12 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import Image from 'next/image';
+import TextEditor from './TextEditor';
+import { File } from '@/app/types/fileSystem';
 
 interface WindowProps {
   id: string;
@@ -90,17 +92,30 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   const handleClose = () => {
     closeWindow(id);
   };
+
+  const isTextFile = (file: File): boolean => {
+    const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
+    return textExtensions.includes(file.extension.toLowerCase());
+  };
   
   const renderWindowContent = () => {
     if (id.startsWith('explorer-')) {
       // Pass the window ID to FileExplorer so it can determine the correct path
-      console.log(`Opening FileExplorer with windowId: ${id}`);
       return <FileExplorer windowId={id} />;
     } else if (id.startsWith('editor-')) {
-      // Text editor goes here
-      return <div className="p-4">Text Editor Content</div>;
+      const fileId = id.replace('editor-', '');
+      const file = fileSystem.items[fileId] as File;
+      
+      if (file && file.type === 'file') {
+        if (isTextFile(file)) {
+          return <TextEditor fileId={fileId} />;
+        } else {
+          return <div className="p-4">This file type is not supported by the text editor.</div>;
+        }
+      }
+      return <div className="p-4">File not found.</div>;
     } else if (id.startsWith('image-')) {
-      // Image viewer goes
+      // Image viewer goes here
       return <div className="p-4">Image Viewer Content</div>;
     } else if (id.startsWith('pdf-')) {
       // PDF viewer goes here
