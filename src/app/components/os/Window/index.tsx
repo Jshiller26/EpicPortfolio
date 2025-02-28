@@ -4,14 +4,14 @@ import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import Image from 'next/image';
-import { WindowContent } from './WindowContent';
+import { WindowContent } from '../WindowContent';
 import { getIconForWindow, getWindowTitle } from '@/app/utils/iconUtils';
 
 interface WindowProps {
   id: string;
 }
 
-export const Window: React.FC<WindowProps> = ({ id }) => {
+const Window: React.FC<WindowProps> = ({ id }) => {
   const rndRef = useRef<Rnd>(null);
   const fileSystem = useFileSystemStore();
   
@@ -151,3 +151,5 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
     </Rnd>
   );
 };
+
+export default Window;
