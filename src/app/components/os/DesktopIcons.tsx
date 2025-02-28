@@ -19,6 +19,8 @@ interface ContextMenuState {
   x: number;
   y: number;
   itemId: string | null;
+  desktopX?: number;
+  desktopY?: number;
 }
 
 const GRID_SIZE = 76;
@@ -46,6 +48,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
   const [vsCodePosition, setVsCodePosition] = useState<IconPosition>({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
+  
+  // Store the last created item ID for auto-renaming
+  const [lastCreatedItemId, setLastCreatedItemId] = useState<string | null>(null);
 
   const isPositionOccupied = (x: number, y: number, excludeItemId?: string): boolean => {
     const desktopOccupied = Object.entries(iconPositions).some(([id, pos]) => {
@@ -57,7 +62,27 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     return desktopOccupied || vsCodeOccupied;
   };
 
-  const findNextAvailablePosition = (): IconPosition => {
+  const findNextAvailablePosition = (startX: number, startY: number): IconPosition => {
+    if (!isPositionOccupied(startX, startY)) {
+      return { x: startX, y: startY };
+    }
+    
+    for (let radius = 1; radius <= 5; radius++) {
+      const positions = [
+        { x: startX, y: startY + (GRID_SIZE * radius) },
+        { x: startX + (GRID_SIZE * radius), y: startY },
+        { x: startX, y: startY - (GRID_SIZE * radius) },
+        { x: startX - (GRID_SIZE * radius), y: startY }
+      ];
+      
+      for (const pos of positions) {
+        if (!isPositionOccupied(pos.x, pos.y)) {
+          return pos;
+        }
+      }
+    }
+    
+    // If no position is found nearby, use the right edge as fallback
     const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
     let y = 0;
     
@@ -135,33 +160,61 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   }, []);
 
   useEffect(() => {
-    if (ready && desktop?.children?.length > 0) {
-      const needsPositioning = desktop.children.some(id => !iconPositions[id]);
+    if (ready && desktop?.children) {
+      const itemsWithoutPositions = desktop.children.filter(id => !iconPositions[id]);
       
-      if (needsPositioning) {
+      if (itemsWithoutPositions.length > 0) {
+        console.log("Found new items without positions:", itemsWithoutPositions);
+        
         setIconPositions(prev => {
           const updatedPositions = { ...prev };
-          let posY = 0;
           
-          const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
-          
-          desktop.children.forEach(itemId => {
-            if (updatedPositions[itemId]) return;
-            
-            // Find next available position
-            while (Object.values(updatedPositions).some(pos => pos.x === rightEdgeX && pos.y === posY)) {
-              posY += GRID_SIZE;
+          itemsWithoutPositions.forEach(itemId => {
+            // Try to position where the context menu was opened if available
+            if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined) {
+              const position = findNextAvailablePosition(contextMenu.desktopX, contextMenu.desktopY);
+              updatedPositions[itemId] = position;
+            } else {
+              const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
+              let y = 0;
+              
+              while (Object.values(updatedPositions).some(pos => pos.x === rightEdgeX && pos.y === y)) {
+                y += GRID_SIZE;
+              }
+              
+              updatedPositions[itemId] = { x: rightEdgeX, y };
             }
             
-            updatedPositions[itemId] = { x: rightEdgeX, y: posY };
-            posY += GRID_SIZE;
+            if (lastCreatedItemId === null) {
+              setLastCreatedItemId(itemId);
+            }
           });
           
           return updatedPositions;
         });
       }
     }
-  }, [ready, desktop?.children, iconPositions]);
+  }, [ready, desktop?.children, iconPositions, contextMenu.desktopX, contextMenu.desktopY]);
+  
+  // This useEffect triggers the rename on the last created item
+  useEffect(() => {
+    if (lastCreatedItemId && !isRenaming) {
+      const item = items[lastCreatedItemId];
+      if (item) {
+        console.log("Autoentering rename mode for:", lastCreatedItemId, item.name);
+        setTimeout(() => {
+          setIsRenaming(lastCreatedItemId);
+          if (item.type === 'file' && item.name.includes('.')) {
+            // For files, exclude extension when renaming
+            setNewName(item.name.substring(0, item.name.lastIndexOf('.')));
+          } else {
+            setNewName(item.name);
+          }
+          setLastCreatedItemId(null);
+        }, 50);
+      }
+    }
+  }, [lastCreatedItemId, isRenaming, items]);
   
   // Save icon positions to localStorage when they change
   useEffect(() => {
@@ -186,26 +239,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   }, [isRenaming]);
   
-  // Listen for clicks outside to cancel rename operations and context menus
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleClick = (e: MouseEvent) => {
-      if (isRenaming && inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        handleRenameComplete();
-      }
-
-      if (contextMenu.visible) {
-        setContextMenu(prev => ({ ...prev, visible: false }));
-      }
-    };
-
-    document.addEventListener('mousedown', handleClick);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-    };
-  }, [isRenaming, contextMenu.visible]);
-
   const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -232,11 +265,21 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     // Only show desktop context menu if we're right-clicking the desktop itself
     if (e.target === e.currentTarget) {
       e.preventDefault();
+      
+      const desktopRect = e.currentTarget.getBoundingClientRect();
+      const desktopX = e.clientX - desktopRect.left;
+      const desktopY = e.clientY - desktopRect.top;
+      
+      const gridX = Math.round(desktopX / GRID_SIZE) * GRID_SIZE;
+      const gridY = Math.round(desktopY / GRID_SIZE) * GRID_SIZE;
+      
       setContextMenu({
         visible: true,
         x: e.clientX,
         y: e.clientY,
-        itemId: null // null indicates desktop context menu
+        itemId: null,
+        desktopX: gridX,
+        desktopY: gridY
       });
     }
   };
@@ -332,7 +375,12 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (!item) return;
     
     setIsRenaming(itemId);
-    setNewName(item.name);
+    if (item.type === 'file' && item.name.includes('.')) {
+      // For files, exclude extension when renaming
+      setNewName(item.name.substring(0, item.name.lastIndexOf('.')));
+    } else {
+      setNewName(item.name);
+    }
   };
 
   const handleRenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,7 +389,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
 
   const handleRenameComplete = () => {
     if (isRenaming && newName.trim()) {
-      renameItem(isRenaming, newName.trim());
+      const item = items[isRenaming];
+      
+      if (item.type === 'file' && item.name.includes('.')) {
+        // For files, preserve the extension
+        const extension = item.name.substring(item.name.lastIndexOf('.'));
+        renameItem(isRenaming, newName.trim() + extension);
+      } else {
+        renameItem(isRenaming, newName.trim());
+      }
     }
     setIsRenaming(null);
     setNewName('');
@@ -356,7 +412,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
-  const handleCreateNewFolder = () => {
+  const handleCreateNewFolder = () => {    
     const baseName = 'New Folder';
     let counter = 1;
     let name = baseName;
@@ -370,7 +426,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       counter++;
     }
     
-    createFolder(name, 'desktop');
+    const folderId = createFolder(name, 'desktop');
+    
+    setLastCreatedItemId(folderId);
   };
 
   const handleCreateTextFile = () => {
@@ -387,7 +445,12 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       counter++;
     }
     
-    createFile(name, 'desktop', '', 0);
+    // Create a new text file - the positioning will be handled by the useEffect
+    const fileId = createFile(name, 'desktop', '', 0);
+    console.log(`Created new text file with ID: ${fileId}`);
+    
+    // Set this as the last created item for auto-rename
+    setLastCreatedItemId(fileId);
   };
 
   const handleProperties = (itemId: string) => {
@@ -399,6 +462,20 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     // If itemId is null, we're showing the desktop context menu
     if (itemId === null) {
       return [
+        {
+          label: 'New',
+          submenu: [
+            { label: 'Folder', onClick: handleCreateNewFolder },
+            { label: 'Text Document', onClick: handleCreateTextFile },
+          ]
+        },
+        { divider: true },
+        {
+          label: 'Paste',
+          onClick: handlePaste,
+          disabled: !clipboard.item
+        },
+        { divider: true },
         {
           label: 'View',
           submenu: [
@@ -414,20 +491,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             { label: 'Size', onClick: () => console.log('Sort by Size') },
             { label: 'Type', onClick: () => console.log('Sort by Type') },
             { label: 'Date modified', onClick: () => console.log('Sort by Date') },
-          ]
-        },
-        { divider: true },
-        {
-          label: 'Paste',
-          onClick: handlePaste,
-          disabled: !clipboard.item
-        },
-        { divider: true },
-        {
-          label: 'New',
-          submenu: [
-            { label: 'Folder', onClick: handleCreateNewFolder },
-            { label: 'Text Document', onClick: handleCreateTextFile },
           ]
         },
         { divider: true },
@@ -561,47 +624,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     // Check if the position is already occupied by another icon
     if (isPositionOccupied(x, y, itemId)) {
       // Find the next available position nearby
-      let newX = x;
-      let newY = y;
-      let found = false;
-      
-      // Try positions in a spiral pattern around the drop target
-      for (let radius = 1; radius <= 5 && !found; radius++) {
-        newY = y + (GRID_SIZE * radius);
-        if (!isPositionOccupied(x, newY, itemId)) {
-          found = true;
-          break;
-        }
-        
-        newX = x + (GRID_SIZE * radius);
-        if (!isPositionOccupied(newX, y, itemId)) {
-          found = true;
-          break;
-        }
-        
-        newY = y - (GRID_SIZE * radius);
-        if (!isPositionOccupied(x, newY, itemId)) {
-          found = true;
-          break;
-        }
-        
-        newX = x - (GRID_SIZE * radius);
-        if (!isPositionOccupied(newX, y, itemId)) {
-          found = true;
-          break;
-        }
-      }
-      
-      // If we couldn't find an empty spot nearby, use the right edge
-      if (!found) {
-        const nextPos = findNextAvailablePosition();
-        newX = nextPos.x;
-        newY = nextPos.y;
-      }
-      
+      const position = findNextAvailablePosition(x, y);
       setIconPositions(prev => ({
         ...prev,
-        [itemId]: { x: newX, y: newY }
+        [itemId]: position
       }));
     } else {
       // Position is free
@@ -645,6 +671,11 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
+  const handleCloseContextMenu = () => {
+    console.log("Closing context menu");
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  };
+
   if (!ready) {
     return null;
   }
@@ -685,7 +716,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       {/* Desktop Items */}
       {desktop?.type === 'folder' && desktop.children.map((itemId) => {
         const item = items[itemId];
-        const position = iconPositions[itemId] || findNextAvailablePosition();
+        if (!item) return null; // Skip rendering if item doesn't exist
+        
+        const position = iconPositions[itemId] || { x: 0, y: 0 }; // Fallback position
         
         return (
           <div
@@ -737,7 +770,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           x={contextMenu.x}
           y={contextMenu.y}
           items={getContextMenuItems(contextMenu.itemId)}
-          onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
+          onClose={handleCloseContextMenu}
         />
       )}
     </div>
