@@ -49,6 +49,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const [vsCodePosition, setVsCodePosition] = useState<IconPosition>({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
   
+  // Track newly created or pasted items to avoid transition
+  const [newItems, setNewItems] = useState<Set<string>>(new Set());
+  
   // Store the last created item ID for auto-renaming
   const [lastCreatedItemId, setLastCreatedItemId] = useState<string | null>(null);
 
@@ -166,6 +169,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       if (itemsWithoutPositions.length > 0) {
         console.log("Found new items without positions:", itemsWithoutPositions);
         
+        // Add these to the new items set to prevent transition
+        setNewItems(prev => {
+          const updated = new Set(prev);
+          itemsWithoutPositions.forEach(id => updated.add(id));
+          return updated;
+        });
+        
         setIconPositions(prev => {
           const updatedPositions = { ...prev };
           
@@ -218,6 +228,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       }
     }
   }, [lastCreatedItemId, isRenaming, items]);
+  
+  // Clear the new items set after a short delay
+  useEffect(() => {
+    if (newItems.size > 0) {
+      const timer = setTimeout(() => {
+        setNewItems(new Set());
+      }, 100); // Clear after 100ms to ensure proper rendering
+      
+      return () => clearTimeout(timer);
+    }
+  }, [newItems]);
   
   // Save icon positions to localStorage when they change
   useEffect(() => {
@@ -733,6 +754,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         if (!item) return null; // Skip rendering if item doesn't exist
         
         const position = iconPositions[itemId] || { x: 0, y: 0 }; // Fallback position
+        const isNewItem = newItems.has(itemId);
         
         return (
           <div
@@ -741,8 +763,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
               ${clipboard.operation === 'cut' && clipboard.item?.id === itemId ? 'opacity-50' : ''}`}
             style={{
               transform: `translate(${position.x}px, ${position.y}px)`,
-              // Only apply transition for dragging, not during initialization
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              // Only apply transition for dragging, not for newly created/pasted items
+              transition: isDragging || isNewItem ? 'none' : 'transform 0.1s ease-out'
             }}
             draggable="true"
             onContextMenu={(e) => handleContextMenu(e, itemId)}
