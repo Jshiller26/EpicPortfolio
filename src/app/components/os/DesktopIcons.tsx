@@ -155,16 +155,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       : null;
 
     if (clipboard.operation === 'cut') {
-      // Move the item
-      fileSystem.moveItem(clipboard.item.id, 'desktop');
-      
-      // Set position to context menu location if available
-      if (pastePosition) {
-        setIconPositions(prev => ({
-          ...prev,
-          [clipboard.item.id]: pastePosition
-        }));
-      }
+      fileSystem.moveItem(clipboard.item.id, 'desktop', (movedItemId) => {
+        // Set position to context menu location if available
+        if (pastePosition) {
+          setIconPositions(prev => ({
+            ...prev,
+            [movedItemId]: pastePosition
+          }));
+        }
+      });
       
       clipboard.clear();
     } else if (clipboard.operation === 'copy') {

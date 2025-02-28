@@ -128,7 +128,8 @@ export const cutItems = (
 
 export const pasteItems = (
   state: FileSystemState,
-  targetFolderId: string
+  targetFolderId: string,
+  onPasteComplete?: (operation: 'cut' | 'copy', itemIds: Record<string, string>) => void
 ): FileSystemState => {
   const { clipboard } = state;
   if (!clipboard.items.length || !clipboard.operation) return state;
@@ -137,15 +138,27 @@ export const pasteItems = (
   if (!targetFolder || targetFolder.type !== 'folder') return state;
 
   let newState = { ...state };
+  const resultIds: Record<string, string> = {};
   
   if (clipboard.operation === 'cut') {
     clipboard.items.forEach(itemId => {
-      newState = moveItem(newState, itemId, targetFolderId);
+      resultIds[itemId] = itemId;
+      
+      newState = moveItem(newState, itemId, targetFolderId, (movedId) => {
+        resultIds[itemId] = movedId;
+      });
     });
   } else if (clipboard.operation === 'copy') {
     clipboard.items.forEach(itemId => {
-      newState = copyItem(newState, itemId, targetFolderId);
+      newState = copyItem(newState, itemId, targetFolderId, (newId) => {
+        resultIds[itemId] = newId;
+      });
     });
+  }
+
+  // Call the callback with the operation and resulting IDs
+  if (onPasteComplete && clipboard.operation) {
+    onPasteComplete(clipboard.operation, resultIds);
   }
 
   // Clear clipboard after paste

@@ -1,5 +1,5 @@
 import { FileSystemState, Folder, File } from '../../../types/fileSystem';
-import { checkNameConflict } from '../utils/pathUtils';
+import { ensureUniqueName } from './createOperations';
 
 export const updatePaths = (
   id: string, 
@@ -31,7 +31,8 @@ export const updatePaths = (
 export const moveItem = (
   state: FileSystemState,
   itemId: string, 
-  targetFolderId: string
+  targetFolderId: string,
+  onMoveComplete?: (newId: string) => void
 ): FileSystemState => {
   const newItems = { ...state.items };
   const item = newItems[itemId];
@@ -39,12 +40,15 @@ export const moveItem = (
   
   if (!item || !targetFolder || targetFolder.type !== 'folder') return state;
   
-  // Check if an item with the same name already exists in the target folder
-  if (checkNameConflict(targetFolder, item.name, item.type, newItems)) {
-    console.error('An item with the same name already exists in the target folder');
+  // If moving to the same folder, no changes needed
+  if (item.parentId === targetFolderId) {
+    if (onMoveComplete) onMoveComplete(itemId);
     return state;
   }
 
+  // Ensure the name is unique in the target folder
+  const uniqueName = ensureUniqueName(item.name, targetFolderId, item.type, newItems);
+  
   // Remove from old parent
   if (item.parentId) {
     const oldParent = newItems[item.parentId] as Folder;
@@ -53,6 +57,14 @@ export const moveItem = (
       children: oldParent.children.filter(childId => childId !== itemId),
       modified: new Date()
     } as Folder;
+  }
+  
+  // Update item's name if it was changed for uniqueness
+  if (uniqueName !== item.name) {
+    newItems[itemId] = {
+      ...newItems[itemId],
+      name: uniqueName
+    };
   }
   
   // Update paths for item and its children
@@ -70,6 +82,11 @@ export const moveItem = (
     children: [...targetFolder.children, itemId],
     modified: new Date()
   } as Folder;
+
+  // Call the callback if provided
+  if (onMoveComplete) {
+    onMoveComplete(itemId);
+  }
 
   return { 
     ...state,
