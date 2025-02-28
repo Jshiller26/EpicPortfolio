@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
@@ -39,8 +39,9 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   onRenameComplete
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastPosition, setLastPosition] = useState(position);
 
-  // Focus the input field when renaming
   React.useEffect(() => {
     if (isRenaming && inputRef.current) {
       inputRef.current.focus();
@@ -48,19 +49,45 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     }
   }, [isRenaming]);
 
+  useEffect(() => {
+    if (isNewItem || isDragging) {
+      return;
+    }
+
+    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
+      setIsVisible(false);
+      
+      setTimeout(() => {
+        setLastPosition(position);
+        setIsVisible(true);
+      }, 50);
+    }
+  }, [position, lastPosition, isNewItem, isDragging]);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsVisible(false);
+    onDragStart(e, itemId);
+  };
+
+  const handleDragEnd = () => {
+    setLastPosition(position);
+    setIsVisible(true);
+    onDragEnd();
+  };
+
   return (
     <div
       className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10
-        ${isCut ? 'opacity-50' : ''}`}
+        ${isCut ? 'opacity-50' : ''}
+        ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        // Only apply transition for dragging, not for newly created/pasted items
-        transition: isDragging || isNewItem ? 'none' : 'transform 0.1s ease-out'
+        transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
+        transition: 'none'
       }}
       draggable="true"
       onContextMenu={(e) => onContextMenu(e, itemId)}
-      onDragStart={(e) => onDragStart(e, itemId)}
-      onDragEnd={onDragEnd}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDoubleClick={onDoubleClick}
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 
 interface VSCodeIconProps {
@@ -18,17 +18,47 @@ export const VSCodeIcon: React.FC<VSCodeIconProps> = ({
   onDragEnd,
   onDoubleClick
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastPosition, setLastPosition] = useState(position);
+
+  useEffect(() => {
+    if (isDragging) {
+      return;
+    }
+
+    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
+      setIsVisible(false);
+      
+      setTimeout(() => {
+        setLastPosition(position);
+        setIsVisible(true);
+      }, 50);
+    }
+  }, [position, lastPosition, isDragging]);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsVisible(false);
+    onDragStart(e);
+  };
+
+  const handleDragEnd = () => {
+    setLastPosition(position);
+    setIsVisible(true);
+    onDragEnd();
+  };
+
   return (
     <div
-      className="absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10"
+      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10
+        ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+        transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
+        transition: 'none'
       }}
       draggable="true"
       onContextMenu={onContextMenu}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDoubleClick={onDoubleClick}
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">

@@ -148,33 +148,52 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
 
   const handlePaste = () => {
     if (!clipboard.item) return;
-
+  
     // Get the paste position from the context menu if available
     const pastePosition = contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined
       ? { x: contextMenu.desktopX, y: contextMenu.desktopY }
       : null;
-
+  
     if (clipboard.operation === 'cut') {
       fileSystem.moveItem(clipboard.item.id, 'desktop', (movedItemId) => {
-        // Set position to context menu location if available
+        const updatedNewItems = new Set(newItems);
+        updatedNewItems.add(movedItemId);
+        
         if (pastePosition) {
           setIconPositions(prev => ({
             ...prev,
             [movedItemId]: pastePosition
           }));
         }
+        
+        setTimeout(() => {
+          const finalNewItems = new Set(newItems);
+          finalNewItems.delete(movedItemId);
+        }, 500);
       });
       
       clipboard.clear();
     } else if (clipboard.operation === 'copy') {
       // Copy the item with a callback to update the position
       fileSystem.copyItem(clipboard.item.id, 'desktop', (newId) => {
-        // Set position to context menu location if available
-        if (pastePosition && newId) {
-          setIconPositions(prev => ({
-            ...prev,
-            [newId]: pastePosition
-          }));
+        if (newId) {
+          // Add to newItems set to prevent transition
+          const updatedNewItems = new Set(newItems);
+          updatedNewItems.add(newId);
+          
+          // Set position to context menu location if available
+          if (pastePosition) {
+            setIconPositions(prev => ({
+              ...prev,
+              [newId]: pastePosition
+            }));
+          }
+          
+          // Remove the "new item" flag after a delay
+          setTimeout(() => {
+            const finalNewItems = new Set(newItems);
+            finalNewItems.delete(newId);
+          }, 500); // Give enough time for the DOM to update
         }
       });
       
@@ -314,7 +333,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     
     const itemId = e.dataTransfer.getData('text/plain');
     if (!itemId) return;
-
+  
     const desktopRect = e.currentTarget.getBoundingClientRect();
     const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
     const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
@@ -323,7 +342,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
     
     if (itemId === 'vscode') {
-      // Handle VS Code icon drop
       if (!isPositionOccupied(x, y, 'vscode')) {
         setVsCodePosition({ x, y });
       } else {
@@ -333,8 +351,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       }
       return;
     }
-    
-    // Check if the position is already occupied by another icon
     if (isPositionOccupied(x, y, itemId)) {
       // Find the next available position nearby
       const position = findNextAvailablePosition(x, y, itemId);
@@ -343,7 +359,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         [itemId]: position
       }));
     } else {
-      // Position is free
       setIconPositions(prev => ({
         ...prev,
         [itemId]: { x, y }
