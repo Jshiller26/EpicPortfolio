@@ -83,6 +83,8 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       onMouseDown={() => setActiveWindow(id)}
       disableDragging={isMaximized}
       enableResizing={!isMaximized}
+      // prevent window dragging when interacting with file items
+      cancel=".draggable-item"
       bounds="window"
       resizeHandleClasses={{
         bottom: 'h-1 bg-transparent ',

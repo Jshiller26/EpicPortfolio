@@ -73,6 +73,8 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    e.dataTransfer.setData('text/plain', itemId);
+    
     onDragStart(e, itemId);
   };
 
@@ -84,7 +86,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
 
   return (
     <div
-      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10
+      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10 draggable-item
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={{

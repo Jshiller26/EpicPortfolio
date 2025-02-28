@@ -7,7 +7,7 @@ interface FileListItemProps {
   item: FileSystemItem;
   onDoubleClick: (item: FileSystemItem) => void;
   onContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
-  currentFolderId: string; // Add this to pass the current folder ID
+  currentFolderId: string;
 }
 
 const FileListItem: React.FC<FileListItemProps> = ({ 
@@ -18,6 +18,8 @@ const FileListItem: React.FC<FileListItemProps> = ({
 }) => {
   // Handle drag start for file explorer items
   const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    
     e.dataTransfer.effectAllowed = 'move';
     
     // Set data with JSON containing both item ID and source folder ID
@@ -28,11 +30,13 @@ const FileListItem: React.FC<FileListItemProps> = ({
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+    // Also set plain text as fallback
+    e.dataTransfer.setData('text/plain', item.id);
   };
 
   return (
     <tr
-      className="hover:bg-gray-100 cursor-pointer"
+      className="hover:bg-gray-100 cursor-pointer draggable-item"
       onDoubleClick={() => onDoubleClick(item)}
       onContextMenu={(e) => onContextMenu(e, item)}
       draggable={true}
