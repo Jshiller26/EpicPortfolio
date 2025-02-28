@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { Folder } from '@/app/types/fileSystem';
-import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { ContextMenuState } from '../DesktopContextMenuHandler';
 import {
-  createUniqueFolder,
-  createUniqueTextFile,
   getInitialRenameName,
-  handleOpenItem} from '@/app/utils/desktopUtils';
+  handleOpenItem
+} from '@/app/utils/desktopUtils';
+import { DesktopIcon } from '../DesktopIcon';
+import { VSCodeIcon } from '../VSCodeIcon';
 
 interface DesktopIconsProps {
   onOpenWindow: (windowId: string) => void;
@@ -21,16 +21,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const fileSystem = useFileSystemStore();
   const desktop = fileSystem.items['desktop'] as Folder;
   const items = fileSystem.items;
-  const createFolder = fileSystem.createFolder;
-  const createFile = fileSystem.createFile;
-  const deleteItem = fileSystem.deleteItem;
   const renameItem = fileSystem.renameItem;
   const clipboard = useClipboardStore();
   
   const [isDragging, setIsDragging] = useState(false);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+  const [, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
     y: 0,
@@ -44,12 +41,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const { 
     iconPositions, 
     vsCodePosition, 
-    setIconPositions,
-    setVsCodePosition,
-    newItems,
-    findNextAvailablePosition,
-    isPositionOccupied,
-    removeIconPosition
   } = useIconPositions(desktop?.children || []);
 
   // This useEffect triggers the rename on the last created item
@@ -122,50 +113,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     onOpenWindow('vscode-new');
   };
 
-  // Clipboard operations
-  const handleCut = (itemId: string) => {
-    const item = items[itemId];
-    if (item) {
-      clipboard.setClipboard(item, 'cut');
-    }
-  };
-
-  const handleCopy = (itemId: string) => {
-    const item = items[itemId];
-    if (item) {
-      clipboard.setClipboard(item, 'copy');
-    }
-  };
-
-  const handlePaste = () => {
-    if (!clipboard.item) return;
-
-    if (clipboard.operation === 'cut') {
-      // Move the item
-      fileSystem.moveItem(clipboard.item.id, 'desktop');
-      clipboard.clear();
-    } else if (clipboard.operation === 'copy') {
-      // Copy the item
-      fileSystem.copyItem(clipboard.item.id, 'desktop');
-      clipboard.clear();
-    }
-  };
-
-  // File operations
-  const handleDelete = (itemId: string) => {
-    deleteItem(itemId);
-    // Remove the position data for the deleted item
-    removeIconPosition(itemId);
-  };
-
-  const handleRename = (itemId: string) => {
-    const item = items[itemId];
-    if (!item) return;
-    
-    setIsRenaming(itemId);
-    setNewName(getInitialRenameName(item));
-  };
-
   const handleRenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewName(e.target.value);
   };
@@ -195,38 +142,67 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
-  const handleCreateNewFolder = () => {    
-    const folderId = createUniqueFolder(desktop, items, createFolder);
-    
-    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && folderId) {
-      setIconPositions(prev => ({
-        ...prev,
-        [folderId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
-      }));
-    }
-    
-    setLastCreatedItemId(folderId);
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setIsDragging(true);
+    e.dataTransfer.setData("text/plain", itemId);
   };
 
-  const handleCreateTextFile = () => {
-    const fileId = createUniqueTextFile(desktop, items, createFile);
-    console.log(`Created new text file with ID: ${fileId}`);
-    
-    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && fileId) {
-      setIconPositions(prev => ({
-        ...prev,
-        [fileId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
-      }));
-    }
-    
-    // Set this as the last created item for auto-rename
-    setLastCreatedItemId(fileId);
+  const handleVsCodeDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.setData("text/plain", "vscode");
   };
 
-  const handleProperties = (itemId: string) => {
-    // In the future, implement properties dialog
-    console.log('Properties:', itemId);
+  const handleDragEnd = () => {
+    setIsDragging(false);
   };
 
-  // Context menu generator
-  const getContextMenuItems = (itemId: string | null): ContextMenuItem[] =>
+  return (
+    <div 
+      className="absolute inset-0 p-1"
+      onContextMenu={handleDesktopContextMenu}
+    >
+      {/* Desktop Icons */}
+      {desktop && desktop.children.map(itemId => {
+        const item = items[itemId];
+        const position = iconPositions[itemId] || { x: 0, y: 0 };
+        const isCut = clipboard.item?.id === itemId && clipboard.operation === 'cut';
+        
+        if (!item) return null;
+        
+        return (
+          <DesktopIcon
+            key={itemId}
+            item={item}
+            itemId={itemId}
+            position={position}
+            isDragging={isDragging}
+            isNewItem={false}
+            isCut={isCut}
+            isRenaming={isRenaming === itemId}
+            newName={isRenaming === itemId ? newName : ''}
+            onDoubleClick={() => handleOpen(itemId)}
+            onContextMenu={handleContextMenu}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onRenameChange={handleRenameChange}
+            onRenameKeyDown={handleRenameKeyDown}
+            onRenameComplete={handleRenameComplete}
+          />
+        );
+      })}
+      
+      {/* VS Code Icon */}
+      <VSCodeIcon
+        position={vsCodePosition}
+        isDragging={isDragging}
+        onDoubleClick={handleOpenVsCode}
+        onContextMenu={handleVsCodeContextMenu}
+        onDragStart={handleVsCodeDragStart}
+        onDragEnd={handleDragEnd}
+      />
+    </div>
+  );
+};
+
+export default DesktopIcons;

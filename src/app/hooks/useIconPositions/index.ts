@@ -64,16 +64,15 @@ export const useIconPositions = (
       }
     }
     
-    // If no position is found nearby, use the right edge as fallback
-    const rightEdgeX = Math.floor((window.innerWidth - GRID_SIZE * 2) / GRID_SIZE) * GRID_SIZE;
+    const leftEdgeX = 0;
     let y = 0;
-    
-    // Find the first available spot going down the right edge
-    while (isPositionOccupied(rightEdgeX, y, excludeItemId)) {
+
+    // Fallback to elft edge
+    while (isPositionOccupied(leftEdgeX, y, excludeItemId)) {
       y += GRID_SIZE;
     }
     
-    return { x: rightEdgeX, y };
+    return { x: leftEdgeX, y };
   }, [isPositionOccupied]);
 
   // Compute initial positions for all desktop items
