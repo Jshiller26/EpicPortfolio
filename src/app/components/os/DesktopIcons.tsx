@@ -122,7 +122,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
-  // Open handlers
+// Open handlers
   const handleOpen = (itemId: string) => {
     handleOpenItem(itemId, items, onOpenWindow);
   };
@@ -331,38 +331,86 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const itemId = e.dataTransfer.getData('text/plain');
-    if (!itemId) return;
-  
-    const desktopRect = e.currentTarget.getBoundingClientRect();
-    const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
-    const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
-    
-    const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
-    const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
-    
-    if (itemId === 'vscode') {
-      if (!isPositionOccupied(x, y, 'vscode')) {
-        setVsCodePosition({ x, y });
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      let itemId;
+      let source;
+      
+      if (jsonData) {
+        const dragData = JSON.parse(jsonData);
+        itemId = dragData.itemId;
+        source = dragData.source;
       } else {
-        // Find next available position
-        const position = findNextAvailablePosition(x, y, 'vscode');
-        setVsCodePosition(position);
+        itemId = e.dataTransfer.getData('text/plain');
+        source = 'desktop';
       }
-      return;
-    }
-    if (isPositionOccupied(x, y, itemId)) {
-      // Find the next available position nearby
-      const position = findNextAvailablePosition(x, y, itemId);
-      setIconPositions(prev => ({
-        ...prev,
-        [itemId]: position
-      }));
-    } else {
-      setIconPositions(prev => ({
-        ...prev,
-        [itemId]: { x, y }
-      }));
+      
+      if (!itemId) return;
+      
+      const desktopRect = e.currentTarget.getBoundingClientRect();
+      const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
+      const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
+      
+      const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
+      const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
+      
+      if (source === 'fileExplorer') {
+        // Move the item from file explorer to desktop
+        fileSystem.moveItem(itemId, 'desktop', (movedItemId) => {
+          // Add to newItems set to prevent transition
+          const updatedNewItems = new Set(newItems);
+          updatedNewItems.add(movedItemId);
+          
+          // Position the item at the drop location
+          if (isPositionOccupied(x, y, movedItemId)) {
+            const position = findNextAvailablePosition(x, y, movedItemId);
+            setIconPositions(prev => ({
+              ...prev,
+              [movedItemId]: position
+            }));
+          } else {
+            setIconPositions(prev => ({
+              ...prev,
+              [movedItemId]: { x, y }
+            }));
+          }
+          
+          // Remove from newItems set after a delay
+          setTimeout(() => {
+            const finalNewItems = new Set(newItems);
+            finalNewItems.delete(movedItemId);
+          }, 500);
+        });
+        
+        return;
+      }
+      
+      if (itemId === 'vscode') {
+        if (!isPositionOccupied(x, y, 'vscode')) {
+          setVsCodePosition({ x, y });
+        } else {
+          // Find next available position
+          const position = findNextAvailablePosition(x, y, 'vscode');
+          setVsCodePosition(position);
+        }
+        return;
+      }
+      
+      if (isPositionOccupied(x, y, itemId)) {
+        // Find the next available position nearby
+        const position = findNextAvailablePosition(x, y, itemId);
+        setIconPositions(prev => ({
+          ...prev,
+          [itemId]: position
+        }));
+      } else {
+        setIconPositions(prev => ({
+          ...prev,
+          [itemId]: { x, y }
+        }));
+      }
+    } catch (error) {
+      console.error('Error processing drop:', error);
     }
   };
 

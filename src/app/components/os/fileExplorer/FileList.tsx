@@ -3,6 +3,7 @@ import { FileSystemItem } from '../../../types/fileSystem';
 import FileListItem from './FileListItem';
 import FileExplorerContextMenu from './ContextMenu';
 import { createPortal } from 'react-dom';
+import { useFileSystemStore } from '../../../stores/fileSystemStore';
 
 interface FileListProps {
   items: FileSystemItem[];
@@ -12,6 +13,8 @@ interface FileListProps {
 
 const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFolderId }) => {
   const fileListRef = useRef<HTMLDivElement>(null);
+  const fileSystem = useFileSystemStore();
+  
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
     x: number;
@@ -39,11 +42,43 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
     setContextMenu(prev => ({ ...prev, show: false }));
   };
 
+  // Handle drag over for the file list
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  // Handle drop for the file list
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      if (!jsonData) return;
+      
+      const dragData = JSON.parse(jsonData);
+      
+      if (!currentFolderId) return;
+      
+      if (dragData.source === 'desktop' && dragData.itemId) {
+        fileSystem.moveItem(dragData.itemId, currentFolderId);
+      }
+      else if (dragData.source === 'fileExplorer' && dragData.itemId && dragData.sourceFolderId !== currentFolderId) {
+        fileSystem.moveItem(dragData.itemId, currentFolderId);
+      }
+    } catch (error) {
+      console.error('Error processing drop:', error);
+    }
+  };
+
   return (
     <div 
       ref={fileListRef}
       className="flex-1 overflow-auto relative"
       onContextMenu={(e) => handleContextMenu(e)}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <table className="w-full text-sm">
         <thead>
@@ -61,6 +96,7 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
               item={item} 
               onDoubleClick={onItemDoubleClick} 
               onContextMenu={(e) => handleContextMenu(e, item)}
+              currentFolderId={currentFolderId || ''}
             />
           ))}
           {items.length === 0 && (

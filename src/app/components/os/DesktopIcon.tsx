@@ -66,6 +66,13 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     setIsVisible(false);
+    
+    const dragData = {
+      itemId: itemId,
+      source: 'desktop'
+    };
+    
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     onDragStart(e, itemId);
   };
 
