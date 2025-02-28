@@ -170,7 +170,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           const updatedPositions = { ...prev };
           
           itemsWithoutPositions.forEach(itemId => {
-            // Try to position where the context menu was opened if available
+            if (updatedPositions[itemId]) {
+              return;
+            }
+            
             if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined) {
               const position = findNextAvailablePosition(contextMenu.desktopX, contextMenu.desktopY);
               updatedPositions[itemId] = position;
@@ -417,7 +420,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     let counter = 1;
     let name = baseName;
     
-    // Check if the folder name already exists and increment counter
     while (desktop.children.some(childId => {
       const child = items[childId];
       return child.name === name && child.type === 'folder';
@@ -428,6 +430,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     
     const folderId = createFolder(name, 'desktop');
     
+    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && folderId) {
+      setIconPositions(prev => ({
+        ...prev,
+        [folderId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
+      }));
+    }
+    
     setLastCreatedItemId(folderId);
   };
 
@@ -436,7 +445,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     let counter = 1;
     let name = `${baseName}.txt`;
     
-    // Check if the file name already exists and increment counter
     while (desktop.children.some(childId => {
       const child = items[childId];
       return child.name === name && child.type === 'file';
@@ -445,9 +453,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       counter++;
     }
     
-    // Create a new text file - the positioning will be handled by the useEffect
     const fileId = createFile(name, 'desktop', '', 0);
     console.log(`Created new text file with ID: ${fileId}`);
+    
+    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && fileId) {
+      setIconPositions(prev => ({
+        ...prev,
+        [fileId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
+      }));
+    }
     
     // Set this as the last created item for auto-rename
     setLastCreatedItemId(fileId);
