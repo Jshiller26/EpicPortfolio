@@ -4,6 +4,7 @@ import { useWindowStore } from '../../stores/windowStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import NavigationBar from './fileExplorer/NavigationBar';
 import FileList from './fileExplorer/FileList';
+import { useClipboardStore } from '../../stores/clipboardStore';
 
 interface FileExplorerProps {
   initialPath?: string;
@@ -23,7 +24,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   windowId
 }) => {
   const fileSystem = useFileSystemStore();
-  const openWindow = useWindowStore(state => state.openWindow);
+  const windowStore = useWindowStore();
+  const openWindow = windowStore.openWindow;
+  const clipboard = useClipboardStore();
+  
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const initializedRef = useRef(false);
@@ -39,6 +43,51 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     ? currentFolder.children.map(id => fileSystem.items[id]).filter(Boolean)
     : [];
 
+  // Listen for window events
+  useEffect(() => {
+    const handleWindowOpen = (e: CustomEvent) => {
+      if (e.detail && e.detail.windowId) {
+        openWindow(e.detail.windowId);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('openWindow', handleWindowOpen as EventListener);
+
+    // Clipboard keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Make sure we're in a file explorer context and not editing text somewhere
+      if (e.target && (e.target as HTMLElement).tagName !== 'INPUT' && 
+          (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+        
+        // Only process if current folder is valid
+        if (currentFolder && currentFolder.id) {
+          // Ctrl+V to paste
+          if (e.ctrlKey && e.key === 'v') {
+            if (clipboard.item) {
+              if (clipboard.operation === 'cut') {
+                fileSystem.moveItem(clipboard.item.id, currentFolder.id);
+              } else if (clipboard.operation === 'copy') {
+                fileSystem.copyItem(clipboard.item.id, currentFolder.id);
+              }
+              clipboard.clear();
+              e.preventDefault();
+            }
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('openWindow', handleWindowOpen as EventListener);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openWindow, clipboard, currentFolder, fileSystem]);
+
+  // Initialize path
   useEffect(() => {
     if (initializedRef.current) return;    
     let pathToUse = initialPath;
@@ -70,8 +119,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setHistoryIndex(0);
       initializedRef.current = true;
     }
-  }, [initialPath, windowId, fileSystem]);
+  }, [initialPath, windowId, fileSystem.items]);
 
+  // Navigation functions
   const navigateToPath = (path: string, resetHistory = false) => {
     // Check if the path exists in the file system
     const pathExists = Object.values(fileSystem.items).some(item => item.path === path);

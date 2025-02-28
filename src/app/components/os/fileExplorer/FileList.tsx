@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FileSystemItem } from '../../../types/fileSystem';
 import FileListItem from './FileListItem';
-import ContextMenu from './ContextMenu';
-import { useFileSystemStore } from '@/app/stores/fileSystemStore';
-import { useWindowStore } from '@/app/stores/windowStore';
+import FileExplorerContextMenu from './ContextMenu';
+import { createPortal } from 'react-dom';
 
 interface FileListProps {
   items: FileSystemItem[];
@@ -12,6 +11,7 @@ interface FileListProps {
 }
 
 const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFolderId }) => {
+  const fileListRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
     x: number;
@@ -23,11 +23,10 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
     y: 0
   });
 
-  const fileSystem = useFileSystemStore();
-  const openWindow = useWindowStore(state => state.openWindow);
-
   const handleContextMenu = (e: React.MouseEvent, item?: FileSystemItem) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     setContextMenu({
       show: true,
       x: e.clientX,
@@ -37,36 +36,12 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
   };
 
   const handleCloseContextMenu = () => {
-    setContextMenu({ ...contextMenu, show: false });
-  };
-
-  const handleCreateFile = (name: string) => {
-    if (!currentFolderId) return;
-    
-    // Create the file in the current folder
-    fileSystem.createFile(name, currentFolderId, '');
-    
-    // Find the newly created file
-    const folder = fileSystem.items[currentFolderId];
-    if (folder && folder.type === 'folder') {
-      const newFileId = folder.children.find(childId => {
-        const child = fileSystem.items[childId];
-        return child && child.type === 'file' && child.name === name;
-      });
-      
-      if (newFileId) {
-        openWindow(`editor-${newFileId}`);
-      }
-    }
-  };
-
-  const handleCreateFolder = (name: string) => {
-    if (!currentFolderId) return;
-    fileSystem.createFolder(name, currentFolderId);
+    setContextMenu(prev => ({ ...prev, show: false }));
   };
 
   return (
     <div 
+      ref={fileListRef}
       className="flex-1 overflow-auto relative"
       onContextMenu={(e) => handleContextMenu(e)}
     >
@@ -98,16 +73,15 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
         </tbody>
       </table>
 
-      {contextMenu.show && (
-        <ContextMenu
+      {contextMenu.show && createPortal(
+        <FileExplorerContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           currentFolder={currentFolderId || ''}
           selectedItem={contextMenu.item}
           onClose={handleCloseContextMenu}
-          onCreateFile={handleCreateFile}
-          onCreateFolder={handleCreateFolder}
-        />
+        />,
+        document.body
       )}
     </div>
   );

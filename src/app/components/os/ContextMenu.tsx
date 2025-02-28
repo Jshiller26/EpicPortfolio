@@ -7,8 +7,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   
   // Position adjustment to keep menu within viewport
   const adjustPosition = () => {
+    if (!contextMenuRef.current) return { x, y };
+    
     const menuWidth = 192;
-    const menuHeight = items.length * 28; // Approximate height based on items
+    // Calculate a more accurate height based on actual items
+    let menuHeight = 0;
+    items.forEach(item => {
+      if ('divider' in item) {
+        menuHeight += 5; // Divider height
+      } else {
+        menuHeight += 28; // Regular menu item height
+      }
+    });
+    
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
