@@ -38,7 +38,7 @@ export const useFileSystemStore = create<FileSystemState & {
   deleteItems: (itemIds: string[]) => void;
   
   // Copy/Move operations
-  copyItem: (itemId: string, targetFolderId: string) => void;
+  copyItem: (itemId: string, targetFolderId: string, onCopyComplete?: (newId: string) => void) => void;
   moveItem: (itemId: string, targetFolderId: string) => void;
   copyItems: (itemIds: string[]) => void;
   cutItems: (itemIds: string[]) => void;
@@ -105,7 +105,9 @@ export const useFileSystemStore = create<FileSystemState & {
   deleteItems: (itemIds) => set(state => deleteItems(state, itemIds)),
   
   // Copy/Move operations
-  copyItem: (itemId, targetFolderId) => set(state => copyItem(state, itemId, targetFolderId)),
+  copyItem: (itemId, targetFolderId, onCopyComplete) => set(state => 
+    copyItem(state, itemId, targetFolderId, onCopyComplete)
+  ),
   moveItem: (itemId, targetFolderId) => set(state => moveItem(state, itemId, targetFolderId)),
   copyItems: (itemIds) => set(state => copyItems(state, itemIds)),
   cutItems: (itemIds) => set(state => cutItems(state, itemIds)),

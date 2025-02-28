@@ -1,5 +1,6 @@
 import { FileSystemState, Folder, File } from '../../../types/fileSystem';
 import { moveItem } from './moveOperations';
+import { ensureUniqueName } from './createOperations';
 
 export const copyItemAndChildren = (
   id: string, 
@@ -18,11 +19,15 @@ export const copyItemAndChildren = (
   const newId = Math.random().toString(36).substr(2, 9);
   idMap[id] = newId;
   
-  // Create copy of the item
-  const newPath = `${targetFolder.path}\\${item.name}`;
+  // Ensure the name is unique in the target folder
+  const uniqueName = ensureUniqueName(item.name, targetId, item.type, items);
+  
+  // Create copy of the item with the unique name
+  const newPath = `${targetFolder.path}\\${uniqueName}`;
   const itemCopy = {
     ...JSON.parse(JSON.stringify(item)),
     id: newId,
+    name: uniqueName,
     parentId: targetId,
     path: newPath,
     created: new Date(),
@@ -69,7 +74,8 @@ export const copyItemAndChildren = (
 export const copyItem = (
   state: FileSystemState,
   itemId: string, 
-  targetFolderId: string
+  targetFolderId: string,
+  onCopyComplete?: (newId: string) => void
 ): FileSystemState => {
   const [newItems, newId] = copyItemAndChildren(itemId, targetFolderId, state.items);
   
@@ -81,6 +87,11 @@ export const copyItem = (
       children: [...targetFolder.children, newId],
       modified: new Date()
     } as Folder;
+
+    // Call the callback with the new ID if provided
+    if (onCopyComplete) {
+      onCopyComplete(newId);
+    }
   }
   
   return { 

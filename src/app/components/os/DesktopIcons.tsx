@@ -149,13 +149,36 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const handlePaste = () => {
     if (!clipboard.item) return;
 
+    // Get the paste position from the context menu if available
+    const pastePosition = contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined
+      ? { x: contextMenu.desktopX, y: contextMenu.desktopY }
+      : null;
+
     if (clipboard.operation === 'cut') {
       // Move the item
       fileSystem.moveItem(clipboard.item.id, 'desktop');
+      
+      // Set position to context menu location if available
+      if (pastePosition) {
+        setIconPositions(prev => ({
+          ...prev,
+          [clipboard.item.id]: pastePosition
+        }));
+      }
+      
       clipboard.clear();
     } else if (clipboard.operation === 'copy') {
-      // Copy the item
-      fileSystem.copyItem(clipboard.item.id, 'desktop');
+      // Copy the item with a callback to update the position
+      fileSystem.copyItem(clipboard.item.id, 'desktop', (newId) => {
+        // Set position to context menu location if available
+        if (pastePosition && newId) {
+          setIconPositions(prev => ({
+            ...prev,
+            [newId]: pastePosition
+          }));
+        }
+      });
+      
       clipboard.clear();
     }
   };
