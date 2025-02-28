@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ContextMenu } from './ContextMenu';
 import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
 
@@ -22,6 +22,28 @@ export const DesktopContextMenuHandler: React.FC<DesktopContextMenuHandlerProps>
   onClose,
   getContextMenuItems
 }) => {
+  useEffect(() => {
+    if (!contextMenu.visible) return;
+    
+    const handleGlobalClick = () => {
+      setTimeout(() => {
+        onClose();
+      }, 10);
+    };
+
+    const handleCloseEvent = () => {
+      onClose();
+    };
+    
+    document.addEventListener('click', handleGlobalClick);
+    document.addEventListener('closeAllContextMenus', handleCloseEvent);
+    
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+      document.removeEventListener('closeAllContextMenus', handleCloseEvent);
+    };
+  }, [contextMenu.visible, onClose]);
+  
   if (!contextMenu.visible) {
     return null;
   }
