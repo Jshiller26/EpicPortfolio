@@ -6,7 +6,7 @@ export const getIconForItem = (item: FileSystemItem): string => {
     return '/images/desktop/icons8-folder.svg';
   }
   
-  if (item.name === 'VS Code.exe') {
+  if (isVSCodeItem(item)) {
     return '/images/desktop/icons8-vscode.svg';
   }
   
@@ -109,6 +109,22 @@ export const getAppIdFromShortcut = (file: File): string | null => {
   } catch (e) {
     return null;
   }
+};
+
+export const isVSCodeItem = (item: FileSystemItem): boolean => {
+  return (
+    item.name.toLowerCase().includes('vs code') || 
+    item.name.toLowerCase() === 'vscode.exe' ||
+    // Additionally check for VS Code shortcuts if needed
+    (item.type === 'file' && (item as File).content && (() => {
+      try {
+        const content = JSON.parse((item as File).content);
+        return content.type === 'appShortcut' && content.appId === 'vscode';
+      } catch {
+        return false;
+      }
+    })())
+  );
 };
 
 // Get the window title based on its ID and file system data

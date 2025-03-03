@@ -77,7 +77,7 @@ export const handleOpenItem = (
     const windowId = `explorer-${itemId}`;
     onOpenWindow(windowId);
   } else {
-    if (item.name === 'VS Code.exe') {
+    if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
       onOpenWindow('vscode-new');
       return;
     }
@@ -111,8 +111,11 @@ export const handleOpenItem = (
         onOpenWindow(`pdf-${itemId}`);
         break;
       case 'exe':
-        // Generic app handling
-        console.log(`Launching app: ${file.name}`);
+        if (file.name.toLowerCase().includes('vs code') || file.name.toLowerCase() === 'vscode.exe') {
+          onOpenWindow('vscode-new');
+        } else {
+          console.log(`Launching app: ${file.name}`);
+        }
         break;
       default:
         // Default file handler

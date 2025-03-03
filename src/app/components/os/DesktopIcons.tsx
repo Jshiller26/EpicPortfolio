@@ -485,7 +485,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       const targetFolder = items[folderId];
       
       if (targetFolder && targetFolder.type === 'folder') {
-        if (isApp || itemId === 'vscode') {
+        if (itemId === 'vscode') {
+          const vsCodeId = createFile('VS Code.exe', folderId, '', 0);
+          console.log(`Created VS Code file in folder: ${vsCodeId}`);
+        } else if (isApp) {
           createAppShortcut(itemId, folderId);
         } else {
           moveItem(itemId, folderId, () => {
