@@ -28,11 +28,17 @@ export const updatePaths = (
   return updatedItems;
 };
 
+// This function is executed when Window's internal hook needs to determine a position for the item
+export interface MoveItemOptions {
+  findNextPosition?: boolean;
+}
+
 export const moveItem = (
   state: FileSystemState,
   itemId: string, 
   targetFolderId: string,
-  onMoveComplete?: (newId: string) => void
+  onMoveComplete?: (movedId: string) => void,
+  options?: MoveItemOptions
 ): FileSystemState => {
   const newItems = { ...state.items };
   const item = newItems[itemId];
@@ -82,6 +88,9 @@ export const moveItem = (
     children: [...targetFolder.children, itemId],
     modified: new Date()
   } as Folder;
+
+  // Use options to determine how to handle the item's position
+  const findNextPosition = options?.findNextPosition ?? true;
 
   // Call the callback if provided
   if (onMoveComplete) {

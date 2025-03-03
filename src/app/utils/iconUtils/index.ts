@@ -6,8 +6,32 @@ export const getIconForItem = (item: FileSystemItem): string => {
     return '/images/desktop/icons8-folder.svg';
   }
   
+  if (isVSCodeItem(item)) {
+    return '/images/desktop/icons8-vscode.svg';
+  }
+  
   // Handle different file types
   const file = item as File;
+  
+  if (file.content) {
+    try {
+      const contentObj = JSON.parse(file.content);
+      if (contentObj.type === 'appShortcut' && contentObj.appId) {
+        switch (contentObj.appId) {
+          case 'vscode':
+            return '/images/desktop/icons8-vscode.svg';
+          default:
+            return '/images/desktop/icons8-shortcut.svg';
+        }
+      }
+    } catch (e) {
+    }
+  }
+  
+  if (!file.extension) {
+    return '/images/desktop/icons8-file.svg';
+  }
+  
   switch (file.extension.toLowerCase()) {
     case 'txt':
       return '/images/desktop/icons8-text-file.svg';
@@ -29,6 +53,8 @@ export const getIconForItem = (item: FileSystemItem): string => {
       return '/images/desktop/icons8-json.svg';
     case 'md':
       return '/images/desktop/icons8-markdown.svg';
+    case 'exe':
+      return '/images/desktop/icons8-app.svg';
     default:
       return '/images/desktop/icons8-file.svg';
   }
@@ -58,7 +84,47 @@ export const getIconForWindow = (windowId: string): string => {
 // Determine if a file is a text file that can be opened in the editor
 export const isTextFile = (file: File): boolean => {
   const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
-  return textExtensions.includes(file.extension.toLowerCase());
+  return file.extension && textExtensions.includes(file.extension.toLowerCase());
+};
+
+// Check if a file is an app shortcut
+export const isAppShortcut = (file: File): boolean => {
+  if (!file.content) return false;
+  
+  try {
+    const content = JSON.parse(file.content);
+    return content.type === 'appShortcut' && !!content.appId;
+  } catch (e) {
+    return false;
+  }
+};
+
+// Get app ID from a shortcut file
+export const getAppIdFromShortcut = (file: File): string | null => {
+  if (!isAppShortcut(file)) return null;
+  
+  try {
+    const content = JSON.parse(file.content);
+    return content.appId;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const isVSCodeItem = (item: FileSystemItem): boolean => {
+  return (
+    item.name.toLowerCase().includes('vs code') || 
+    item.name.toLowerCase() === 'vscode.exe' ||
+    // Additionally check for VS Code shortcuts if needed
+    (item.type === 'file' && (item as File).content && (() => {
+      try {
+        const content = JSON.parse((item as File).content);
+        return content.type === 'appShortcut' && content.appId === 'vscode';
+      } catch {
+        return false;
+      }
+    })())
+  );
 };
 
 // Get the window title based on its ID and file system data

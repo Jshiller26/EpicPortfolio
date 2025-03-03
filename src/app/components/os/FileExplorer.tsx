@@ -185,25 +185,31 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   const handleItemDoubleClick = (item: FileSystemItem) => {
     if (isFolder(item)) {
-      // Navigate into the folder
       navigateToPath(item.path);
     } else if (isFile(item)) {
-      // Handle opening different file types
       console.log('Opening file:', item.name, 'with extension:', item.extension);
+      
+      if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
+        openWindow('vscode-new');
+        return;
+      }
       
       // Handle text files with the editor
       if (isTextFile(item)) {
         openWindow(`editor-${item.id}`);
-      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.extension.toLowerCase())) {
-        // Open image viewer
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes((item as File).extension?.toLowerCase() || '')) {
         openWindow(`image-${item.id}`);
-      } else if (item.extension.toLowerCase() === 'pdf') {
-        // Open PDF viewer
+      } else if ((item as File).extension?.toLowerCase() === 'pdf') {
         openWindow(`pdf-${item.id}`);
+      } else if ((item as File).extension?.toLowerCase() === 'exe') {
+        if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
+          openWindow('vscode-new');
+        } else {
+          console.log(`Launching app: ${item.name}`);
+          alert(`Application cannot be launched.`);
+        }
       } else {
-        // For unknown file types, show a message or default handler
-        console.log('Unknown file type');
-        alert(`File type .${item.extension} is not supported.`);
+        alert(`File type .${(item as File).extension} is not supported.`);
       }
     }
   };

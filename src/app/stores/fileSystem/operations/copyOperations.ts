@@ -90,7 +90,9 @@ export const copyItem = (
 
     // Call the callback with the new ID if provided
     if (onCopyComplete) {
-      onCopyComplete(newId);
+      setTimeout(() => {
+        onCopyComplete(newId);
+      }, 0);
     }
   }
   
@@ -158,7 +160,9 @@ export const pasteItems = (
 
   // Call the callback with the operation and resulting IDs
   if (onPasteComplete && clipboard.operation) {
-    onPasteComplete(clipboard.operation, resultIds);
+    setTimeout(() => {
+      onPasteComplete(clipboard.operation, resultIds);
+    }, 0);
   }
 
   // Clear clipboard after paste

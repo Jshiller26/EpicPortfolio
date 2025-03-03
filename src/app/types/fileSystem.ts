@@ -1,15 +1,17 @@
-export type FileType = 'file' | 'folder';
+export type FileType = 'file' | 'folder' | 'app';
 
 // Base interface for both files and folders
 export interface FileSystemItem {
   id: string;
   name: string;
   type: FileType;
-  path: string;
-  created: Date;
-  modified: Date;
-  size?: number;
   parentId: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  path?: string;
+  created?: Date;
+  modified?: Date;
+  size?: number;
 }
 
 // Interface for folder items
@@ -21,12 +23,17 @@ export interface Folder extends FileSystemItem {
 // Interface for file items
 export interface File extends FileSystemItem {
   type: 'file';
-  extension: string;
+  extension?: string;
   content: string;
 }
 
+export interface AppItem extends FileSystemItem {
+  type: 'app';
+  appId: string; // ID used by the window system
+}
+
 export type FileSystemState = {
-  items: { [key: string]: Folder | File };
+  items: { [key: string]: Folder | File | AppItem };
   currentPath: string;
   selectedItems: string[];
   clipboard: {

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
-import { Folder } from '@/app/types/fileSystem';
+import { Folder, FileSystemItem } from '@/app/types/fileSystem';
 import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { ContextMenuState } from './DesktopContextMenuHandler';
@@ -11,7 +11,6 @@ import {
   getInitialRenameName,
   handleOpenItem,
   getDesktopContextMenu,
-  getVsCodeContextMenu,
   getItemContextMenu
 } from '@/app/utils/desktopUtils';
 
@@ -26,6 +25,18 @@ interface DesktopIconsProps {
 
 const GRID_SIZE = 76;
 
+// Create a fake app item to represent VS Code
+const createAppItem = (appId: string, appName: string): FileSystemItem => {
+  return {
+    id: appId,
+    name: appName,
+    type: 'app',
+    parentId: 'desktop',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+};
+
 export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const fileSystem = useFileSystemStore();
   const desktop = fileSystem.items['desktop'] as Folder;
@@ -34,7 +45,12 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const createFile = fileSystem.createFile;
   const deleteItem = fileSystem.deleteItem;
   const renameItem = fileSystem.renameItem;
+  const moveItem = fileSystem.moveItem;
   const clipboard = useClipboardStore();
+  
+  const [appItems] = useState<Record<string, FileSystemItem>>({
+    'vscode': createAppItem('vscode', 'VS Code')
+  });
   
   const [isDragging, setIsDragging] = useState(false);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
@@ -58,8 +74,44 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     newItems,
     findNextAvailablePosition,
     isPositionOccupied,
-    removeIconPosition
-  } = useIconPositions(desktop?.children || []);
+    removeIconPosition  } = useIconPositions(desktop?.children || []);
+
+  // Track any file system changes
+  const desktopChildrenRef = useRef<string[]>([]);
+  
+  // Monitor for file system changes
+  useEffect(() => {
+    if (desktop?.children) {
+      const currentChildren = desktop.children;
+      const prevChildren = desktopChildrenRef.current;
+      
+      const newItemsAdded = currentChildren.filter(id => !prevChildren.includes(id));
+      
+      if (newItemsAdded.length > 0) {
+        console.log("New items added to desktop:", newItemsAdded);
+        
+        newItemsAdded.forEach(itemId => {
+          if (!iconPositions[itemId]) {
+            const nextPosition = findNextAvailablePosition(0, 0, itemId);
+            setIconPositions(prev => ({
+              ...prev,
+              [itemId]: nextPosition
+            }));
+            
+            const updatedNewItems = new Set(newItems);
+            updatedNewItems.add(itemId);
+            
+            setTimeout(() => {
+              const finalNewItems = new Set(newItems);
+              finalNewItems.delete(itemId);
+            }, 500);
+          }
+        });
+      }
+      
+      desktopChildrenRef.current = [...currentChildren];
+    }
+  }, [desktop?.children, iconPositions, newItems, findNextAvailablePosition, setIconPositions]);
 
   // This useEffect triggers the rename on the last created item
   useEffect(() => {
@@ -88,17 +140,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     });
   };
 
-  const handleVsCodeContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      itemId: 'vscode'
-    });
-  };
-
   const handleDesktopContextMenu = (e: React.MouseEvent) => {
     // Only show desktop context menu if we're right-clicking the desktop itself
     if (e.target === e.currentTarget) {
@@ -108,8 +149,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       const desktopX = e.clientX - desktopRect.left;
       const desktopY = e.clientY - desktopRect.top;
       
-      const gridX = Math.round(desktopX / GRID_SIZE) * GRID_SIZE;
-      const gridY = Math.round(desktopY / GRID_SIZE) * GRID_SIZE;
+      const gridX = Math.floor(desktopX / GRID_SIZE) * GRID_SIZE;
+      const gridY = Math.floor(desktopY / GRID_SIZE) * GRID_SIZE;
       
       setContextMenu({
         visible: true,
@@ -122,13 +163,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   };
 
-// Open handlers
+  // Open handlers
   const handleOpen = (itemId: string) => {
-    handleOpenItem(itemId, items, onOpenWindow);
-  };
-
-  const handleOpenVsCode = () => {
-    onOpenWindow('vscode-new');
+    if (appItems[itemId]) {
+      if (itemId === 'vscode') {
+        onOpenWindow('vscode-new');
+      } else {
+        onOpenWindow(itemId);
+      }
+    } else {
+      handleOpenItem(itemId, items, onOpenWindow);
+    }
   };
 
   // Clipboard operations
@@ -159,10 +204,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         const updatedNewItems = new Set(newItems);
         updatedNewItems.add(movedItemId);
         
-        if (pastePosition) {
+        if (pastePosition && !isPositionOccupied(pastePosition.x, pastePosition.y)) {
           setIconPositions(prev => ({
             ...prev,
             [movedItemId]: pastePosition
+          }));
+        } else {
+          // Find next available position
+          const nextPosition = findNextAvailablePosition(0, 0, movedItemId);
+          setIconPositions(prev => ({
+            ...prev,
+            [movedItemId]: nextPosition
           }));
         }
         
@@ -181,11 +233,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           const updatedNewItems = new Set(newItems);
           updatedNewItems.add(newId);
           
-          // Set position to context menu location if available
-          if (pastePosition) {
+          // Set position to context menu location if available and not occupied
+          if (pastePosition && !isPositionOccupied(pastePosition.x, pastePosition.y)) {
             setIconPositions(prev => ({
               ...prev,
               [newId]: pastePosition
+            }));
+          } else {
+            const nextPosition = findNextAvailablePosition(0, 0, newId);
+            setIconPositions(prev => ({
+              ...prev,
+              [newId]: nextPosition
             }));
           }
           
@@ -248,29 +306,65 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const handleCreateNewFolder = () => {    
     const folderId = createUniqueFolder(desktop, items, createFolder);
     
-    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && folderId) {
-      setIconPositions(prev => ({
-        ...prev,
-        [folderId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
-      }));
+    if (folderId) {
+      if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined) {
+        const position = { x: contextMenu.desktopX, y: contextMenu.desktopY };
+        
+        if (!isPositionOccupied(position.x, position.y)) {
+          setIconPositions(prev => ({
+            ...prev,
+            [folderId]: position
+          }));
+        } else {
+          const nextPosition = findNextAvailablePosition(0, 0, folderId);
+          setIconPositions(prev => ({
+            ...prev,
+            [folderId]: nextPosition
+          }));
+        }
+      } else {
+        const nextPosition = findNextAvailablePosition(0, 0, folderId);
+        setIconPositions(prev => ({
+          ...prev,
+          [folderId]: nextPosition
+        }));
+      }
+      
+      setLastCreatedItemId(folderId);
     }
-    
-    setLastCreatedItemId(folderId);
   };
 
   const handleCreateTextFile = () => {
     const fileId = createUniqueTextFile(desktop, items, createFile);
     console.log(`Created new text file with ID: ${fileId}`);
     
-    if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined && fileId) {
-      setIconPositions(prev => ({
-        ...prev,
-        [fileId]: { x: contextMenu.desktopX!, y: contextMenu.desktopY! }
-      }));
+    if (fileId) {
+      if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined) {
+        const position = { x: contextMenu.desktopX, y: contextMenu.desktopY };
+        
+        if (!isPositionOccupied(position.x, position.y)) {
+          setIconPositions(prev => ({
+            ...prev,
+            [fileId]: position
+          }));
+        } else {
+          const nextPosition = findNextAvailablePosition(0, 0, fileId);
+          setIconPositions(prev => ({
+            ...prev,
+            [fileId]: nextPosition
+          }));
+        }
+      } else {
+        const nextPosition = findNextAvailablePosition(0, 0, fileId);
+        setIconPositions(prev => ({
+          ...prev,
+          [fileId]: nextPosition
+        }));
+      }
+      
+      // Set this as the last created item for auto-rename
+      setLastCreatedItemId(fileId);
     }
-    
-    // Set this as the last created item for auto-rename
-    setLastCreatedItemId(fileId);
   };
 
   const handleProperties = (itemId: string) => {
@@ -289,10 +383,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       );
     }
 
-    if (itemId === 'vscode') {
-      return getVsCodeContextMenu(handleOpenVsCode);
-    }
-
     return getItemContextMenu(
       itemId,
       handleOpen,
@@ -308,13 +398,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
     setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
+    
+    const dragData = {
+      itemId: itemId,
+      source: 'desktop',
+      isApp: appItems[itemId] !== undefined
+    };
+    
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.setData('text/plain', itemId);
-  };
-
-  const handleVsCodeDragStart = (e: React.DragEvent) => {
-    setIsDragging(true);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', 'vscode');
   };
 
   const handleDragEnd = () => {
@@ -327,6 +419,88 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     e.dataTransfer.dropEffect = 'move';
   };
 
+  const handleFolderDragOver = (e: React.DragEvent) => {
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleFolderDragLeave = () => {
+  };
+
+  const createAppShortcut = (appId: string, targetFolderId: string) => {
+    const app = appItems[appId];
+    if (!app) {
+      console.error(`App not found: ${appId}`);
+      return;
+    }
+    
+    const targetFolder = items[targetFolderId];
+    if (!targetFolder) {
+      console.error(`Target folder not found: ${targetFolderId}`);
+      return;
+    }
+    if (targetFolder.type !== 'folder') {
+      console.error(`Target is not a folder: ${targetFolderId}, type: ${targetFolder.type}`);
+      return;
+    }
+    
+    const shortcutName = `${app.name} Shortcut.lnk`;
+    
+    // Add a text file to the desktop folder
+    fileSystem.createFile(
+      'desktop',
+      shortcutName,
+      JSON.stringify({ type: 'appShortcut', appId }),
+      (newFileId) => {
+        if (newFileId) {
+          console.log(`Created temporary shortcut on desktop: ${newFileId}`);
+          
+          // Now move it to the target folder
+          fileSystem.moveItem(newFileId, targetFolderId, (movedItemId) => {
+            console.log(`Moved shortcut to folder: ${movedItemId}`);
+          });
+        }
+      }
+    );
+  };
+
+  const handleFolderDrop = (e: React.DragEvent, folderId: string) => {
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      let itemId;
+      let source;
+      let isApp = false;
+      
+      if (jsonData) {
+        const dragData = JSON.parse(jsonData);
+        itemId = dragData.itemId;
+        source = dragData.source;
+        isApp = dragData.isApp || false;
+      } else {
+        itemId = e.dataTransfer.getData('text/plain');
+        source = 'desktop';
+      }
+      
+      if (!itemId || itemId === folderId) return;
+      
+      const targetFolder = items[folderId];
+      
+      if (targetFolder && targetFolder.type === 'folder') {
+        if (itemId === 'vscode') {
+          const vsCodeId = createFile('VS Code.exe', folderId, '', 0);
+          console.log(`Created VS Code file in folder: ${vsCodeId}`);
+        } else if (isApp) {
+          createAppShortcut(itemId, folderId);
+        } else {
+          moveItem(itemId, folderId, () => {
+            removeIconPosition(itemId);
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error processing folder drop:', error);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -335,11 +509,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       const jsonData = e.dataTransfer.getData('application/json');
       let itemId;
       let source;
+      let isApp = false;
       
       if (jsonData) {
         const dragData = JSON.parse(jsonData);
         itemId = dragData.itemId;
         source = dragData.source;
+        isApp = dragData.isApp || false;
       } else {
         itemId = e.dataTransfer.getData('text/plain');
         source = 'desktop';
@@ -347,12 +523,20 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       
       if (!itemId) return;
       
+      // Get desktop dimensions for bounds checking
       const desktopRect = e.currentTarget.getBoundingClientRect();
-      const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
-      const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
       
-      const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
-      const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
+      // Calculate grid-aligned drop position
+      const relativeX = Math.max(0, e.clientX - desktopRect.left);
+      const relativeY = Math.max(0, e.clientY - desktopRect.top);
+      
+      // Calculate max grid positions to ensure icons stay visible
+      const maxCols = Math.floor(desktopRect.width / GRID_SIZE) - 1;
+      const maxRows = Math.floor(desktopRect.height / GRID_SIZE) - 1;
+      
+      // Calculate grid position with bounds checking
+      const x = Math.min(maxCols * GRID_SIZE, Math.floor(relativeX / GRID_SIZE) * GRID_SIZE);
+      const y = Math.min(maxRows * GRID_SIZE, Math.floor(relativeY / GRID_SIZE) * GRID_SIZE);
       
       if (source === 'fileExplorer') {
         // Move the item from file explorer to desktop
@@ -361,17 +545,17 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           const updatedNewItems = new Set(newItems);
           updatedNewItems.add(movedItemId);
           
-          // Position the item at the drop location
-          if (isPositionOccupied(x, y, movedItemId)) {
-            const position = findNextAvailablePosition(x, y, movedItemId);
-            setIconPositions(prev => ({
-              ...prev,
-              [movedItemId]: position
-            }));
-          } else {
+          if (!isPositionOccupied(x, y, movedItemId)) {
             setIconPositions(prev => ({
               ...prev,
               [movedItemId]: { x, y }
+            }));
+          } else {
+            // If occupied, find next available position
+            const position = findNextAvailablePosition(0, 0, movedItemId);
+            setIconPositions(prev => ({
+              ...prev,
+              [movedItemId]: position
             }));
           }
           
@@ -385,29 +569,26 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         return;
       }
       
-      if (itemId === 'vscode') {
-        if (!isPositionOccupied(x, y, 'vscode')) {
+      if (!isPositionOccupied(x, y, itemId)) {
+        if (itemId === 'vscode') {
           setVsCodePosition({ x, y });
         } else {
-          // Find next available position
-          const position = findNextAvailablePosition(x, y, 'vscode');
-          setVsCodePosition(position);
+          setIconPositions(prev => ({
+            ...prev,
+            [itemId]: { x, y }
+          }));
         }
-        return;
-      }
-      
-      if (isPositionOccupied(x, y, itemId)) {
-        // Find the next available position nearby
-        const position = findNextAvailablePosition(x, y, itemId);
-        setIconPositions(prev => ({
-          ...prev,
-          [itemId]: position
-        }));
       } else {
-        setIconPositions(prev => ({
-          ...prev,
-          [itemId]: { x, y }
-        }));
+        const position = findNextAvailablePosition(0, 0, itemId);
+        
+        if (itemId === 'vscode') {
+          setVsCodePosition(position);
+        } else {
+          setIconPositions(prev => ({
+            ...prev,
+            [itemId]: position
+          }));
+        }
       }
     } catch (error) {
       console.error('Error processing drop:', error);
@@ -415,9 +596,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   };
 
   const handleCloseContextMenu = () => {
-    console.log("Closing context menu");
     setContextMenu(prev => ({ ...prev, visible: false }));
   };
+
+  const allItems = [
+    ...Object.values(appItems), // App icons
+    ...(desktop?.type === 'folder' 
+      ? desktop.children.map(itemId => items[itemId]).filter(Boolean) 
+      : [])
+  ];
 
   return (
     <div 
@@ -426,24 +613,49 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* VS Code Icon */}
-      <VSCodeIcon 
-        position={vsCodePosition}
-        isDragging={isDragging}
-        onContextMenu={handleVsCodeContextMenu}
-        onDragStart={handleVsCodeDragStart}
-        onDragEnd={handleDragEnd}
-        onDoubleClick={handleOpenVsCode}
-      />
-
-      {/* Desktop Items */}
-      {desktop?.type === 'folder' && desktop.children.map((itemId) => {
-        const item = items[itemId];
-        if (!item) return null; // Skip rendering if item doesn't exist
+      {/* All Desktop Items */}
+      {allItems.map((item) => {
+        if (!item) return null;
         
-        const position = iconPositions[itemId] || { x: 0, y: 0 }; // Fallback position
+        const itemId = item.id;
+        const isApp = item.type === 'app';
+        
+        // Get the appropriate position for the item
+        let position = isApp && itemId === 'vscode' 
+          ? vsCodePosition 
+          : iconPositions[itemId];
+        
+        if (!position) {
+          const newPosition = findNextAvailablePosition(0, 0, itemId);
+          
+          if (isApp && itemId === 'vscode') {
+            setVsCodePosition(newPosition);
+          } else {
+            setIconPositions(prev => ({
+              ...prev,
+              [itemId]: newPosition
+            }));
+          }
+          
+          position = newPosition;
+        }
+        
         const isNewItem = newItems.has(itemId);
         const isCut = clipboard.operation === 'cut' && clipboard.item?.id === itemId;
+        
+        if (isApp && itemId === 'vscode') {
+          return (
+            <VSCodeIcon
+              key={itemId}
+              position={position}
+              isDragging={isDragging}
+              onContextMenu={(e) => handleContextMenu(e, itemId)}
+              onDragStart={(e) => handleDragStart(e, itemId)}
+              onDragEnd={handleDragEnd}
+              onDoubleClick={() => handleOpen(itemId)}
+            />
+          );
+        }
         
         return (
           <DesktopIcon
@@ -460,6 +672,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDoubleClick={() => handleOpen(itemId)}
+            onDragOver={item.type === 'folder' ? handleFolderDragOver : undefined}
+            onDragLeave={item.type === 'folder' ? handleFolderDragLeave : undefined}
+            onDrop={item.type === 'folder' ? handleFolderDrop : undefined}
             onRenameChange={handleRenameChange}
             onRenameKeyDown={handleRenameKeyDown}
             onRenameComplete={handleRenameComplete}
