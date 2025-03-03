@@ -144,8 +144,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       const desktopX = e.clientX - desktopRect.left;
       const desktopY = e.clientY - desktopRect.top;
       
-      const gridX = Math.round(desktopX / GRID_SIZE) * GRID_SIZE;
-      const gridY = Math.round(desktopY / GRID_SIZE) * GRID_SIZE;
+      const gridX = Math.floor(desktopX / GRID_SIZE) * GRID_SIZE;
+      const gridY = Math.floor(desktopY / GRID_SIZE) * GRID_SIZE;
       
       setContextMenu({
         visible: true,
@@ -432,12 +432,19 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       
       if (!itemId) return;
       
+      // Get desktop dimensions for bounds checking
       const desktopRect = e.currentTarget.getBoundingClientRect();
-      const relativeX = e.clientX - desktopRect.left - (GRID_SIZE / 2);
-      const relativeY = e.clientY - desktopRect.top - (GRID_SIZE / 2);
       
-      const x = Math.max(0, Math.round(relativeX / GRID_SIZE) * GRID_SIZE);
-      const y = Math.max(0, Math.round(relativeY / GRID_SIZE) * GRID_SIZE);
+      const relativeX = Math.max(0, e.clientX - desktopRect.left);
+      const relativeY = Math.max(0, e.clientY - desktopRect.top);
+      
+      // Calculate max grid positions to ensure icons stay visible
+      const maxCols = Math.floor(desktopRect.width / GRID_SIZE) - 1;
+      const maxRows = Math.floor(desktopRect.height / GRID_SIZE) - 1;
+      
+      // Calculate grid position with bounds checking
+      const x = Math.min(maxCols * GRID_SIZE, Math.floor(relativeX / GRID_SIZE) * GRID_SIZE);
+      const y = Math.min(maxRows * GRID_SIZE, Math.floor(relativeY / GRID_SIZE) * GRID_SIZE);
       
       if (source === 'fileExplorer') {
         // Move the item from file explorer to desktop
@@ -474,7 +481,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           setVsCodePosition({ x, y });
         } else {
           // Find next available position
-          const position = findNextAvailablePosition(x, y, 'vscode');
+          const position = findNextAvailablePosition(0, 0, 'vscode');
           setVsCodePosition(position);
         }
         return;

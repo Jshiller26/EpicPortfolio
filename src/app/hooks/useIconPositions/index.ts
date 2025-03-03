@@ -19,6 +19,7 @@ export interface UseIconPositionsReturn {
   savePositions: () => void;
 }
 
+// Fixed grid size
 const GRID_SIZE = 76;
 
 // Custom hook to manage icon positions
@@ -32,17 +33,13 @@ export const useIconPositions = (
   // Track newly created or pasted items to avoid transition
   const [newItems, setNewItems] = useState<Set<string>>(new Set());
 
-  const getAllOccupiedPositions = useCallback((): Record<string, string> => {
-    const occupied: Record<string, string> = {};
-    
-    occupied[`${vsCodePosition.x},${vsCodePosition.y}`] = 'vscode';
-    
-    Object.entries(iconPositions).forEach(([id, pos]) => {
-      occupied[`${pos.x},${pos.y}`] = id;
-    });
-    
-    return occupied;
-  }, [iconPositions, vsCodePosition]);
+  const getWindowDimensions = useCallback(() => {
+    if (typeof window === 'undefined') return { width: 1920, height: 1080 };
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+  }, []);
 
   const isPositionOccupied = useCallback((x: number, y: number, excludeItemId?: string): boolean => {
     if (vsCodePosition.x === x && vsCodePosition.y === y && excludeItemId !== 'vscode') {
@@ -54,35 +51,54 @@ export const useIconPositions = (
     });
   }, [iconPositions, vsCodePosition]);
 
-  // Find the next available position on the grid
   const findNextAvailablePosition = useCallback((startX: number, startY: number, excludeItemId?: string): IconPosition => {
     if (!isPositionOccupied(startX, startY, excludeItemId)) {
       return { x: startX, y: startY };
     }
     
-    const leftEdgeX = 0;
-    let y = 0;
+    const { width, height } = getWindowDimensions();
     
-    while (isPositionOccupied(leftEdgeX, y, excludeItemId)) {
-      y += GRID_SIZE;
+    const maxColumns = Math.floor((width - GRID_SIZE) / GRID_SIZE);
+    const maxRows = Math.floor((height - 100) / GRID_SIZE);
+    
+    // Start at the top-left corner
+    for (let col = 0; col <= maxColumns; col++) {
+      for (let row = 0; row <= maxRows; row++) {
+        const x = col * GRID_SIZE;
+        const y = row * GRID_SIZE;
+        
+        if (!isPositionOccupied(x, y, excludeItemId)) {
+          return { x, y };
+        }
+      }
     }
     
-    return { x: leftEdgeX, y };
-  }, [isPositionOccupied]);
+    return { x: 0, y: 0 };
+  }, [isPositionOccupied, getWindowDimensions]);
 
-  const arrangeIconsVertically = useCallback((items: string[], savedPositions: Record<string, IconPosition> = {}) => {
+  const arrangeIconsInGrid = useCallback((items: string[], savedPositions: Record<string, IconPosition> = {}) => {
     const positions: Record<string, IconPosition> = {};
-    const occupied: Record<string, string> = {};
-    const leftEdgeX = 0;
+    const { width, height } = getWindowDimensions();
+    
+    const maxColumns = Math.floor((width - GRID_SIZE) / GRID_SIZE);
+    const maxRows = Math.floor((height - 100) / GRID_SIZE);
+    
+    const occupied: Record<string, boolean> = {};
     
     items.forEach(itemId => {
       if (savedPositions[itemId]) {
         const pos = savedPositions[itemId];
-        const posKey = `${pos.x},${pos.y}`;
         
-        if (!occupied[posKey]) {
-          positions[itemId] = pos;
-          occupied[posKey] = itemId;
+        if (pos.x >= 0 && pos.x <= maxColumns * GRID_SIZE && 
+            pos.y >= 0 && pos.y <= maxRows * GRID_SIZE) {
+          
+          const posKey = `${pos.x},${pos.y}`;
+          
+          // Check if this position is already occupied
+          if (!occupied[posKey]) {
+            positions[itemId] = pos;
+            occupied[posKey] = true;
+          }
         }
       }
     });
@@ -90,19 +106,26 @@ export const useIconPositions = (
     items.forEach(itemId => {
       if (positions[itemId]) return;
       
-      let y = 0;
-      while (occupied[`${leftEdgeX},${y}`]) {
-        y += GRID_SIZE;
+      // Find the first available position in the grid
+      for (let col = 0; col <= maxColumns; col++) {
+        for (let row = 0; row <= maxRows; row++) {
+          const x = col * GRID_SIZE;
+          const y = row * GRID_SIZE;
+          const posKey = `${x},${y}`;
+          
+          if (!occupied[posKey]) {
+            positions[itemId] = { x, y };
+            occupied[posKey] = true;
+            return;
+          }
+        }
       }
-      
-      positions[itemId] = { x: leftEdgeX, y };
-      occupied[`${leftEdgeX},${y}`] = itemId;
+      positions[itemId] = { x: 0, y: 0 };
     });
     
     return positions;
-  }, []);
+  }, [getWindowDimensions]);
 
-  // Compute initial positions for all items
   const computeInitialPositions = useCallback((
     allItems: string[], 
     savedIconPositions: Record<string, IconPosition> = {},
@@ -119,8 +142,7 @@ export const useIconPositions = (
       combinedSavedPositions['vscode'] = savedVsCodePos;
     }
     
-    // Arrange all items vertically
-    const allPositions = arrangeIconsVertically(allItemsCopy, combinedSavedPositions);
+    const allPositions = arrangeIconsInGrid(allItemsCopy, combinedSavedPositions);
     
     // Extract VS Code position from the results
     const vsCodePos = allPositions['vscode'] || { x: 0, y: 0 };
@@ -130,7 +152,7 @@ export const useIconPositions = (
       iconPositions: allPositions,
       vsCodePosition: vsCodePos
     };
-  }, [arrangeIconsVertically]);
+  }, [arrangeIconsInGrid]);
 
   // Add a new icon position
   const addIconPosition = useCallback((itemId: string, position?: IconPosition) => {
@@ -150,7 +172,6 @@ export const useIconPositions = (
         }));
       }
     } else {
-      // Default to finding a position along the left edge
       const newPos = findNextAvailablePosition(0, 0, itemId);
       setIconPositions(prev => ({
         ...prev,
@@ -198,6 +219,42 @@ export const useIconPositions = (
     }
   }, [iconPositions, vsCodePosition, ready]);
 
+  const ensureIconsVisible = useCallback(() => {
+    if (!ready) return;
+    
+    const { width, height } = getWindowDimensions();
+    const maxX = width - GRID_SIZE;
+    const maxY = height - 100 - GRID_SIZE;
+    
+    let needsUpdate = false;
+    const updatedPositions = { ...iconPositions };
+    
+    if (vsCodePosition.x > maxX || vsCodePosition.y > maxY) {
+      setVsCodePosition(prev => {
+        if (prev.x <= maxX) {
+          return { x: prev.x, y: Math.min(prev.y, maxY) };
+        }
+        return findNextAvailablePosition(0, 0, 'vscode');
+      });
+    }
+    
+    Object.entries(iconPositions).forEach(([id, pos]) => {
+      if (pos.x > maxX || pos.y > maxY) {
+        needsUpdate = true;
+        
+        if (pos.x <= maxX) {
+          updatedPositions[id] = { x: pos.x, y: Math.min(pos.y, maxY) };
+        } else {
+          updatedPositions[id] = findNextAvailablePosition(0, 0, id);
+        }
+      }
+    });
+    
+    if (needsUpdate) {
+      setIconPositions(updatedPositions);
+    }
+  }, [ready, getWindowDimensions, iconPositions, vsCodePosition, findNextAvailablePosition]);
+
   // Load saved positions on component mount
   useEffect(() => {
     if (typeof window !== 'undefined' && !ready) {
@@ -212,7 +269,7 @@ export const useIconPositions = (
         // Compute positions for all items
         const { iconPositions: initialPositions, vsCodePosition: initialVsCodePos } = 
           computeInitialPositions(
-            [...desktopChildren, 'vscode'], 
+            [...desktopChildren, 'vscode'],
             parsedIconPositions,
             parsedVsCodePos
           );
@@ -241,38 +298,47 @@ export const useIconPositions = (
       if (itemsWithoutPositions.length > 0) {
         console.log("Found new items without positions:", itemsWithoutPositions);
         
-        setNewItems(prev => {
-          const updated = new Set(prev);
-          itemsWithoutPositions.forEach(id => updated.add(id));
-          return updated;
-        });
-        
-        const occupied = getAllOccupiedPositions();
-        
         // Update positions for new items
         setIconPositions(prev => {
           const updatedPositions = { ...prev };
-          const leftEdgeX = 0;
           
           itemsWithoutPositions.forEach(itemId => {
-            let y = 0;
-            let posKey = `${leftEdgeX},${y}`;
+            const position = findNextAvailablePosition(0, 0, itemId);
+            updatedPositions[itemId] = position;
             
-            // Find the first unoccupied position
-            while (occupied[posKey]) {
-              y += GRID_SIZE;
-              posKey = `${leftEdgeX},${y}`;
-            }
-            
-            updatedPositions[itemId] = { x: leftEdgeX, y };
-            occupied[posKey] = itemId; 
+            setNewItems(prevItems => {
+              const updated = new Set(prevItems);
+              updated.add(itemId);
+              return updated;
+            });
+            setTimeout(() => {
+              setNewItems(prevItems => {
+                const updated = new Set(prevItems);
+                updated.delete(itemId);
+                return updated;
+              });
+            }, 500);
           });
           
           return updatedPositions;
         });
       }
     }
-  }, [ready, desktopChildren, iconPositions, getAllOccupiedPositions]);
+  }, [ready, desktopChildren, iconPositions, findNextAvailablePosition]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ready) {
+      const handleResize = () => {
+        ensureIconsVisible();
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [ready, ensureIconsVisible]);
 
   // Save positions to localStorage when they change
   useEffect(() => {
