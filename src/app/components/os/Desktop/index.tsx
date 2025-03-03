@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWindowStore } from '@/app/stores/windowStore';
-import { Taskbar } from './Taskbar';
-import { DesktopIcons } from './DesktopIcons';
-import { Window } from './Window';
-import { BackButton } from './BackButton';
-import DialogBox from '../DialogBox';
+import { Taskbar } from '../Taskbar';
+import { DesktopIcons } from '../DesktopIcons';
+import { Window } from '../Window';
+import { BackButton } from '../BackButton';
+import DialogBox from '../../DialogBox';
 
 interface DesktopProps {
   onClose: () => void;
@@ -75,16 +75,12 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     const window = windows[windowId];
     
     if (!window) {
-      // Window doesn't exist, create it
       openWindow(windowId);
     } else if (window.isMinimized) {
-      // Window is minimized, restore it
       restoreWindow(windowId);
     } else if (activeWindowId === windowId) {
-      // Window is active, minimize it
       useWindowStore.getState().minimizeWindow(windowId);
     } else {
-      // Window exists but isn't active, make it active
       useWindowStore.getState().setActiveWindow(windowId);
     }
   };

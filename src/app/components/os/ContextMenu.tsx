@@ -7,8 +7,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   
   // Position adjustment to keep menu within viewport
   const adjustPosition = () => {
+    if (!contextMenuRef.current) return { x, y };
+    
     const menuWidth = 192;
-    const menuHeight = items.length * 28; // Approximate height based on items
+    // Calculate a more accurate height based on actual items
+    let menuHeight = 0;
+    items.forEach(item => {
+      if ('divider' in item) {
+        menuHeight += 5; // Divider height
+      } else {
+        menuHeight += 28; // Regular menu item height
+      }
+    });
+    
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
@@ -32,13 +43,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
   const [openSubmenuIndex, setOpenSubmenuIndex] = React.useState<number | null>(null);
 
   useEffect(() => {
+    // Create a handler at the document level
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      
-      const isOutsideMainMenu = contextMenuRef.current && !contextMenuRef.current.contains(target);
-      const isOutsideSubmenu = submenuRef.current && !submenuRef.current.contains(target);
-      
-      if (isOutsideMainMenu && isOutsideSubmenu) {
+      // Check if click was inside any context menu
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node) &&
+          (!submenuRef.current || !submenuRef.current.contains(e.target as Node))) {
         onClose();
       }
     };
@@ -49,6 +58,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       }
     };
 
+    // Add the handler to mousedown to catch clicks
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
     
@@ -128,10 +138,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
                         e.stopPropagation();
                         // Execute item action and then close
                         subItem.onClick();
-                        // Delay closing to allow the action to complete
-                        setTimeout(() => {
-                          onClose();
-                        }, 50);
+                        // Immediately close without delay
+                        onClose();
                       }}
                     >
                       <span>{subItem.label}</span>
@@ -155,7 +163,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               onClick={(e) => {
                 e.stopPropagation();
                 if (!item.disabled && item.onClick) {
+                  // Execute action first
                   item.onClick();
+                  // Then close the menu immediately
                   onClose();
                 }
               }}

@@ -83,3 +83,8 @@ image {
 .duration-1000 {
   transition-duration: 3000ms;
 }
+
+/* Add draggable item class for preventing window drag on items */
+.draggable-item {
+  cursor: grab;
+}

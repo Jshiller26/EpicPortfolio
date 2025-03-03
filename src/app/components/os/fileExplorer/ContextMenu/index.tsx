@@ -1,98 +1,408 @@
 import React, { useEffect, useRef } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
+import { useClipboardStore } from '@/app/stores/clipboardStore';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
-interface ContextMenuProps {
+interface FileExplorerContextMenuProps {
   x: number;
   y: number;
   currentFolder: string;
   selectedItem?: FileSystemItem | null;
   onClose: () => void;
-  onCreateFile: (name: string, extension: string) => void;
-  onCreateFolder: (name: string) => void;
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({
+const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   x,
   y,
-  onClose,
-  onCreateFile,
-  onCreateFolder
+  currentFolder,
+  selectedItem,
+  onClose
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const clipboard = useClipboardStore();
+  const fileSystem = useFileSystemStore();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
+  
+  // Track which submenu is open
+  const [openSubmenu, setOpenSubmenu] = React.useState<string | null>(null);
+  
+  // Determine if the paste option should be enabled
+  const canPaste = !!clipboard.item;
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          (!submenuRef.current || !submenuRef.current.contains(e.target as Node))) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
 
-  const handleCreateTextFile = () => {
-    const fileName = prompt('Enter file name:', 'New Text File.txt');
-    if (fileName) {
-      // Extract extension or use txt as default
-      const extension = fileName.includes('.') ? fileName.split('.').pop()! : 'txt';
-      const nameWithExtension = fileName.includes('.') ? fileName : `${fileName}.txt`;
+  // Prevent default context menu on our menu
+  const preventDefault = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Actions
+  const handleOpen = () => {
+    if (!selectedItem) return;
+    
+    if (selectedItem.type === 'folder') {
+      fileSystem.navigateToFolder(selectedItem.id);
+    } else {
+      const fileExt = selectedItem.type === 'file' ? selectedItem.extension.toLowerCase() : '';
+      const windowType = ['txt', 'md', 'js', 'ts', 'html', 'css', 'py', 'json'].includes(fileExt) 
+        ? 'editor' 
+        : ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(fileExt)
+        ? 'image'
+        : fileExt === 'pdf' ? 'pdf' : 'editor';
       
-      onCreateFile(nameWithExtension, extension);
+      window.dispatchEvent(new CustomEvent('openWindow', { 
+        detail: { windowId: `${windowType}-${selectedItem.id}` } 
+      }));
+    }
+    onClose();
+  };
+
+  const handleCut = () => {
+    if (!selectedItem) return;
+    clipboard.setClipboard(selectedItem, 'cut');
+    onClose();
+  };
+
+  const handleCopy = () => {
+    if (!selectedItem) return;
+    clipboard.setClipboard(selectedItem, 'copy');
+    onClose();
+  };
+
+  const handlePaste = () => {
+    if (!clipboard.item) return;
+    
+    if (clipboard.operation === 'cut') {
+      fileSystem.moveItem(clipboard.item.id, currentFolder);
+    } else if (clipboard.operation === 'copy') {
+      fileSystem.copyItem(clipboard.item.id, currentFolder);
+    }
+    clipboard.clear();
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!selectedItem) return;
+    fileSystem.deleteItem(selectedItem.id);
+    onClose();
+  };
+
+  const handleRename = () => {
+    if (!selectedItem) return;
+    const newName = prompt('Enter new name:', selectedItem.name);
+    if (newName && newName.trim() !== '') {
+      fileSystem.renameItem(selectedItem.id, newName);
     }
     onClose();
   };
 
   const handleCreateFolder = () => {
     const folderName = prompt('Enter folder name:', 'New Folder');
-    if (folderName) {
-      onCreateFolder(folderName);
+    if (folderName && folderName.trim() !== '') {
+      fileSystem.createFolder(folderName, currentFolder);
+    }
+    onClose();
+  };
+
+  const handleCreateTextFile = () => {
+    const fileName = prompt('Enter file name:', 'New Text Document.txt');
+    if (fileName && fileName.trim() !== '') {
+      fileSystem.createFile(fileName, currentFolder, '');
     }
     onClose();
   };
 
   return (
-    <div
-      ref={ref}
-      className="absolute bg-white shadow-lg rounded-md py-1 z-50 select-none"
-      style={{
+    <div 
+      ref={menuRef}
+      className="custom-context-menu absolute z-[9999] w-48 bg-white shadow-md rounded-none border border-gray-300"
+      style={{ 
         left: x,
         top: y,
-        minWidth: '200px'
+        filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
       }}
+      onContextMenu={preventDefault}
     >
-      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-        Actions
-      </div>
-      
-      <button
-        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
-        onClick={handleCreateTextFile}
-      >
-        <span className="mr-2">📄</span>
-        New Text Document
-      </button>
-      
-      <button
-        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
-        onClick={handleCreateFolder}
-      >
-        <span className="mr-2">📁</span>
-        New Folder
-      </button>
-      
-      <div className="border-t border-gray-100 my-1"></div>
-      
-      <button
-        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-        onClick={onClose}
-      >
-        Refresh
-      </button>
+      {selectedItem ? (
+        // Item-specific menu
+        <>
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={handleOpen}
+          >
+            <span>Open</span>
+          </button>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={handleCut}
+          >
+            <span>Cut</span>
+          </button>
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={handleCopy}
+          >
+            <span>Copy</span>
+          </button>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={handleDelete}
+          >
+            <span>Delete</span>
+          </button>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={handleRename}
+          >
+            <span>Rename</span>
+          </button>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={() => {
+              console.log('Properties for', selectedItem.name);
+              onClose();
+            }}
+          >
+            <span>Properties</span>
+          </button>
+        </>
+      ) : (
+        // Background/folder menu
+        <>
+          <div className="relative">
+            <button
+              className="w-full px-3 py-[6px] text-left flex items-center justify-between text-gray-900 hover:bg-[#f2f2f2]"
+              style={{
+                fontSize: '12px',
+                lineHeight: '1',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+              }}
+              onClick={() => setOpenSubmenu(openSubmenu === 'new' ? null : 'new')}
+              onMouseEnter={() => setOpenSubmenu('new')}
+            >
+              <span>New</span>
+              <span className="ml-2">▶</span>
+            </button>
+            
+            {openSubmenu === 'new' && (
+              <div 
+                ref={submenuRef}
+                className="absolute z-[9999] w-48 bg-white shadow-md rounded-none border border-gray-300"
+                style={{ 
+                  left: '100%',
+                  top: '0',
+                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+                }}
+                onContextMenu={preventDefault}
+              >
+                <button
+                  className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+                  style={{
+                    fontSize: '12px',
+                    lineHeight: '1',
+                    fontFamily: 'Segoe UI, system-ui, sans-serif'
+                  }}
+                  onClick={handleCreateFolder}
+                >
+                  <span>Folder</span>
+                </button>
+                <button
+                  className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+                  style={{
+                    fontSize: '12px',
+                    lineHeight: '1',
+                    fontFamily: 'Segoe UI, system-ui, sans-serif'
+                  }}
+                  onClick={handleCreateTextFile}
+                >
+                  <span>Text Document</span>
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              ${!canPaste ? 'text-gray-400 cursor-default' : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={canPaste ? handlePaste : undefined}
+            disabled={!canPaste}
+          >
+            <span>Paste</span>
+          </button>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <div className="relative">
+            <button
+              className="w-full px-3 py-[6px] text-left flex items-center justify-between text-gray-900 hover:bg-[#f2f2f2]"
+              style={{
+                fontSize: '12px',
+                lineHeight: '1',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+              }}
+              onClick={() => setOpenSubmenu(openSubmenu === 'view' ? null : 'view')}
+              onMouseEnter={() => setOpenSubmenu('view')}
+            >
+              <span>View</span>
+              <span className="ml-2">▶</span>
+            </button>
+            
+            {openSubmenu === 'view' && (
+              <div 
+                className="absolute z-[9999] w-48 bg-white shadow-md rounded-none border border-gray-300"
+                style={{ 
+                  left: '100%',
+                  top: '0',
+                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+                }}
+                onContextMenu={preventDefault}
+              >
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Large Icons
+                </button>
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Medium Icons
+                </button>
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Small Icons
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="relative">
+            <button
+              className="w-full px-3 py-[6px] text-left flex items-center justify-between text-gray-900 hover:bg-[#f2f2f2]"
+              style={{
+                fontSize: '12px',
+                lineHeight: '1',
+                fontFamily: 'Segoe UI, system-ui, sans-serif'
+              }}
+              onClick={() => setOpenSubmenu(openSubmenu === 'sort' ? null : 'sort')}
+              onMouseEnter={() => setOpenSubmenu('sort')}
+            >
+              <span>Sort By</span>
+              <span className="ml-2">▶</span>
+            </button>
+            
+            {openSubmenu === 'sort' && (
+              <div 
+                className="absolute z-[9999] w-48 bg-white shadow-md rounded-none border border-gray-300"
+                style={{ 
+                  left: '100%',
+                  top: '0',
+                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+                }}
+                onContextMenu={preventDefault}
+              >
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Name
+                </button>
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Size
+                </button>
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Type
+                </button>
+                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                  Date modified
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
+          
+          <button
+            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1',
+              fontFamily: 'Segoe UI, system-ui, sans-serif'
+            }}
+            onClick={() => {
+              console.log('Folder properties');
+              onClose();
+            }}
+          >
+            <span>Properties</span>
+          </button>
+        </>
+      )}
     </div>
   );
 };
 
-export default ContextMenu;
+export default FileExplorerContextMenu;

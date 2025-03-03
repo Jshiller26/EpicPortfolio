@@ -38,11 +38,11 @@ export const useFileSystemStore = create<FileSystemState & {
   deleteItems: (itemIds: string[]) => void;
   
   // Copy/Move operations
-  copyItem: (itemId: string, targetFolderId: string) => void;
-  moveItem: (itemId: string, targetFolderId: string) => void;
+  copyItem: (itemId: string, targetFolderId: string, onCopyComplete?: (newId: string) => void) => void;
+  moveItem: (itemId: string, targetFolderId: string, onMoveComplete?: (newId: string) => void) => void;
   copyItems: (itemIds: string[]) => void;
   cutItems: (itemIds: string[]) => void;
-  pasteItems: (targetFolderId: string) => void;
+  pasteItems: (targetFolderId: string, onPasteComplete?: (operation: 'cut' | 'copy', itemIds: Record<string, string>) => void) => void;
   
   // Rename operation
   renameItem: (itemId: string, newName: string) => void;
@@ -105,11 +105,17 @@ export const useFileSystemStore = create<FileSystemState & {
   deleteItems: (itemIds) => set(state => deleteItems(state, itemIds)),
   
   // Copy/Move operations
-  copyItem: (itemId, targetFolderId) => set(state => copyItem(state, itemId, targetFolderId)),
-  moveItem: (itemId, targetFolderId) => set(state => moveItem(state, itemId, targetFolderId)),
+  copyItem: (itemId, targetFolderId, onCopyComplete) => set(state => 
+    copyItem(state, itemId, targetFolderId, onCopyComplete)
+  ),
+  moveItem: (itemId, targetFolderId, onMoveComplete) => set(state => 
+    moveItem(state, itemId, targetFolderId, onMoveComplete)
+  ),
   copyItems: (itemIds) => set(state => copyItems(state, itemIds)),
   cutItems: (itemIds) => set(state => cutItems(state, itemIds)),
-  pasteItems: (targetFolderId) => set(state => pasteItems(state, targetFolderId)),
+  pasteItems: (targetFolderId, onPasteComplete) => set(state => 
+    pasteItems(state, targetFolderId, onPasteComplete)
+  ),
   
   // Rename operation
   renameItem: (itemId, newName) => set(state => renameItem(state, itemId, newName))
