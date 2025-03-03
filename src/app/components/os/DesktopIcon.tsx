@@ -16,6 +16,9 @@ interface DesktopIconProps {
   onDragStart: (e: React.DragEvent, itemId: string) => void;
   onDragEnd: () => void;
   onDoubleClick: () => void;
+  onDragOver?: (e: React.DragEvent, itemId: string) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent, itemId: string) => void;
   onRenameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRenameKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onRenameComplete?: () => void;
@@ -34,6 +37,9 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   onDragStart,
   onDragEnd,
   onDoubleClick,
+  onDragOver,
+  onDragLeave,
+  onDrop,
   onRenameChange,
   onRenameKeyDown,
   onRenameComplete
@@ -41,6 +47,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
+  const [isDropTarget, setIsDropTarget] = useState(false);
 
   React.useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -84,9 +91,49 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     onDragEnd();
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    // Only accept drops for folders
+    if (item.type === 'folder') {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Set visual feedback
+      if (!isDropTarget) {
+        setIsDropTarget(true);
+      }
+      
+      if (onDragOver) {
+        onDragOver(e, itemId);
+      }
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (item.type === 'folder') {
+      setIsDropTarget(false);
+      
+      if (onDragLeave) {
+        onDragLeave(e);
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (item.type === 'folder') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDropTarget(false);
+      
+      if (onDrop) {
+        onDrop(e, itemId);
+      }
+    }
+  };
+
   return (
     <div
-      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded hover:bg-white/10 draggable-item
+      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded 
+        ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={{
@@ -97,6 +144,9 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onContextMenu={(e) => onContextMenu(e, itemId)}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onDoubleClick={onDoubleClick}
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">

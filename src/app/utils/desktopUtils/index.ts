@@ -26,21 +26,33 @@ export const createUniqueFolder = (
 export const createUniqueTextFile = (
   desktop: Folder,
   items: Record<string, FileSystemItem>,
-  createFile: (name: string, parentId: string, content: string, size: number) => string | null
+  createFile: (name: string, parentId: string, content: string, size: number) => string | null,
+  customName?: string,
+  callback?: (id: string | null) => void
 ): string | null => {
-  const baseName = 'New Text Document';
+  const baseName = customName || 'New Text Document';
   let counter = 1;
-  let name = `${baseName}.txt`;
+  let name = customName || `${baseName}.txt`;
+  
+  if (customName && !customName.includes('.')) {
+    name = `${customName}.txt`;
+  }
   
   while (desktop.children.some(childId => {
     const child = items[childId];
     return child.name === name && child.type === 'file';
   })) {
-    name = `${baseName} (${counter}).txt`;
+    name = customName ? 
+      `${customName.replace(/\(\d+\)$/, '')} (${counter})${customName.includes('.') ? '' : '.txt'}` : 
+      `${baseName} (${counter}).txt`;
     counter++;
   }
   
-  return createFile(name, 'desktop', '', 0);
+  const newId = createFile(name, 'desktop', '', 0);
+  if (callback && typeof callback === 'function') {
+    callback(newId);
+  }
+  return newId;
 };
 
 // Get the initial new name for renaming, handling file extensions
@@ -65,10 +77,16 @@ export const handleOpenItem = (
     const windowId = `explorer-${itemId}`;
     onOpenWindow(windowId);
   } else {
-    // Handle file opening based on file type
-    const file = items[itemId] as File;
+    if (item.name === 'VS Code.exe') {
+      onOpenWindow('vscode-new');
+      return;
+    }
     
-    switch (file.extension.toLowerCase()) {
+    // Handle file opening based on file extension
+    const file = item as File;
+    const extension = file.extension ? file.extension.toLowerCase() : '';
+    
+    switch (extension) {
       case 'txt':
       case 'md':
       case 'js':
@@ -91,6 +109,10 @@ export const handleOpenItem = (
       case 'pdf':
         // Open in PDF viewer
         onOpenWindow(`pdf-${itemId}`);
+        break;
+      case 'exe':
+        // Generic app handling
+        console.log(`Launching app: ${file.name}`);
         break;
       default:
         // Default file handler
@@ -145,27 +167,6 @@ export const getDesktopContextMenu = (
     {
       label: 'Properties',
       onClick: () => console.log('Desktop properties')
-    }
-  ];
-};
-
-export const getVsCodeContextMenu = (
-  handleOpenVsCode: () => void
-): ContextMenuItem[] => {
-  return [
-    {
-      label: 'Open',
-      onClick: handleOpenVsCode
-    },
-    { divider: true },
-    {
-      label: 'Create New File',
-      onClick: handleOpenVsCode
-    },
-    { divider: true },
-    {
-      label: 'Properties',
-      onClick: () => console.log('VS Code properties')
     }
   ];
 };
