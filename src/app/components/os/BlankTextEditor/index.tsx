@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Save, Check } from 'lucide-react';
+import { editor } from 'monaco-editor';
 
 interface BlankTextEditorProps {
   windowId: string;
@@ -16,7 +17,7 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   useEffect(() => {
     setIsLoading(false);
@@ -149,7 +150,7 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
     }
   };
 
-  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
     editorRef.current = editor;
     setIsLoading(false);
     

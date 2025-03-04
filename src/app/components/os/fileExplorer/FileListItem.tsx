@@ -34,6 +34,37 @@ const FileListItem: React.FC<FileListItemProps> = ({
     e.dataTransfer.setData('text/plain', item.id);
   };
 
+  const getFormattedDate = () => {
+    if (!item.modified) {
+      return 'Unknown';
+    }
+    
+    if (item.modified instanceof Date) {
+      return item.modified.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+    
+    try {
+      const date = new Date(item.modified);
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
   return (
     <tr
       className="hover:bg-gray-100 cursor-pointer draggable-item"
@@ -65,14 +96,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
         <span className="text-gray-700">{item.name}</span>
       </td>
       <td className="px-4 py-1 text-gray-700">
-        {new Date(item.modified).toLocaleString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        })}
+        {getFormattedDate()}
       </td>
       <td className="px-4 py-1 text-gray-700">{getItemTypeString(item)}</td>
       <td className="px-4 py-1 text-gray-700">

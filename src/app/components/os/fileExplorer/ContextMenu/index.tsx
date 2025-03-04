@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { FileSystemItem } from '@/app/types/fileSystem';
+import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
@@ -58,6 +58,13 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     e.stopPropagation();
   };
 
+  const getFileExtension = (item: FileSystemItem): string => {
+    if (item.type === 'file') {
+      return (item as File).extension?.toLowerCase() || '';
+    }
+    return '';
+  };
+
   // Actions
   const handleOpen = () => {
     if (!selectedItem) return;
@@ -65,7 +72,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     if (selectedItem.type === 'folder') {
       fileSystem.navigateToFolder(selectedItem.id);
     } else {
-      const fileExt = selectedItem.type === 'file' ? selectedItem.extension.toLowerCase() : '';
+      const fileExt = getFileExtension(selectedItem);
       const windowType = ['txt', 'md', 'js', 'ts', 'html', 'css', 'py', 'json'].includes(fileExt) 
         ? 'editor' 
         : ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(fileExt)
