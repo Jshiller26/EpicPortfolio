@@ -5,6 +5,7 @@ import { FileExplorer } from './FileExplorer';
 import TextEditor from './TextEditor';
 import BlankTextEditor from './BlankTextEditor';
 import { isTextFile } from '@/app/utils/iconUtils';
+import PDFViewer from './PDFViewer';
 
 interface WindowContentProps {
   windowId: string;
@@ -51,14 +52,7 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     const file = fileSystem.items[fileId] as File;
     
     if (file && file.type === 'file') {
-      return (
-        <div className="p-4 flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-gray-500">PDF Viewer</div>
-            <div className="mt-2 text-sm">{file.name}</div>
-          </div>
-        </div>
-      );
+      return <PDFViewer fileId={file.name} />;
     }
     return <div className="p-4">PDF not found.</div>;
   }
