@@ -23,18 +23,21 @@ const FileListItem: React.FC<FileListItemProps> = ({
   const [newName, setNewName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // Define the type for our custom event
+  type RenameItemEvent = CustomEvent<{ itemId: string }>;
+
   // Listen for rename event
   useEffect(() => {
-    const handleRename = (e: CustomEvent) => {
+    const handleRename = (e: RenameItemEvent) => {
       if (e.detail && e.detail.itemId === item.id) {
         startRenaming();
       }
     };
     
-    window.addEventListener('renameItem' as any, handleRename as EventListener);
+    window.addEventListener('renameItem', handleRename as EventListener);
     
     return () => {
-      window.removeEventListener('renameItem' as any, handleRename as EventListener);
+      window.removeEventListener('renameItem', handleRename as EventListener);
     };
   }, [item.id]);
   
@@ -197,41 +200,50 @@ const FileListItem: React.FC<FileListItemProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <td className="px-4 py-1 flex items-center gap-2">
-        {item.type === 'folder' ? (
-          <Image
-            src="/images/desktop/icons8-folder.svg" 
-            alt="folder"
-            width={16}
-            height={16}
-            className="w-4 h-4"
-            unoptimized={true}
-          />
-        ) : (
-          <Image
-            src="/images/desktop/icons8-file.svg"
-            alt="file"
-            width={16}
-            height={16}
-            className="w-4 h-4"
-            unoptimized={true}
-          />
-        )}
-        {isRenaming ? (
-          <input
-            ref={inputRef}
-            type="text"
-            className="px-1 py-0 m-0 border border-blue-500 outline-none bg-white text-gray-700 w-56"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={handleRenameKeyDown}
-            onBlur={handleInputBlur}
-            onClick={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span className="text-gray-700">{item.name}</span>
-        )}
+      <td className="px-4 py-1">
+        <div className="flex items-center gap-2 relative">
+          {item.type === 'folder' ? (
+            <Image
+              src="/images/desktop/icons8-folder.svg" 
+              alt="folder"
+              width={16}
+              height={16}
+              className="w-4 h-4"
+              unoptimized={true}
+            />
+          ) : (
+            <Image
+              src="/images/desktop/icons8-file.svg"
+              alt="file"
+              width={16}
+              height={16}
+              className="w-4 h-4"
+              unoptimized={true}
+            />
+          )}
+          {isRenaming ? (
+            <div className="absolute left-6 top-[-1px] z-10">
+              <input
+                ref={inputRef}
+                type="text"
+                className="px-1 py-0 m-0 border border-blue-500 outline-none bg-white text-gray-700 w-40"
+                value={newName}
+                onChange={(e) => {
+                  // Limit to 50 characters
+                  if (e.target.value.length <= 50) {
+                    setNewName(e.target.value);
+                  }
+                }}
+                maxLength={50}
+                onKeyDown={handleRenameKeyDown}
+                onBlur={handleInputBlur}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          ) : null}
+          <span className={`text-gray-700 ${isRenaming ? 'invisible' : 'visible'}`}>{item.name}</span>
+        </div>
       </td>
       <td className="px-4 py-1 text-gray-700">
         {getFormattedDate()}
