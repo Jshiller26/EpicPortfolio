@@ -96,7 +96,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       const folderId = windowId.replace('explorer-', '');
       const folder = fileSystem.items[folderId];
       
-      if (folder && folder.type === 'folder') {
+      if (folder && folder.type === 'folder' && folder.path) {
         pathToUse = folder.path;
       }
     }
@@ -162,7 +162,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const navigateUp = () => {
     if (currentFolder && currentFolder.parentId !== null) {
       const parentFolder = fileSystem.items[currentFolder.parentId];
-      if (parentFolder) {
+      if (parentFolder && parentFolder.path) {
         navigateToPath(parentFolder.path);
       }
     }
@@ -180,12 +180,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   // Helper function to check if a file is a text file
   const isTextFile = (file: File): boolean => {
     const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
-    return textExtensions.includes(file.extension.toLowerCase());
+    return file.extension ? textExtensions.includes(file.extension.toLowerCase()) : false;
   };
 
   const handleItemDoubleClick = (item: FileSystemItem) => {
     if (isFolder(item)) {
-      navigateToPath(item.path);
+      if (item.path) {
+        navigateToPath(item.path);
+      }
     } else if (isFile(item)) {
       console.log('Opening file:', item.name, 'with extension:', item.extension);
       
@@ -197,11 +199,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       // Handle text files with the editor
       if (isTextFile(item)) {
         openWindow(`editor-${item.id}`);
-      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes((item as File).extension?.toLowerCase() || '')) {
+      } else if (item.extension && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.extension.toLowerCase())) {
         openWindow(`image-${item.id}`);
-      } else if ((item as File).extension?.toLowerCase() === 'pdf') {
+      } else if (item.extension?.toLowerCase() === 'pdf') {
         openWindow(`pdf-${item.id}`);
-      } else if ((item as File).extension?.toLowerCase() === 'exe') {
+      } else if (item.extension?.toLowerCase() === 'exe') {
         if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
           openWindow('vscode-new');
         } else {
@@ -209,7 +211,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           alert(`Application cannot be launched.`);
         }
       } else {
-        alert(`File type .${(item as File).extension} is not supported.`);
+        alert(`File type ${item.extension ? '.' + item.extension : 'unknown'} is not supported.`);
       }
     }
   };

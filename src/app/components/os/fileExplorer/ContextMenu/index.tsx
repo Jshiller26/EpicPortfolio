@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { FileSystemItem } from '@/app/types/fileSystem';
+import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
@@ -58,6 +58,13 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     e.stopPropagation();
   };
 
+  const getFileExtension = (item: FileSystemItem): string => {
+    if (item.type === 'file') {
+      return (item as File).extension?.toLowerCase() || '';
+    }
+    return '';
+  };
+
   // Actions
   const handleOpen = () => {
     if (!selectedItem) return;
@@ -65,7 +72,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     if (selectedItem.type === 'folder') {
       fileSystem.navigateToFolder(selectedItem.id);
     } else {
-      const fileExt = selectedItem.type === 'file' ? selectedItem.extension.toLowerCase() : '';
+      const fileExt = getFileExtension(selectedItem);
       const windowType = ['txt', 'md', 'js', 'ts', 'html', 'css', 'py', 'json'].includes(fileExt) 
         ? 'editor' 
         : ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(fileExt)
@@ -111,26 +118,37 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 
   const handleRename = () => {
     if (!selectedItem) return;
-    const newName = prompt('Enter new name:', selectedItem.name);
-    if (newName && newName.trim() !== '') {
-      fileSystem.renameItem(selectedItem.id, newName);
-    }
+    
+    // Trigger a rename event that the item component will listen for
+    window.dispatchEvent(new CustomEvent('renameItem', {
+      detail: { itemId: selectedItem.id }
+    }));
+    
     onClose();
   };
 
   const handleCreateFolder = () => {
-    const folderName = prompt('Enter folder name:', 'New Folder');
-    if (folderName && folderName.trim() !== '') {
-      fileSystem.createFolder(folderName, currentFolder);
-    }
+    const folderId = fileSystem.createFolder('New Folder', currentFolder);
+    
+    // Trigger the rename event immediately after creation to start inline renaming
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('renameItem', {
+        detail: { itemId: folderId }
+      }));
+    }, 100);
+    
     onClose();
   };
 
   const handleCreateTextFile = () => {
-    const fileName = prompt('Enter file name:', 'New Text Document.txt');
-    if (fileName && fileName.trim() !== '') {
-      fileSystem.createFile(fileName, currentFolder, '');
-    }
+    const fileId = fileSystem.createFile('New Text Document.txt', currentFolder, '', 0);
+    
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('renameItem', {
+        detail: { itemId: fileId }
+      }));
+    }, 100);
+    
     onClose();
   };
 

@@ -31,6 +31,11 @@ export const navigateToFolder = (
     return state;
   }
   
+  if (!folder.path) {
+    console.error('Folder path is undefined');
+    return state;
+  }
+  
   return {
     ...state,
     currentPath: folder.path
@@ -70,5 +75,5 @@ export const getPathToItem = (
   
   if (!item) return null;
   
-  return item.path;
+  return item.path || null;
 };
