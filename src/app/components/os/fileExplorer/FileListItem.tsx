@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { FileSystemItem } from '../../../types/fileSystem';
 import { formatFileSize, getItemTypeString } from '../../../stores/fileSystem/utils/pathUtils';
+import { useFileSystemStore } from '../../../stores/fileSystemStore';
 
 interface FileListItemProps {
   item: FileSystemItem;
@@ -16,6 +17,9 @@ const FileListItem: React.FC<FileListItemProps> = ({
   onContextMenu,
   currentFolderId 
 }) => {
+  const fileSystem = useFileSystemStore();
+  const [isDragOver, setIsDragOver] = useState(false);
+  
   // Handle drag start for file explorer items
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
@@ -65,13 +69,63 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    if (item.type !== 'folder') return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  // Handle drag leave for folders
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (item.type !== 'folder') return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  // Handle drop for folders
+  const handleDrop = (e: React.DragEvent) => {
+    if (item.type !== 'folder') return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      if (!jsonData) return;
+      
+      const dragData = JSON.parse(jsonData);
+      const draggedItemId = dragData.itemId;
+      
+      if (draggedItemId === item.id) return;
+      
+      if (dragData.source === 'desktop') {
+        fileSystem.moveItem(draggedItemId, item.id);
+      } else if (dragData.source === 'fileExplorer') {
+        if (dragData.sourceFolderId === item.id) return;
+        
+        fileSystem.moveItem(draggedItemId, item.id);
+      }
+    } catch (error) {
+      console.error('Error processing drop onto folder:', error);
+    }
+  };
+
   return (
     <tr
-      className="hover:bg-gray-100 cursor-pointer draggable-item"
+      className={`hover:bg-gray-100 cursor-pointer draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
       onDoubleClick={() => onDoubleClick(item)}
       onContextMenu={(e) => onContextMenu(e, item)}
       draggable={true}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <td className="px-4 py-1 flex items-center gap-2">
         {item.type === 'folder' ? (
