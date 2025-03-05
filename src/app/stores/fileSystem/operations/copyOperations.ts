@@ -1,6 +1,6 @@
 import { FileSystemState, Folder, File } from '../../../types/fileSystem';
 import { moveItem } from './moveOperations';
-import { ensureUniqueName } from './createOperations';
+import { generateUniqueFilename } from '../utils/pathUtils';
 
 export const copyItemAndChildren = (
   id: string, 
@@ -20,7 +20,7 @@ export const copyItemAndChildren = (
   idMap[id] = newId;
   
   // Ensure the name is unique in the target folder
-  const uniqueName = ensureUniqueName(item.name, targetId, item.type, items);
+  const uniqueName = generateUniqueFilename(targetFolder, item.name, item.type, items);
   
   // Create copy of the item with the unique name
   const newPath = `${targetFolder.path}\\${uniqueName}`;

@@ -27,6 +27,51 @@ export const checkNameConflict = (
   });
 };
 
+export const generateUniqueFilename = (
+  parent: Folder,
+  baseName: string,
+  type: 'file' | 'folder',
+  items: Record<string, FileSystemItem>
+): string => {
+  if (!checkNameConflict(parent, baseName, type, items)) {
+    return baseName;
+  }
+  
+  let nameWithoutExtension = baseName;
+  let extension = '';
+  
+  if (type === 'file' && baseName.includes('.')) {
+    const lastDotIndex = baseName.lastIndexOf('.');
+    nameWithoutExtension = baseName.substring(0, lastDotIndex);
+    extension = baseName.substring(lastDotIndex);
+  }
+  
+  const counterRegex = /^(.*?)(?: \((\d+)\))?$/;
+  const match = nameWithoutExtension.match(counterRegex);
+  
+  if (!match) {
+    return baseName;
+  }
+  
+  const nameBase = match[1];
+  let counter = match[2] ? parseInt(match[2], 10) : 0;
+  
+  // Try incrementing numbers until we find a unique name
+  let uniqueName = '';
+  let isUnique = false;
+  
+  while (!isUnique) {
+    counter++;
+    uniqueName = type === 'file' 
+      ? `${nameBase} (${counter})${extension}`
+      : `${nameBase} (${counter})`;
+    
+    isUnique = !checkNameConflict(parent, uniqueName, type, items);
+  }
+  
+  return uniqueName;
+};
+
 export const getPathParts = (path: string): { name: string; path: string }[] => {
   const parts = path.split('\\');
   const result: { name: string; path: string }[] = [];

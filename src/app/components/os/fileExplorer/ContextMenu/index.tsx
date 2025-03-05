@@ -128,28 +128,27 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   };
 
   const handleCreateFolder = () => {
-    const folderName = prompt('Enter folder name:', 'New Folder');
-    if (folderName && folderName.trim() !== '') {
-      fileSystem.createFolder(folderName, currentFolder);
-    }
+    const folderId = fileSystem.createFolder('New Folder', currentFolder);
+    
+    // Trigger the rename event immediately after creation to start inline renaming
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('renameItem', {
+        detail: { itemId: folderId }
+      }));
+    }, 100);
+    
     onClose();
   };
 
   const handleCreateTextFile = () => {
-    // Get the file name from the user
-    let fileName = prompt('Enter file name:', 'New Text Document');
+    const fileId = fileSystem.createFile('New Text Document.txt', currentFolder, '', 0);
     
-    // Only proceed if the user entered a name
-    if (fileName && fileName.trim() !== '') {
-      // Ensure the file has a .txt extension
-      if (!fileName.toLowerCase().endsWith('.txt')) {
-        fileName = `${fileName}.txt`;
-      }
-      
-      // Create the text file
-      const fileId = fileSystem.createFile(fileName, currentFolder, '', 0);
-      console.log(`Created text file: ${fileName} with ID: ${fileId}`);
-    }
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('renameItem', {
+        detail: { itemId: fileId }
+      }));
+    }, 100);
+    
     onClose();
   };
 

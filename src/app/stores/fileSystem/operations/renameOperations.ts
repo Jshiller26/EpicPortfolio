@@ -1,5 +1,5 @@
 import { FileSystemState, Folder, File, FileSystemItem } from '../../../types/fileSystem';
-import { checkNameConflict } from '../utils/pathUtils';
+import { checkNameConflict, generateUniqueFilename } from '../utils/pathUtils';
 
 export const updatePathsAfterRename = (
   id: string, 
@@ -38,12 +38,11 @@ export const renameItem = (
   
   if (!item) return state;
   
-  // Check if an item with the same name exists in the parent folder
+  let finalName = newName;
   if (item.parentId) {
     const parent = newItems[item.parentId] as Folder;
     if (checkNameConflict(parent, newName, item.type, newItems, itemId)) {
-      console.error('An item with this name already exists');
-      return state;
+      finalName = generateUniqueFilename(parent, newName, item.type, newItems);
     }
   }
   
@@ -53,14 +52,14 @@ export const renameItem = (
   // Update item name and path
   newItems[itemId] = {
     ...item,
-    name: newName,
-    path: parentPath ? `${parentPath}\\${newName}` : newName,
+    name: finalName,
+    path: parentPath ? `${parentPath}\\${finalName}` : finalName,
     modified: new Date()
   };
   
   // If it's a file, update extension
   if (item.type === 'file') {
-    const extension = newName.includes('.') ? newName.split('.').pop()! : '';
+    const extension = finalName.includes('.') ? finalName.split('.').pop()! : '';
     (newItems[itemId] as File).extension = extension;
   }
   

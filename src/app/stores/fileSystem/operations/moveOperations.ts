@@ -1,5 +1,5 @@
 import { FileSystemState, Folder, File } from '../../../types/fileSystem';
-import { ensureUniqueName } from './createOperations';
+import { generateUniqueFilename } from '../utils/pathUtils';
 
 export const updatePaths = (
   id: string, 
@@ -53,7 +53,7 @@ export const moveItem = (
   }
 
   // Ensure the name is unique in the target folder
-  const uniqueName = ensureUniqueName(item.name, targetFolderId, item.type, newItems);
+  const uniqueName = generateUniqueFilename(targetFolder, item.name, item.type, newItems);
   
   // Remove from old parent
   if (item.parentId) {

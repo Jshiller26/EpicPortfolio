@@ -23,7 +23,6 @@ const FileListItem: React.FC<FileListItemProps> = ({
   const [newName, setNewName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Define the type for our custom event
   type RenameItemEvent = CustomEvent<{ itemId: string }>;
 
   // Listen for rename event
