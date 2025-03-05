@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { FileSystemItem } from '../../../types/fileSystem';
 import { formatFileSize, getItemTypeString } from '../../../stores/fileSystem/utils/pathUtils';
@@ -19,9 +19,77 @@ const FileListItem: React.FC<FileListItemProps> = ({
 }) => {
   const fileSystem = useFileSystemStore();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Listen for rename event
+  useEffect(() => {
+    const handleRename = (e: CustomEvent) => {
+      if (e.detail && e.detail.itemId === item.id) {
+        startRenaming();
+      }
+    };
+    
+    window.addEventListener('renameItem' as any, handleRename as EventListener);
+    
+    return () => {
+      window.removeEventListener('renameItem' as any, handleRename as EventListener);
+    };
+  }, [item.id]);
+  
+  // Focus input when renaming starts
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus();
+      
+      // Select only the name part for files (exclude extension)
+      if (item.type === 'file' && item.name.includes('.')) {
+        const lastDotIndex = item.name.lastIndexOf('.');
+        inputRef.current.setSelectionRange(0, lastDotIndex);
+      } else {
+        inputRef.current.select();
+      }
+    }
+  }, [isRenaming, item]);
+  
+  const startRenaming = () => {
+    setIsRenaming(true);
+    setNewName(item.name);
+  };
+  
+  const finishRenaming = () => {
+    if (newName.trim() && newName !== item.name) {
+      // For files, preserve the extension
+      if (item.type === 'file' && item.name.includes('.') && !newName.includes('.')) {
+        const extension = item.name.substring(item.name.lastIndexOf('.'));
+        fileSystem.renameItem(item.id, newName.trim() + extension);
+      } else {
+        fileSystem.renameItem(item.id, newName.trim());
+      }
+    }
+    setIsRenaming(false);
+  };
+  
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      finishRenaming();
+    } else if (e.key === 'Escape') {
+      setIsRenaming(false);
+    }
+  };
+  
+  const handleInputBlur = () => {
+    finishRenaming();
+  };
   
   // Handle drag start for file explorer items
   const handleDragStart = (e: React.DragEvent) => {
+    if (isRenaming) {
+      e.preventDefault();
+      return;
+    }
+    
     e.stopPropagation();
     
     e.dataTransfer.effectAllowed = 'move';
@@ -69,6 +137,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
+  // Handle drag over events for folders
   const handleDragOver = (e: React.DragEvent) => {
     if (item.type !== 'folder') return;
     
@@ -102,6 +171,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
       const dragData = JSON.parse(jsonData);
       const draggedItemId = dragData.itemId;
       
+      // Don't allow dropping onto itself
       if (draggedItemId === item.id) return;
       
       if (dragData.source === 'desktop') {
@@ -119,9 +189,9 @@ const FileListItem: React.FC<FileListItemProps> = ({
   return (
     <tr
       className={`hover:bg-gray-100 cursor-pointer draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
-      onDoubleClick={() => onDoubleClick(item)}
-      onContextMenu={(e) => onContextMenu(e, item)}
-      draggable={true}
+      onDoubleClick={() => !isRenaming && onDoubleClick(item)}
+      onContextMenu={(e) => !isRenaming && onContextMenu(e, item)}
+      draggable={!isRenaming}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -147,7 +217,21 @@ const FileListItem: React.FC<FileListItemProps> = ({
             unoptimized={true}
           />
         )}
-        <span className="text-gray-700">{item.name}</span>
+        {isRenaming ? (
+          <input
+            ref={inputRef}
+            type="text"
+            className="px-1 py-0 m-0 border border-blue-500 outline-none bg-white text-gray-700 w-56"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={handleRenameKeyDown}
+            onBlur={handleInputBlur}
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="text-gray-700">{item.name}</span>
+        )}
       </td>
       <td className="px-4 py-1 text-gray-700">
         {getFormattedDate()}

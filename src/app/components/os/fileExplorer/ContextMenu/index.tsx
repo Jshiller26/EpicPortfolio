@@ -118,10 +118,12 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 
   const handleRename = () => {
     if (!selectedItem) return;
-    const newName = prompt('Enter new name:', selectedItem.name);
-    if (newName && newName.trim() !== '') {
-      fileSystem.renameItem(selectedItem.id, newName);
-    }
+    
+    // Trigger a rename event that the item component will listen for
+    window.dispatchEvent(new CustomEvent('renameItem', {
+      detail: { itemId: selectedItem.id }
+    }));
+    
     onClose();
   };
 
@@ -134,9 +136,19 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   };
 
   const handleCreateTextFile = () => {
-    const fileName = prompt('Enter file name:', 'New Text Document.txt');
+    // Get the file name from the user
+    let fileName = prompt('Enter file name:', 'New Text Document');
+    
+    // Only proceed if the user entered a name
     if (fileName && fileName.trim() !== '') {
-      fileSystem.createFile(fileName, currentFolder, '');
+      // Ensure the file has a .txt extension
+      if (!fileName.toLowerCase().endsWith('.txt')) {
+        fileName = `${fileName}.txt`;
+      }
+      
+      // Create the text file
+      const fileId = fileSystem.createFile(fileName, currentFolder, '', 0);
+      console.log(`Created text file: ${fileName} with ID: ${fileId}`);
     }
     onClose();
   };
