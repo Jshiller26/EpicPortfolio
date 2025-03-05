@@ -165,8 +165,21 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc',
-      children: []
+      children: ['emc-photobooth-pdf']
     } as Folder,
+    
+    'emc-photobooth-pdf': {
+      id: 'emc-photobooth-pdf',
+      name: 'EMC Photobooth.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\EMC\\EMC-Photobooth\\EMC Photobooth.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'EMC-Photobooth',
+      content: '[PDF content from /pdfs/EMC Photobooth.pdf]',
+      size: 2048
+    } as File,
     
     'Emc-QuizGame': {
       id: 'Emc-QuizGame',
