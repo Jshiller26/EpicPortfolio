@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { File } from '@/app/types/fileSystem';
-import { FileExplorer } from '../fileExplorer/FileExplorer';
+import { FileExplorer } from '../FileExplorer';
 import TextEditor from '../TextEditor';
 import BlankTextEditor from '../BlankTextEditor';
 import { isTextFile } from '@/app/utils/iconUtils';

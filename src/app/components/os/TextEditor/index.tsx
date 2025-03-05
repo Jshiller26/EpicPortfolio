@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Editor, { Monaco } from "@monaco-editor/react";
+import Editor, { OnMount } from "@monaco-editor/react";
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { File } from '@/app/types/fileSystem';
 import { Save, Check } from 'lucide-react';
+import { editor } from 'monaco-editor';
 
 interface TextEditorProps {
   fileId: string;
@@ -18,7 +19,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   useEffect(() => {
     if (file) {
@@ -54,7 +55,8 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
         'txt': 'plaintext'
       };
       
-      const extension = file.extension.toLowerCase();
+      // Fix for possibly undefined extension
+      const extension = file.extension ? file.extension.toLowerCase() : 'txt';
       setLanguage(languageMap[extension] || 'plaintext');
     }
     
@@ -96,7 +98,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
     }
   };
 
-  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     setIsLoading(false);
     
@@ -137,7 +139,6 @@ const TextEditor: React.FC<TextEditorProps> = ({ fileId }) => {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden bg-[#1e1e1e] text-white relative">
-      {/* Editor takes all available space minus the status bar height */}
       <div className="absolute inset-0 bottom-9">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
