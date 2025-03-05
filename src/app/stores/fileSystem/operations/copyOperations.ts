@@ -1,15 +1,15 @@
-import { FileSystemState, Folder, File } from '../../../types/fileSystem';
+import { FileSystemState, Folder, File, AppItem } from '../../../types/fileSystem';
 import { moveItem } from './moveOperations';
 import { generateUniqueFilename } from '../utils/pathUtils';
 
 export const copyItemAndChildren = (
   id: string, 
   targetId: string, 
-  items: Record<string, Folder | File>,
+  items: Record<string, Folder | File | AppItem>,
   idMap: Record<string, string> = {}
-): [Record<string, Folder | File>, string] => {
+): [Record<string, Folder | File | AppItem>, string] => {
   const item = items[id];
-  const targetFolder = items[targetId] as Folder;
+  const targetFolder = items[targetId];
   
   if (!item || !targetFolder || targetFolder.type !== 'folder') {
     return [items, ''];
@@ -20,10 +20,10 @@ export const copyItemAndChildren = (
   idMap[id] = newId;
   
   // Ensure the name is unique in the target folder
-  const uniqueName = generateUniqueFilename(targetFolder, item.name, item.type, items);
+  const uniqueName = generateUniqueFilename(targetFolder as Folder, item.name, item.type, items);
   
   // Create copy of the item with the unique name
-  const newPath = `${targetFolder.path}\\${uniqueName}`;
+  const newPath = `${targetFolder.path || ''}\\${uniqueName}`;
   const itemCopy = {
     ...JSON.parse(JSON.stringify(item)),
     id: newId,
@@ -41,7 +41,7 @@ export const copyItemAndChildren = (
     
     let newItems = {
       ...items,
-      [newId]: itemCopy as Folder | File
+      [newId]: itemCopy
     };
     
     // Copy each child
@@ -61,11 +61,10 @@ export const copyItemAndChildren = (
     return [newItems, newId];
   }
   
-  // For files just return the copy
   return [
     {
       ...items,
-      [newId]: itemCopy as File
+      [newId]: itemCopy
     },
     newId
   ];
@@ -81,18 +80,20 @@ export const copyItem = (
   
   // If copy was successful, add to target folder's children
   if (newId && newItems[targetFolderId]) {
-    const targetFolder = newItems[targetFolderId] as Folder;
-    newItems[targetFolderId] = {
-      ...targetFolder,
-      children: [...targetFolder.children, newId],
-      modified: new Date()
-    } as Folder;
+    const targetFolder = newItems[targetFolderId];
+    if (targetFolder.type === 'folder') {
+      newItems[targetFolderId] = {
+        ...targetFolder,
+        children: [...(targetFolder as Folder).children, newId],
+        modified: new Date()
+      } as Folder;
 
-    // Call the callback with the new ID if provided
-    if (onCopyComplete) {
-      setTimeout(() => {
-        onCopyComplete(newId);
-      }, 0);
+      // Call the callback with the new ID if provided
+      if (onCopyComplete) {
+        setTimeout(() => {
+          onCopyComplete(newId);
+        }, 0);
+      }
     }
   }
   
@@ -136,13 +137,15 @@ export const pasteItems = (
   const { clipboard } = state;
   if (!clipboard.items.length || !clipboard.operation) return state;
 
-  const targetFolder = state.items[targetFolderId] as Folder;
+  const targetFolder = state.items[targetFolderId];
   if (!targetFolder || targetFolder.type !== 'folder') return state;
 
   let newState = { ...state };
   const resultIds: Record<string, string> = {};
   
-  if (clipboard.operation === 'cut') {
+  const operationType = clipboard.operation;
+  
+  if (operationType === 'cut') {
     clipboard.items.forEach(itemId => {
       resultIds[itemId] = itemId;
       
@@ -150,7 +153,7 @@ export const pasteItems = (
         resultIds[itemId] = movedId;
       });
     });
-  } else if (clipboard.operation === 'copy') {
+  } else if (operationType === 'copy') {
     clipboard.items.forEach(itemId => {
       newState = copyItem(newState, itemId, targetFolderId, (newId) => {
         resultIds[itemId] = newId;
@@ -159,15 +162,18 @@ export const pasteItems = (
   }
 
   // Call the callback with the operation and resulting IDs
-  if (onPasteComplete && clipboard.operation) {
+  if (onPasteComplete) {
     setTimeout(() => {
-      onPasteComplete(clipboard.operation, resultIds);
+      onPasteComplete(operationType, resultIds);
     }, 0);
   }
 
   // Clear clipboard after paste
   return {
     ...newState,
-    clipboard: { items: [], operation: null }
+    clipboard: { 
+      items: [], 
+      operation: null
+    }
   };
 };

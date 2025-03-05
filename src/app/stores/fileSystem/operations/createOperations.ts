@@ -14,7 +14,7 @@ export const createFolder = (
     return state;
   }
   
-  const parentPath = parent.path;
+  const parentPath = parent.path || '';
   
   // Generate a unique name
   const uniqueName = generateUniqueFilename(parent, name, 'folder', state.items);
@@ -59,7 +59,7 @@ export const createFile = (
     return state;
   }
   
-  const parentPath = parent.path;
+  const parentPath = parent.path || '';
   const uniqueName = generateUniqueFilename(parent, name, 'file', state.items);
   const extension = uniqueName.includes('.') ? uniqueName.split('.').pop()! : '';
   

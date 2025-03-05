@@ -46,8 +46,8 @@ export const renameItem = (
     }
   }
   
-  // Get parent path
-  const parentPath = item.parentId ? newItems[item.parentId].path : null;
+  // Get parent path - use null as fallback to ensure it's never undefined
+  const parentPath = item.parentId ? (newItems[item.parentId].path || null) : null;
   
   // Update item name and path
   newItems[itemId] = {
