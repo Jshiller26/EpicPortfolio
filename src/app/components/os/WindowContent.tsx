@@ -52,7 +52,8 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     const file = fileSystem.items[fileId] as File;
     
     if (file && file.type === 'file') {
-      return <PDFViewer fileId={file.name} />;
+      // Pass the fileId to the PDFViewer
+      return <PDFViewer fileId={fileId} />;
     }
     return <div className="p-4">PDF not found.</div>;
   }

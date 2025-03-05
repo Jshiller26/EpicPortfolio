@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
+import { File } from '@/app/types/fileSystem';
 
 interface PDFViewerProps {
   fileId: string;
@@ -9,18 +11,22 @@ interface PDFViewerProps {
 export const PDFViewer: React.FC<PDFViewerProps> = ({ fileId }) => {
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const fileSystem = useFileSystemStore();
   
   useEffect(() => {
-    // Extract file name from fileId - this will depend on your naming convention
-    const fileName = fileId.endsWith('.pdf') 
-      ? fileId 
-      : `${fileId}.pdf`;
+    const file = fileSystem.items[fileId] as File;
     
-    // Get URL for PDF file with parameter to hide sidebar
-    setPdfUrl(`/pdfs/${fileName}#pagemode=none&view=FitH&zoom=100`);
-    setLoading(false);
-  }, [fileId]);
+    if (file && file.type === 'file') {
+      const fileName = file.name;
+      
+      setPdfUrl(`/pdfs/${fileName}#pagemode=none&view=FitH&zoom=100`);
+      setLoading(false);
+    } else {
+      setError("File not found in the file system");
+      setLoading(false);
+    }
+  }, [fileId, fileSystem.items]);
 
   if (loading) {
     return (
@@ -45,7 +51,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileId }) => {
   }
 
   // Use a simple iframe with the browser's built-in PDF viewer
-  // with the sidebar/thumbnails panel closed by default
   return (
     <div className="w-full h-full">
       <iframe 
