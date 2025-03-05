@@ -1,16 +1,18 @@
-import { FileSystemState, Folder, File } from '../../../types/fileSystem';
+import { FileSystemState, Folder, File, AppItem } from '../../../types/fileSystem';
 import { generateUniqueFilename } from '../utils/pathUtils';
 
 export const updatePaths = (
   id: string, 
   newParentPath: string,
-  items: Record<string, Folder | File>
-): Record<string, Folder | File> => {
+  items: Record<string, Folder | File | AppItem>
+): Record<string, Folder | File | AppItem> => {
   const updatedItems = { ...items };
   const currentItem = updatedItems[id];
   if (!currentItem) return updatedItems;
   
-  const newPath = `${newParentPath}\\${currentItem.name}`;
+  const safePath = newParentPath || '';
+  const newPath = `${safePath}\\${currentItem.name}`;
+  
   updatedItems[id] = {
     ...currentItem,
     path: newPath,
@@ -38,11 +40,10 @@ export const moveItem = (
   itemId: string, 
   targetFolderId: string,
   onMoveComplete?: (movedId: string) => void,
-  options?: MoveItemOptions
 ): FileSystemState => {
   const newItems = { ...state.items };
   const item = newItems[itemId];
-  const targetFolder = newItems[targetFolderId] as Folder;
+  const targetFolder = newItems[targetFolderId];
   
   if (!item || !targetFolder || targetFolder.type !== 'folder') return state;
   
@@ -52,8 +53,10 @@ export const moveItem = (
     return state;
   }
 
+  const targetFolderPath = targetFolder.path || '';
+
   // Ensure the name is unique in the target folder
-  const uniqueName = generateUniqueFilename(targetFolder, item.name, item.type, newItems);
+  const uniqueName = generateUniqueFilename(targetFolder as Folder, item.name, item.type, newItems);
   
   // Remove from old parent
   if (item.parentId) {
@@ -74,7 +77,7 @@ export const moveItem = (
   }
   
   // Update paths for item and its children
-  const updatedItems = updatePaths(itemId, targetFolder.path, newItems);
+  const updatedItems = updatePaths(itemId, targetFolderPath, newItems);
   
   // Update item's parent
   updatedItems[itemId] = {
@@ -85,12 +88,9 @@ export const moveItem = (
   // Add to new parent
   updatedItems[targetFolderId] = {
     ...targetFolder,
-    children: [...targetFolder.children, itemId],
+    children: [...(targetFolder as Folder).children, itemId],
     modified: new Date()
   } as Folder;
-
-  // Use options to determine how to handle the item's position
-  const findNextPosition = options?.findNextPosition ?? true;
 
   // Call the callback if provided
   if (onMoveComplete) {

@@ -1,4 +1,4 @@
-import { Folder, FileSystemItem } from '../../../types/fileSystem';
+import { Folder, FileSystemItem, FileType } from '../../../types/fileSystem';
 
 export const getParentPath = (path: string): string => {
   const pathParts = path.split('\\');
@@ -15,7 +15,7 @@ export const joinPaths = (parentPath: string, childName: string): string => {
 export const checkNameConflict = (
   parent: Folder,
   name: string,
-  type: 'file' | 'folder',
+  type: FileType,
   items: Record<string, FileSystemItem>,
   excludeId?: string
 ): boolean => {
@@ -30,7 +30,7 @@ export const checkNameConflict = (
 export const generateUniqueFilename = (
   parent: Folder,
   baseName: string,
-  type: 'file' | 'folder',
+  type: FileType,
   items: Record<string, FileSystemItem>
 ): string => {
   if (!checkNameConflict(parent, baseName, type, items)) {
@@ -105,6 +105,8 @@ export const formatFileSize = (size?: number): string => {
 export const getItemTypeString = (item: FileSystemItem): string => {
   if (item.type === 'folder') {
     return 'File folder';
+  } else if (item.type === 'app') {
+    return 'Application';
   } else {
     const extension = item.name.includes('.') ? item.name.split('.').pop() : '';
     if (extension) {
