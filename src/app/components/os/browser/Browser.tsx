@@ -91,6 +91,8 @@ const Browser: React.FC<BrowserProps> = ({ }) => {
         const iframe = iframeRef.current;
         const contentWindow = iframe.contentWindow;
         
+        if (!contentWindow) return;
+        
         // Attempt to find and populate the search input
         const searchInput = contentWindow.document.querySelector('input[type="text"], input[name="q"]');
         if (searchInput) {
@@ -193,7 +195,7 @@ const Browser: React.FC<BrowserProps> = ({ }) => {
             { icon: '🏠', url: GOOGLE_URL, name: 'Google' },
             { icon: '📚', url: 'https://en.wikipedia.org', name: 'Wikipedia' },
             { icon: '💧', url: 'https://paveldogreat.github.io/WebGL-Fluid-Simulation/', name: 'Fluid' },
-            { icon: '🐱', url: 'https://pokemondb.net/pokedex/national', name: 'Pokédex' },
+            { icon: '🎮', url: 'https://bruno-simon.com', name: 'Bruno' },
             { icon: '⚡', url: 'https://codepen.io/akm2/full/rHIsa', name: 'Lightning' },
             { icon: '🎨', url: 'https://jacksonpollock.org', name: 'Paint' }
           ].map((bookmark) => (
