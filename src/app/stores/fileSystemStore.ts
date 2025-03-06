@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FileSystemState, FileSystemItem } from '../types/fileSystem';
+import { FileSystemState, FileSystemItem, Folder } from '../types/fileSystem';
 import initialState from './fileSystem/initialState';
 import {
   createFolder,
@@ -63,15 +63,17 @@ export const useFileSystemStore = create<FileSystemState & {
     set(state => {
       const newState = createFolder(state, name, parentId);
       // Find the ID of the newly created folder
-      if (state.items[parentId]?.type === 'folder') {
-        const parent = newState.items[parentId];
-        if (parent.type === 'folder') {
-          const newChildIds = parent.children.filter(
-            id => !state.items[parentId].children.includes(id)
-          );
-          if (newChildIds.length === 1) {
-            folderId = newChildIds[0];
-          }
+      const parent = state.items[parentId];
+      if (parent && parent.type === 'folder') {
+        const parentFolder = parent as Folder;
+        const newParentFolder = newState.items[parentId] as Folder;
+        
+        const newChildIds = newParentFolder.children.filter(
+          id => !parentFolder.children.includes(id)
+        );
+        
+        if (newChildIds.length === 1) {
+          folderId = newChildIds[0];
         }
       }
       return newState;
@@ -84,15 +86,17 @@ export const useFileSystemStore = create<FileSystemState & {
     set(state => {
       const newState = createFile(state, name, parentId, content, size);
       // Find the ID of the newly created file
-      if (state.items[parentId]?.type === 'folder') {
-        const parent = newState.items[parentId];
-        if (parent.type === 'folder') {
-          const newChildIds = parent.children.filter(
-            id => !state.items[parentId].children.includes(id)
-          );
-          if (newChildIds.length === 1) {
-            fileId = newChildIds[0];
-          }
+      const parent = state.items[parentId];
+      if (parent && parent.type === 'folder') {
+        const parentFolder = parent as Folder;
+        const newParentFolder = newState.items[parentId] as Folder;
+        
+        const newChildIds = newParentFolder.children.filter(
+          id => !parentFolder.children.includes(id)
+        );
+        
+        if (newChildIds.length === 1) {
+          fileId = newChildIds[0];
         }
       }
       return newState;
