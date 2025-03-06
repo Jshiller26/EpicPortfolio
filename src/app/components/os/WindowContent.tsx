@@ -6,6 +6,7 @@ import TextEditor from './TextEditor';
 import BlankTextEditor from './BlankTextEditor';
 import { isTextFile } from '@/app/utils/iconUtils';
 import PDFViewer from './PDFViewer';
+import Browser from './browser/Browser';
 
 interface WindowContentProps {
   windowId: string;
@@ -14,10 +15,12 @@ interface WindowContentProps {
 export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   const fileSystem = useFileSystemStore();
 
+  // Handle specific window types
   if (windowId.startsWith('explorer-')) {
-    // Pass the window ID to FileExplorer so it can determine the correct path
+    // File Explorer
     return <FileExplorer windowId={windowId} />;
   } else if (windowId.startsWith('editor-')) {
+    // Text Editor
     const fileId = windowId.replace('editor-', '');
     const file = fileSystem.items[fileId] as File;
     
@@ -30,7 +33,6 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     }
     return <div className="p-4">File not found.</div>;
   } else if (windowId.startsWith('vscode-')) {
-    // Blank VS Code editor
     return <BlankTextEditor windowId={windowId} />;
   } else if (windowId.startsWith('image-')) {
     const fileId = windowId.replace('image-', '');
@@ -52,11 +54,13 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     const file = fileSystem.items[fileId] as File;
     
     if (file && file.type === 'file') {
-      // Pass the fileId to the PDFViewer
       return <PDFViewer fileId={fileId} />;
     }
     return <div className="p-4">PDF not found.</div>;
+  } else if (windowId.startsWith('chrome-')) {
+    return <Browser windowId={windowId} />;
   }
   
+  // Default content for unknown window types
   return <div className="p-4">Window Content</div>;
 };
