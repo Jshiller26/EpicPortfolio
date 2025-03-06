@@ -28,11 +28,8 @@ const iconMap: { [key: string]: string } = {
 
 export const Taskbar: React.FC<TaskbarProps> = ({
   onWindowSelect,
-  onClose,
   onStartClick,
-  onSearchClick,
   isStartOpen,
-  isSearchOpen,
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -42,7 +39,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const activeWindowId = useWindowStore(state => state.activeWindowId);
   
   const openWindowIds = Object.keys(windows);
-  const minimizedWindowIds = openWindowIds.filter(id => windows[id].isMinimized);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -126,9 +122,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <div className="flex space-x-1">
           {pinnedApps.map((appId) => {
             const isOpen = openWindowIds.includes(appId);
-            const isActive = activeWindowId === appId;
-            const isMinimized = minimizedWindowIds.includes(appId);
-            
+            const isActive = activeWindowId === appId;            
             return (
               <div key={appId} className="relative">
                 <button 
@@ -158,7 +152,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <div className="flex items-center space-x-1">
           {runningApps.map((windowId) => {
             const isActive = activeWindowId === windowId;
-            const isMinimized = minimizedWindowIds.includes(windowId);
             const iconSrc = getIconForWindow(windowId);
             
             return (
