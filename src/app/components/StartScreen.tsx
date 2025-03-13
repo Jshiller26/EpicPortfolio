@@ -76,7 +76,7 @@ export default function StartScreen() {
             : 'opacity-100'
         }`}
         style={{
-          backgroundImage: 'url("/images/rayquazaAnimation/emeraldBackgroundHD.png")',
+          backgroundImage: 'url("/images/rayquazaAnimation/rayquazagif.gif")',
         }}
       />
       <CloudBackground animationState={animationState} />
@@ -146,7 +146,7 @@ export default function StartScreen() {
               letterSpacing: '0.1em'
             }}>
               <textPath href="#software-curve" startOffset="50%" textAnchor="middle">
-                SOFTWARE
+                PERSONAL
               </textPath>
             </text>
           </svg>
@@ -168,7 +168,7 @@ export default function StartScreen() {
               letterSpacing: '0.1em'
             }}>
               <textPath href="#developer-curve" startOffset="50%" textAnchor="middle">
-                DEVELOPER
+                PORTFOLIO
               </textPath>
             </text>
           </svg>
