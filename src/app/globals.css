@@ -84,9 +84,20 @@ image {
   transition-duration: 3000ms;
 }
 
-/* Add draggable item class for preventing window drag on items */
 .draggable-item {
-  cursor: grab;
+  cursor: pointer;
+}
+
+.explorer-item {
+  transition: background-color 0.1s ease;
+}
+
+.explorer-item:hover {
+  background-color: rgba(0, 120, 215, 0.1) !important;
+}
+
+.explorer-item.selected {
+  background-color: rgba(0, 120, 215, 0.2) !important;
 }
 
 /* Force move cursor during folder drops */

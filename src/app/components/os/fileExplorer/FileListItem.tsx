@@ -190,7 +190,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
   return (
     <tr
-      className={`hover:bg-gray-100 cursor-pointer draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
+      className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
       onDoubleClick={() => !isRenaming && onDoubleClick(item)}
       onContextMenu={(e) => !isRenaming && onContextMenu(e, item)}
       draggable={!isRenaming}
