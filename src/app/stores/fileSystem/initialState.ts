@@ -69,7 +69,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'my-projects',
-      children: ['EMC-Photobooth', 'Emc-QuizGame']
+      children: ['emc-bizquiz-pdf', 'emc-photobooth-pdf', 'emc-other-files']
     } as Folder,
     
     'knights': {
@@ -157,40 +157,110 @@ const initialState: FileSystemState = {
       children: []
     } as Folder,
     
-    'EMC-Photobooth': {
-      id: 'EMC-Photobooth',
-      name: 'EMC-Photobooth',
-      type: 'folder',
-      path: 'C:\\Desktop\\My Projects\\EMC\\EMC-Photobooth',
+    // EMC folder
+    'emc-bizquiz-pdf': {
+      id: 'emc-bizquiz-pdf',
+      name: 'EMC BizQuiz.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\EMC\\EMC BizQuiz.pdf',
       created: new Date(),
       modified: new Date(),
       parentId: 'emc',
-      children: ['emc-photobooth-pdf']
-    } as Folder,
+      content: '/pdfs/EMC BizQuiz.pdf',
+      size: 2048
+    } as File,
     
     'emc-photobooth-pdf': {
       id: 'emc-photobooth-pdf',
       name: 'EMC Photobooth.pdf',
       type: 'file',
       extension: 'pdf',
-      path: 'C:\\Desktop\\My Projects\\EMC\\EMC-Photobooth\\EMC Photobooth.pdf',
-      created: new Date(),
-      modified: new Date(),
-      parentId: 'EMC-Photobooth',
-      content: '[PDF content from /pdfs/EMC Photobooth.pdf]',
-      size: 2048
-    } as File,
-    
-    'Emc-QuizGame': {
-      id: 'Emc-QuizGame',
-      name: 'Emc-QuizGame',
-      type: 'folder',
-      path: 'C:\\Desktop\\My Projects\\EMC\\Emc-QuizGame',
+      path: 'C:\\Desktop\\My Projects\\EMC\\EMC Photobooth.pdf',
       created: new Date(),
       modified: new Date(),
       parentId: 'emc',
-      children: []
-    } as Folder
+      content: '/pdfs/EMC Photobooth.pdf',
+      size: 1845
+    } as File,
+    
+    // Other Files folder
+    'emc-other-files': {
+      id: 'emc-other-files',
+      name: 'Other Files',
+      type: 'folder',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc',
+      children: ['app-transfer-manual', 'change-overlay-manual', 'emc-image-1', 'emc-image-2', 'emc-image-3']
+    } as Folder,
+    
+    // Other Files contentsS
+    'app-transfer-manual': {
+      id: 'app-transfer-manual',
+      name: 'EMC App Transfer Manual.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files\\App Transfer Manual.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc-other-files',
+      content: '/pdfs/Emc App Transfer Manual.pdf',
+      size: 1024
+    } as File,
+    
+    'change-overlay-manual': {
+      id: 'change-overlay-manual',
+      name: 'EMC Change Overlay Manual.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files\\Change Overlay Manual.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc-other-files',
+      content: '/pdfs/Emc Change Overlay Manual.pdf',
+      size: 1356
+    } as File,
+    
+    'emc-image-1': {
+      id: 'emc-image-1',
+      name: 'emc1.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files\\emc1.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc-other-files',
+      content: '/images/projects/emc1.jpg',
+      size: 2450
+    } as File,
+    
+    'emc-image-2': {
+      id: 'emc-image-2',
+      name: 'emc2.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files\\emc2.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc-other-files',
+      content: '/images/projects/emc2.jpg',
+      size: 3240
+    } as File,
+    
+    'emc-image-3': {
+      id: 'emc-image-3',
+      name: 'emc3.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\EMC\\Other Files\\emc3.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'emc-other-files',
+      content: '/images/projects/emc3.jpg',
+      size: 1875
+    } as File
   },
   currentPath: 'C:\\Desktop',
   selectedItems: [],
