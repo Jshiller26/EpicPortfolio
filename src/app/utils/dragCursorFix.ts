@@ -29,15 +29,20 @@ export const initDragCursorFix = () => {
     }
   });
 
-  // Add a custom style tag to enforce move cursor
+    // Add a custom style tag to enforce move cursor
   const styleTag = document.createElement('style');
   styleTag.textContent = `
     body.dragging * {
-      cursor: grabbing !important;
+      cursor: pointer !important;
     }
     body.dragging-over-folder * {
-      cursor: move !important;
+      cursor: pointer !important;
     }
   `;
   document.head.appendChild(styleTag);
+  
+  document.addEventListener('drop', () => {
+    document.body.classList.remove('dragging');
+    document.body.classList.remove('dragging-over-folder');
+  });
 };
