@@ -7,6 +7,7 @@ import BlankTextEditor from './BlankTextEditor';
 import { isTextFile } from '@/app/utils/iconUtils';
 import PDFViewer from './PDFViewer';
 import Browser from './browser/Browser';
+import ImageViewer from './ImageViewer';
 
 interface WindowContentProps {
   windowId: string;
@@ -36,19 +37,7 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     return <BlankTextEditor windowId={windowId} />;
   } else if (windowId.startsWith('image-')) {
     const fileId = windowId.replace('image-', '');
-    const file = fileSystem.items[fileId] as File;
-    
-    if (file && file.type === 'file') {
-      return (
-        <div className="p-4 flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-gray-500">Image Viewer</div>
-            <div className="mt-2 text-sm">{file.name}</div>
-          </div>
-        </div>
-      );
-    }
-    return <div className="p-4">Image not found.</div>;
+    return <ImageViewer fileId={fileId} />;
   } else if (windowId.startsWith('pdf-')) {
     const fileId = windowId.replace('pdf-', '');
     const file = fileSystem.items[fileId] as File;
