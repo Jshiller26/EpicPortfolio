@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { ZoomIn, ZoomOut, RotateCw, RotateCcw, Maximize2, X } from 'lucide-react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
@@ -18,24 +18,37 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [imagePath, setImagePath] = useState('/images/placeholder.svg');
   
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Get image path based on file content
+  useEffect(() => {
+    if (file && file.type === 'file') {
+      if (file.content && typeof file.content === 'string' && 
+          (file.content.startsWith('/images/') || file.content.startsWith('/pdfs/'))) {
+        setImagePath(file.content);
+      } else if (file.extension && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(file.extension.toLowerCase())) {
+        setImagePath(`/images/projects/${file.name}`);
+      } else {
+        setImagePath('/images/placeholder.svg');
+      }
+    }
+  }, [file]);
+
+  // Reset position when zoom changes to 1
+  useEffect(() => {
+    if (zoom === 1) {
+      setPosition({ x: 0, y: 0 });
+    }
+    if (containerRef.current) {
+      containerRef.current.style.cursor = zoom > 1 ? 'grab' : 'default';
+    }
+  }, [zoom]);
 
   if (!file || file.type !== 'file') {
     return <div className="p-4">File not found.</div>;
   }
-
-  const getImagePath = () => {
-    if (file.content && typeof file.content === 'string' && 
-        (file.content.startsWith('/images/') || file.content.startsWith('/pdfs/'))) {
-      return file.content;
-    }
-    
-    const extension = file.extension?.toLowerCase();
-    if (extension && ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension)) {
-      return `/images/projects/${file.name}`;
-    }
-  };
 
   const zoomIn = () => {
     setZoom(prev => {
@@ -105,17 +118,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
     e.stopPropagation(); // Stop propagation to parent
   };
 
-  // Reset position when zoom changes to 1
-  React.useEffect(() => {
-    if (zoom === 1) {
-      setPosition({ x: 0, y: 0 });
-    }
-    // Update cursor based on zoom level
-    if (containerRef.current) {
-      containerRef.current.style.cursor = zoom > 1 ? 'grab' : 'default';
-    }
-  }, [zoom]);
-
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
@@ -167,8 +169,8 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
           }}
         >
           <Image
-            src={getImagePath()}
-            alt={file.name}
+            src={imagePath}
+            alt={file.name || 'Image'}
             width={1000}
             height={800}
             className="pointer-events-none max-h-[calc(100vh-6rem)] max-w-full object-contain"
