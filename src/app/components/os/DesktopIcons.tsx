@@ -64,6 +64,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   
   // Store the last created item ID for auto-renaming
   const [lastCreatedItemId, setLastCreatedItemId] = useState<string | null>(null);
+  
+  // Keep track of current dragged item
+  const draggedItemRef = useRef<string | null>(null);
 
   // Initialize icon positions with desktop children
   const { 
@@ -399,6 +402,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
     
+    // Store the current dragged item ID
+    draggedItemRef.current = itemId;
+    
     const dragData: {
       itemId: string;
       source: string;
@@ -415,6 +421,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
 
   const handleDragEnd = () => {
     setIsDragging(false);
+    // Reset dragged item
+    draggedItemRef.current = null;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -423,8 +431,16 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleFolderDragOver = (e: React.DragEvent) => {
-    e.dataTransfer.dropEffect = 'move';
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if we're trying to drag a folder onto itself
+    if (draggedItemRef.current === folderId) {
+      e.dataTransfer.dropEffect = 'none';
+    } else {
+      e.dataTransfer.dropEffect = 'move';
+    }
   };
 
   const createAppShortcut = (appId: string, targetFolderId: string) => {
@@ -510,6 +526,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         itemId = e.dataTransfer.getData('text/plain');
       }
       
+      // Don't try to move a folder into itself
       if (!itemId || itemId === folderId) return;
       
       const targetFolder = items[folderId];
@@ -667,7 +684,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDoubleClick={() => handleOpen(itemId)}
-            onDragOver={item.type === 'folder' ? handleFolderDragOver : undefined}
+            onDragOver={item.type === 'folder' ? (e) => handleFolderDragOver(e, itemId) : undefined}
             onDrop={item.type === 'folder' ? handleFolderDrop : undefined}
             onRenameChange={handleRenameChange}
             onRenameKeyDown={handleRenameKeyDown}

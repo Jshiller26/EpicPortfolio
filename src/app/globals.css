@@ -84,7 +84,38 @@ image {
   transition-duration: 3000ms;
 }
 
-/* Add draggable item class for preventing window drag on items */
 .draggable-item {
-  cursor: grab;
+  cursor: pointer;
+}
+
+.explorer-item {
+  transition: background-color 0.1s ease;
+}
+
+.explorer-item:hover {
+  background-color: rgba(0, 120, 215, 0.1) !important;
+}
+
+.explorer-item.selected {
+  background-color: rgba(0, 120, 215, 0.2) !important;
+}
+
+/* Force pointer cursor during folder drops */
+.folder-drop-target * {
+  cursor: pointer !important;
+}
+
+/* Fix for cancel cursor during drag operations */
+.os-drag-operation * {
+  cursor: pointer !important;
+}
+
+/* Add this class to body during drag operations */
+body.dragging-over-folder * {
+  cursor: pointer !important;
+}
+
+/* Reset cursor when dragging is complete */
+body.dragging * {
+  cursor: pointer !important;
 }

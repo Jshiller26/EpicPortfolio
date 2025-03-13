@@ -48,6 +48,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const [isVisible, setIsVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -82,35 +83,91 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.setData('text/plain', itemId);
     
+    // Add a class to body to indicate drag operation
+    document.body.classList.add('dragging');
+    
+    // Set the dropEffect to move
+    e.dataTransfer.effectAllowed = 'move';
+    
     onDragStart(e, itemId);
   };
 
   const handleDragEnd = () => {
     setLastPosition(position);
     setIsVisible(true);
+    
+    // Remove dragging class from body
+    document.body.classList.remove('dragging');
+    document.body.classList.remove('dragging-over-folder');
+    
     onDragEnd();
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    // Only accept drops for folders
+    // Only handle dragover for folders
     if (item.type === 'folder') {
+      // Always prevent default to allow drop
       e.preventDefault();
       e.stopPropagation();
       
-      // Set visual feedback
+      // Force move cursor
+      e.dataTransfer.dropEffect = 'move';
+      
+      // Add class to body to indicate drag over folder
+      document.body.classList.add('dragging-over-folder');
+      
+      // Only set highlight if not already highlighted
       if (!isDropTarget) {
         setIsDropTarget(true);
+        
+        // Add drop target class to container
+        if (containerRef.current) {
+          containerRef.current.classList.add('folder-drop-target');
+        }
       }
       
+      // Call parent handler if exists
       if (onDragOver) {
         onDragOver(e, itemId);
       }
     }
   };
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (item.type === 'folder') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      
+      // Add class to body to indicate drag over folder
+      document.body.classList.add('dragging-over-folder');
+      
+      setIsDropTarget(true);
+      
+      // Add drop target class to container
+      if (containerRef.current) {
+        containerRef.current.classList.add('folder-drop-target');
+      }
+    }
+  };
+
   const handleDragLeave = (e: React.DragEvent) => {
     if (item.type === 'folder') {
-      setIsDropTarget(false);
+      // Check if we're really leaving (and not just entering a child element)
+      const relatedTarget = e.relatedTarget as Node;
+      const currentTarget = e.currentTarget as Node;
+      
+      if (!currentTarget.contains(relatedTarget)) {
+        setIsDropTarget(false);
+        
+        // Remove drop target class from container
+        if (containerRef.current) {
+          containerRef.current.classList.remove('folder-drop-target');
+        }
+        
+        // Remove class from body
+        document.body.classList.remove('dragging-over-folder');
+      }
       
       if (onDragLeave) {
         onDragLeave(e);
@@ -124,18 +181,32 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       e.stopPropagation();
       setIsDropTarget(false);
       
+      // Remove drop target class from container
+      if (containerRef.current) {
+        containerRef.current.classList.remove('folder-drop-target');
+      }
+      
+      // Remove class from body
+      document.body.classList.remove('dragging-over-folder');
+      
       if (onDrop) {
         onDrop(e, itemId);
       }
     }
   };
 
+  // Determine classnames based on folder type and drop state
+  const folderClasses = item.type === 'folder' ? 'folder-item' : '';
+  const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
+
   return (
     <div
+      ref={containerRef}
       className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded 
         ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
         ${isCut ? 'opacity-50' : ''}
-        ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        ${isVisible ? 'opacity-100' : 'opacity-0'}
+        ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
         transition: 'none'
@@ -145,6 +216,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onDoubleClick={onDoubleClick}
