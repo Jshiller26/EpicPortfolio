@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { Taskbar } from './Taskbar';
@@ -6,6 +6,7 @@ import { DesktopIcons } from './DesktopIcons';
 import { Window } from './Window';
 import { BackButton } from './BackButton';
 import DialogBox from '../DialogBox';
+import { initDragCursorFix } from '@/app/utils/dragCursorFix';
 
 interface DesktopProps {
   onClose: () => void;
@@ -28,6 +29,11 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   
   // Get window IDs for rendering
   const windowIds = Object.keys(windows);
+  
+  // Initialize the drag cursor fix
+  useEffect(() => {
+    initDragCursorFix();
+  }, []);
   
   const toggleStartMenu = () => {
     setStartMenuOpen(!startMenuOpen);

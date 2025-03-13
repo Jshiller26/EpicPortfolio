@@ -88,3 +88,18 @@ image {
 .draggable-item {
   cursor: grab;
 }
+
+/* Force move cursor during folder drops */
+.folder-drop-target * {
+  cursor: move !important;
+}
+
+/* Fix for cancel cursor during drag operations */
+.os-drag-operation * {
+  cursor: move !important;
+}
+
+/* Add this class to body during drag operations */
+body.dragging-over-folder * {
+  cursor: move !important;
+}
