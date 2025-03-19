@@ -188,6 +188,31 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
+  // Get appropriate icon for the file type
+  const getFileIcon = () => {
+    if (item.type === 'folder') {
+      return "/images/desktop/icons8-folder.svg";
+    }
+    
+    if (item.type === 'file') {
+      const extension = item.name.includes('.') ? item.name.split('.').pop()?.toLowerCase() : '';
+      
+      if (extension === 'pdf') {
+        return "/images/desktop/pdfFileIcon.png";
+      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension || '')) {
+        return "/images/desktop/imageFileIcon.png";
+      } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension || '')) {
+        return "/images/desktop/videoFileIcon.png";
+      } else if (['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css'].includes(extension || '')) {
+        return "/images/desktop/textFileIcon.png";
+      } else if (extension === 'exe') {
+        return "/images/desktop/icons8-application.svg";
+      }
+    }
+    
+    return "/images/desktop/icons8-file.svg";
+  };
+
   return (
     <tr
       className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
@@ -201,25 +226,14 @@ const FileListItem: React.FC<FileListItemProps> = ({
     >
       <td className="px-4 py-1">
         <div className="flex items-center gap-2 relative">
-          {item.type === 'folder' ? (
-            <Image
-              src="/images/desktop/icons8-folder.svg" 
-              alt="folder"
-              width={16}
-              height={16}
-              className="w-4 h-4"
-              unoptimized={true}
-            />
-          ) : (
-            <Image
-              src="/images/desktop/icons8-file.svg"
-              alt="file"
-              width={16}
-              height={16}
-              className="w-4 h-4"
-              unoptimized={true}
-            />
-          )}
+          <Image
+            src={getFileIcon()}
+            alt={item.type}
+            width={16}
+            height={16}
+            className="w-4 h-4"
+            unoptimized={true}
+          />
           {isRenaming ? (
             <div className="absolute left-6 top-[-1px] z-10">
               <input

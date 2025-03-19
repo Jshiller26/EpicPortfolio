@@ -183,6 +183,12 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     return file.extension ? textExtensions.includes(file.extension.toLowerCase()) : false;
   };
 
+  // Helper function to check if a file is a video file
+  const isVideoFile = (file: File): boolean => {
+    const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'mkv', 'flv'];
+    return file.extension ? videoExtensions.includes(file.extension.toLowerCase()) : false;
+  };
+
   const handleItemDoubleClick = (item: FileSystemItem) => {
     if (isFolder(item)) {
       if (item.path) {
@@ -203,6 +209,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         openWindow(`image-${item.id}`);
       } else if (item.extension?.toLowerCase() === 'pdf') {
         openWindow(`pdf-${item.id}`);
+      } else if (isVideoFile(item)) {
+        openWindow(`video-${item.id}`);
       } else if (item.extension?.toLowerCase() === 'exe') {
         if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
           openWindow('vscode-new');

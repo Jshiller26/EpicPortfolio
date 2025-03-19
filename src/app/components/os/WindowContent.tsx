@@ -6,6 +6,7 @@ import TextEditor from './TextEditor';
 import BlankTextEditor from './BlankTextEditor';
 import { isTextFile } from '@/app/utils/iconUtils';
 import PDFViewer from './PDFViewer';
+import VideoPlayer from './VideoPlayer';
 import Browser from './browser/Browser';
 import ImageViewer from './ImageViewer';
 
@@ -46,6 +47,14 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
       return <PDFViewer fileId={fileId} />;
     }
     return <div className="p-4">PDF not found.</div>;
+  } else if (windowId.startsWith('video-')) {
+    const fileId = windowId.replace('video-', '');
+    const file = fileSystem.items[fileId] as File;
+    
+    if (file && file.type === 'file') {
+      return <VideoPlayer fileId={fileId} />;
+    }
+    return <div className="p-4">Video not found.</div>;
   } else if (windowId.startsWith('chrome-')) {
     return <Browser windowId={windowId} />;
   }

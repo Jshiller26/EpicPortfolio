@@ -80,6 +80,31 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'my-projects',
+      children: ['knights-demo-video', 'knights-screenshots']
+    } as Folder,
+    
+    // Knights Escape Room subfolders and files
+    'knights-demo-video': {
+      id: 'knights-demo-video',
+      name: 'KnightsDemoVid.mp4',
+      type: 'file',
+      extension: 'mp4',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\KnightsDemoVid.mp4',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/videos/projects/knights/KnightsDemoVid.mp4',
+      size: 25600
+    } as File,
+    
+    'knights-screenshots': {
+      id: 'knights-screenshots',
+      name: 'Screenshots',
+      type: 'folder',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\Screenshots',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
       children: []
     } as Folder,
     
@@ -232,7 +257,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc1.jpg',
+      content: '/images/projects/emc/emc1.jpg',
       size: 2450
     } as File,
     
@@ -245,7 +270,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc2.jpg',
+      content: '/images/projects/emc/emc2.jpg',
       size: 3240
     } as File,
     
@@ -258,7 +283,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc3.jpg',
+      content: '/images/projects/emc/emc3.jpg',
       size: 1875
     } as File
   },
