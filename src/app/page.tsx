@@ -1,5 +1,15 @@
-import StartScreen from './components/StartScreen';
+'use client';
 
-export default function Home() {
-  return <StartScreen />;
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import { Desktop } from './components/os/Desktop';
+
+export default function HomePage() {
+  const router = useRouter();
+  
+  const handleClose = () => {
+    router.push('/start');
+  };
+  
+  return <Desktop onClose={handleClose} />;
 }

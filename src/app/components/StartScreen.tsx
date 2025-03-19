@@ -14,7 +14,7 @@ export default function StartScreen() {
     if (animationState === 'showBackground') {
       setAnimationState('complete');
       setTimeout(() => {
-        router.push('/home');
+        router.push('/');
       }, 500);
     }
   };
