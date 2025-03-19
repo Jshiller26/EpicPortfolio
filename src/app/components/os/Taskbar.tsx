@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { getIconForWindow } from '@/app/utils/iconUtils';
 
 interface TaskbarProps {
   onWindowSelect: (windowId: string) => void;
@@ -9,22 +10,6 @@ interface TaskbarProps {
   isStartOpen: boolean;
   isSearchOpen: boolean;
 }
-
-const iconMap: { [key: string]: string } = {
-  chrome: '/images/desktop/icons8-chrome.svg',
-  edge: '/images/desktop/icons8-microsoft-edge.svg',
-  vscode: '/images/desktop/icons8-visual-studio-code-2019.svg',
-  folder: '/images/desktop/icons8-folder.svg',
-  text: '/images/desktop/icons8-text-file.svg',
-  image: '/images/desktop/icons8-image.svg',
-  pdf: '/images/desktop/icons8-pdf.svg',
-  js: '/images/desktop/icons8-js.svg',
-  html: '/images/desktop/icons8-html.svg',
-  css: '/images/desktop/icons8-css.svg',
-  json: '/images/desktop/icons8-json.svg',
-  md: '/images/desktop/icons8-markdown.svg',
-  file: '/images/desktop/icons8-file.svg',
-};
 
 export const Taskbar: React.FC<TaskbarProps> = ({
   onWindowSelect,
@@ -58,34 +43,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const getIconForWindow = (windowId: string) => {
-    if (windowId.startsWith('explorer-')) {
-      return iconMap.folder;
-    } else if (windowId.startsWith('editor-')) {
-      return iconMap.text;
-    } else if (windowId.startsWith('image-')) {
-      return iconMap.image;
-    } else if (windowId.startsWith('pdf-')) {
-      return iconMap.pdf;
-    } else if (windowId.startsWith('chrome-')) {
-      return iconMap.chrome;
-    } else if (windowId.startsWith('edge-')) {
-      return iconMap.edge;
-    } else if (windowId.startsWith('vscode-')) {
-      return iconMap.vscode;
-    }
-
-    // Default icon
-    return iconMap.file;
-  };
-
   // Determine pinned apps and running apps for the taskbar
   const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
   const runningApps = openWindowIds.filter(id => !pinnedApps.includes(id));
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg flex items-center px-3 z-50">
-      <div className="flex-1 flex justify-center items-center space-x-2">
+      <div className="flex-1 flex items-center justify-center space-x-2">
         {/* Start button */}
         <button
           onClick={onStartClick}
@@ -126,7 +90,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
             return (
               <div key={appId} className="relative">
                 <button 
-                  data-taskbar-id={appId}
                   className={`p-2 rounded-md hover:bg-black/10 ${isActive ? 'bg-black/10' : ''}`}
                   onClick={() => onWindowSelect(appId)}
                 >
@@ -152,21 +115,19 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         <div className="flex items-center space-x-1">
           {runningApps.map((windowId) => {
             const isActive = activeWindowId === windowId;
-            const iconSrc = getIconForWindow(windowId);
             
             return (
               <div key={windowId} className="relative">
                 <button
-                  data-taskbar-id={windowId}
                   onClick={() => onWindowSelect(windowId)}
                   className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
                     isActive ? 'bg-black/10' : ''
                   }`}
                 >
                   <img 
-                    src={iconSrc}
+                    src={getIconForWindow(windowId)}
                     alt={windowId}
-                    className="w-5 h-5"
+                    className="w-5 h-5 object-contain"
                   />
                 </button>
                 <div 
