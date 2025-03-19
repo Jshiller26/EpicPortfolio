@@ -19,6 +19,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
   const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
   
   const fileSystem = useFileSystemStore();
   
@@ -93,6 +94,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation(); // Stop event propagation
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (videoRef.current) {
@@ -101,11 +103,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation(); // Stop event propagation
     const newTime = parseFloat(e.target.value);
     setCurrentTime(newTime);
     if (videoRef.current) {
       videoRef.current.currentTime = newTime;
     }
+  };
+
+  // Prevent mousedown on sliders from triggering parent drag behavior
+  const handleSliderMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const formatTime = (seconds: number) => {
@@ -163,9 +171,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
       
       {/* Video Controls */}
       <div 
+        ref={controlsRef}
         className={`absolute bottom-0 left-0 right-0 bg-black/70 p-2 transition-opacity duration-300 ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
+        onClick={(e) => e.stopPropagation()} // Stop click propagation
       >
         <div className="flex items-center justify-between space-x-4">
           <button 
@@ -194,6 +204,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
               max={duration || 0}
               value={currentTime}
               onChange={handleTimeChange}
+              onMouseDown={handleSliderMouseDown}
               className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
             />
           </div>
@@ -209,6 +220,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ fileId }) => {
               step="0.01"
               value={volume}
               onChange={handleVolumeChange}
+              onMouseDown={handleSliderMouseDown}
               className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
             />
           </div>

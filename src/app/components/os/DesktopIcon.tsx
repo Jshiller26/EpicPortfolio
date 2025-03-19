@@ -202,7 +202,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[76px] p-1 rounded 
+      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[88px] p-1 rounded 
         ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
@@ -242,7 +242,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
           autoFocus
         />
       ) : (
-        <div className="text-[11px] text-white text-center leading-tight max-w-[72px] px-1 [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
+        <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
           {item.name}
         </div>
       )}
