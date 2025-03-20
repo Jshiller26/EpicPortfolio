@@ -32,32 +32,21 @@ export const getIconForItem = (item: FileSystemItem): string => {
     return '/images/desktop/icons8-file.svg';
   }
   
-  switch (file.extension.toLowerCase()) {
-    case 'txt':
-      return '/images/desktop/icons8-text-file.svg';
-    case 'pdf':
-      return '/images/desktop/icons8-pdf.svg';
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-      return '/images/desktop/icons8-image.svg';
-    case 'js':
-    case 'ts':
-      return '/images/desktop/icons8-js.svg';
-    case 'html':
-      return '/images/desktop/icons8-html.svg';
-    case 'css':
-      return '/images/desktop/icons8-css.svg';
-    case 'json':
-      return '/images/desktop/icons8-json.svg';
-    case 'md':
-      return '/images/desktop/icons8-markdown.svg';
-    case 'exe':
-      return '/images/desktop/icons8-app.svg';
-    default:
-      return '/images/desktop/icons8-file.svg';
+  const extension = file.extension.toLowerCase();
+  
+  if (extension === 'pdf') {
+    return '/images/desktop/pdfFileIcon.png';
+  } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension)) {
+    return '/images/desktop/imageFileIcon.png';
+  } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) {
+    return '/images/desktop/videoFileIcon.png';
+  } else if (['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'yml', 'yaml'].includes(extension)) {
+    return '/images/desktop/textFileIcon.png';
+  } else if (extension === 'exe') {
+    return '/images/desktop/icons8-app.svg';
   }
+  
+  return '/images/desktop/icons8-file.svg';
 };
 
 // Get the icon path for a window by its ID
@@ -65,13 +54,15 @@ export const getIconForWindow = (windowId: string): string => {
   if (windowId.startsWith('explorer-')) {
     return '/images/desktop/icons8-folder.svg';
   } else if (windowId.startsWith('editor-')) {
-    return '/images/desktop/icons8-text-file.svg';
+    return '/images/desktop/textFileIcon.png';
   } else if (windowId.startsWith('vscode-')) {
     return '/images/desktop/icons8-vscode.svg';
   } else if (windowId.startsWith('image-')) {
-    return '/images/desktop/icons8-image.svg';
+    return '/images/desktop/imageFileIcon.png';
   } else if (windowId.startsWith('pdf-')) {
-    return '/images/desktop/icons8-pdf.svg';
+    return '/images/desktop/pdfFileIcon.png';
+  } else if (windowId.startsWith('video-')) {
+    return '/images/desktop/videoFileIcon.png';
   } else if (windowId.startsWith('chrome-')) {
     return '/images/desktop/icons8-chrome.svg';
   } else if (windowId.startsWith('edge-')) {
@@ -85,6 +76,12 @@ export const getIconForWindow = (windowId: string): string => {
 export const isTextFile = (file: File): boolean => {
   const textExtensions = ['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'css', 'html', 'json', 'yml', 'yaml', 'py', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'rb', 'swift', 'go', 'rs', 'sql', 'xml', 'sh', 'bat', 'ps1'];
   return !!file.extension && textExtensions.includes(file.extension.toLowerCase());
+};
+
+// Check if a file is a video file
+export const isVideoFile = (file: File): boolean => {
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'mkv', 'flv'];
+  return !!file.extension && videoExtensions.includes(file.extension.toLowerCase());
 };
 
 // Check if a file is an app shortcut
@@ -160,6 +157,10 @@ export const getWindowTitle = (windowId: string, items: Record<string, FileSyste
     const fileId = windowId.replace('pdf-', '');
     const file = items[fileId];
     return file ? file.name : 'PDF Viewer';
+  } else if (windowId.startsWith('video-')) {
+    const fileId = windowId.replace('video-', '');
+    const file = items[fileId];
+    return file ? file.name : 'Video Player';
   }
   
   return 'Window';

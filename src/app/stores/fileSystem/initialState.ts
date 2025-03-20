@@ -80,8 +80,74 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'my-projects',
-      children: []
+      children: ['knights-pdf', 'knights-puzzle-explainer', 'knights-image-1', 'knights-image-2', 'knights-demo-video']
     } as Folder,
+    
+    // Knights Escape Room files
+    'knights-pdf': {
+      id: 'knights-pdf',
+      name: 'Knights.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\Knights.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/pdfs/Knights.pdf',
+      size: 2048
+    } as File,
+    
+    'knights-puzzle-explainer': {
+      id: 'knights-puzzle-explainer',
+      name: 'KnightsPuzzleExplainer.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\KnightsPuzzleExplainer.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/pdfs/KnightsPuzzleExplainer.pdf',
+      size: 1756
+    } as File,
+    
+    'knights-image-1': {
+      id: 'knights-image-1',
+      name: 'knights1.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\knights1.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/images/projects/knights/knights1.jpg',
+      size: 3150
+    } as File,
+    
+    'knights-image-2': {
+      id: 'knights-image-2',
+      name: 'knights2.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\knights2.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/images/projects/knights/knights2.jpg',
+      size: 2950
+    } as File,
+    
+    'knights-demo-video': {
+      id: 'knights-demo-video',
+      name: 'KnightsDemoVid.mp4',
+      type: 'file',
+      extension: 'mp4',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\KnightsDemoVid.mp4',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'knights',
+      content: '/videos/projects/knights/KnightsDemoVid.mp4',
+      size: 25600
+    } as File,
     
     'pandora': {
       id: 'pandora',
@@ -232,7 +298,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc1.jpg',
+      content: '/images/projects/emc/emc1.jpg',
       size: 2450
     } as File,
     
@@ -245,7 +311,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc2.jpg',
+      content: '/images/projects/emc/emc2.jpg',
       size: 3240
     } as File,
     
@@ -258,7 +324,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'emc-other-files',
-      content: '/images/projects/emc3.jpg',
+      content: '/images/projects/emc/emc3.jpg',
       size: 1875
     } as File
   },
