@@ -19,6 +19,22 @@ function isFile(item: FileSystemItem): item is File {
   return item.type === 'file';
 }
 
+// Helper to extract the content ID from a window ID
+const getContentId = (windowId: string) => {
+  if (!windowId) return '';
+  
+  // Split by hyphen and remove first and last parts
+  const parts = windowId.split('-');
+  if (parts.length < 3) return '';
+  
+  // Remove the first part (window type) and the last part (instance counter)
+  parts.shift(); // Remove window type
+  parts.pop();   // Remove instance counter
+  
+  // Rejoin the middle parts to get the content ID
+  return parts.join('-');
+};
+
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
   initialPath,
   windowId
@@ -93,7 +109,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     let pathToUse = initialPath;
     
     if (windowId && windowId.startsWith('explorer-')) {
-      const folderId = windowId.replace('explorer-', '');
+      const folderId = getContentId(windowId);
       const folder = fileSystem.items[folderId];
       
       if (folder && folder.type === 'folder' && folder.path) {

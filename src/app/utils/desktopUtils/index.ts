@@ -110,6 +110,12 @@ export const handleOpenItem = (
         // Open in PDF viewer
         onOpenWindow(`pdf-${itemId}`);
         break;
+      case 'mp4':
+      case 'webm':
+      case 'mov':
+      case 'avi':
+        onOpenWindow(`video-${itemId}`);
+        break;
       case 'exe':
         if (file.name.toLowerCase().includes('vs code') || file.name.toLowerCase() === 'vscode.exe') {
           onOpenWindow('vscode-new');
