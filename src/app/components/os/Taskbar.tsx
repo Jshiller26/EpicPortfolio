@@ -4,7 +4,7 @@ import { useWindowStore } from '@/app/stores/windowStore';
 import { getIconForWindow} from '@/app/utils/iconUtils';
 import { searchFileSystem } from '@/app/utils/searchUtils';
 import { SearchResults } from './SearchResults';
-import { FileSystemItem } from '@/app/types/fileSystem';
+import { FileSystemItem, File } from '@/app/types/fileSystem';
 
 interface TaskbarProps {
   onWindowSelect: (windowId: string) => void;
@@ -13,6 +13,17 @@ interface TaskbarProps {
   onSearchClick: () => void;
   isStartOpen: boolean;
   isSearchOpen: boolean;
+}
+
+interface WindowState {
+  id: string;
+  isOpen: boolean;
+  isMinimized: boolean;
+  isMaximized: boolean;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  zIndex: number;
+  baseId: string;
 }
 
 const getWindowType = (windowId: string) => {
@@ -27,7 +38,7 @@ const getWindowType = (windowId: string) => {
   return windowType;
 };
 
-const groupWindowsByType = (windows: Record<string, any>) => {
+const groupWindowsByType = (windows: Record<string, WindowState>) => {
   const groupedWindows: Record<string, string[]> = {};
   
   Object.keys(windows).forEach(windowId => {
@@ -54,8 +65,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const fileSystem = useFileSystemStore();
   const windows = useWindowStore(state => state.windows);
   const activeWindowId = useWindowStore(state => state.activeWindowId);
-  const openWindow = useWindowStore(state => state.openWindow);  
-  const openWindowIds = Object.keys(windows);
+  const openWindow = useWindowStore(state => state.openWindow);    
+  const groupedWindows = groupWindowsByType(windows);
+  const runningAppTypes = Object.keys(groupedWindows).filter(type => 
+    !['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'].includes(type)
+  );
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -116,7 +130,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         return;
       }
       
-      const file = item as any;
+      const file = item as File;
       const extension = item.name.split('.').pop()?.toLowerCase() || '';
       
       switch (extension) {
@@ -176,7 +190,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
   // Determine pinned apps and running apps for the taskbar
   const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
-  const runningApps = openWindowIds.filter(id => !pinnedApps.includes(id));
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg flex items-center px-3 z-50">
@@ -253,7 +266,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                   onClick={handlePinnedAppClick}
                 >
                   <img 
-                    src={getIconForWindow(appType + "-1")}
+                    src={getIconForWindow(appType)}
                     alt={appType}
                     className="w-5 h-5"
                   />
