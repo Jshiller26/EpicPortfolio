@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { useWindowStore } from '@/app/stores/windowStore';
-import { getIconForWindow } from '@/app/utils/iconUtils';
+import { getIconForWindow} from '@/app/utils/iconUtils';
+import { searchFileSystem } from '@/app/utils/searchUtils';
+import { SearchResults } from './SearchResults';
+import { FileSystemItem } from '@/app/types/fileSystem';
 
 interface TaskbarProps {
   onWindowSelect: (windowId: string) => void;
@@ -19,9 +23,13 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<FileSystemItem[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   
+  const fileSystem = useFileSystemStore();
   const windows = useWindowStore(state => state.windows);
   const activeWindowId = useWindowStore(state => state.activeWindowId);
+  const openWindow = useWindowStore(state => state.openWindow);
   
   const openWindowIds = Object.keys(windows);
 
@@ -42,6 +50,105 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     const interval = setInterval(updateDateTime, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    
+    if (value.trim() !== '') {
+      const results = searchFileSystem(fileSystem.items, value);
+      setSearchResults(results);
+      setShowSearchResults(true);
+    } else {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    }
+  };
+
+  // Handle search input focus
+  const handleSearchFocus = () => {
+    if (searchText.trim() !== '') {
+      setShowSearchResults(true);
+    }
+  };
+
+  const openItem = (itemId: string) => {
+    const item = fileSystem.items[itemId];
+    if (!item) return;
+    
+    if (item.type === 'folder') {
+      const windowId = `explorer-${itemId}`;
+      onWindowSelect(windowId);
+    } else if (item.type === 'app') {
+      if (item.id === 'vscode') {
+        openWindow('vscode-new');
+      } else {
+        openWindow(item.id);
+      }
+    } else {
+      if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
+        openWindow('vscode-new');
+        return;
+      }
+      
+      const file = item as any;
+      const extension = item.name.split('.').pop()?.toLowerCase() || '';
+      
+      switch (extension) {
+        case 'txt':
+        case 'md':
+        case 'js':
+        case 'ts':
+        case 'html':
+        case 'css':
+        case 'py':
+        case 'json':
+          onWindowSelect(`editor-${itemId}`);
+          break;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'svg':
+          onWindowSelect(`image-${itemId}`);
+          break;
+        case 'pdf':
+          onWindowSelect(`pdf-${itemId}`);
+          break;
+        case 'mp4':
+        case 'webm':
+        case 'mov':
+          onWindowSelect(`video-${itemId}`);
+          break;
+        case 'exe':
+          if (file.name.toLowerCase().includes('vs code') || file.name.toLowerCase() === 'vscode.exe') {
+            openWindow('vscode-new');
+          }
+          break;
+        default:
+          // Default file handler - go to parent folder
+          if (item.parentId) {
+            onWindowSelect(`explorer-${item.parentId}`);
+          }
+      }
+    }
+  };
+
+  // Handle search result item click
+  const handleSearchResultClick = (item: FileSystemItem) => {
+    // Close search results
+    setShowSearchResults(false);
+    setSearchText('');
+    setSearchResults([]);
+    
+    openItem(item.id);
+  };
+
+  // Close search results
+  const handleCloseSearchResults = () => {
+    setShowSearchResults(false);
+  };
 
   // Determine pinned apps and running apps for the taskbar
   const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
@@ -65,7 +172,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
         </button>
 
         {/* Search bar */}
-        <div className="relative group">
+        <div className="relative">
           <div className="flex items-center bg-black/5 rounded-md hover:bg-black/10 transition-colors">
             <div className="flex items-center pl-3">
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,10 +183,33 @@ export const Taskbar: React.FC<TaskbarProps> = ({
               type="text"
               placeholder="Type here to search"
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={handleSearchChange}
+              onFocus={handleSearchFocus}
               className="w-48 py-1.5 px-2 bg-transparent outline-none text-sm"
             />
+            {searchText && (
+              <button
+                onClick={() => {
+                  setSearchText('');
+                  setShowSearchResults(false);
+                }}
+                className="p-1 mr-1 text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
+          
+          {/* Search Results Dropdown */}
+          {showSearchResults && (
+            <SearchResults
+              results={searchResults}
+              onItemClick={handleSearchResultClick}
+              onClose={handleCloseSearchResults}
+            />
+          )}
         </div>
 
         {/* Pinned apps */}

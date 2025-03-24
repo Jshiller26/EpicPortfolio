@@ -123,20 +123,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
           ))}
         </div>
 
-        {/* Start Menu */}
-        {startMenuOpen && (
-          <div className="absolute bottom-16 left-0 w-96 h-[calc(100vh-5rem)] bg-white/95 backdrop-blur-md rounded-lg shadow-lg p-4 animate-slide-up">
-            {/* Start Menu Content */}
-          </div>
-        )}
-
-        {/* Search */}
-        {searchOpen && (
-          <div className="absolute bottom-16 left-16 w-[600px] h-[70vh] bg-white/95 backdrop-blur-md rounded-lg shadow-lg p-4 animate-slide-up">
-            {/* Search Content */}
-          </div>
-        )}
-
         {/* Taskbar */}
         <div className="absolute bottom-0 left-0 right-0">
           <Taskbar
