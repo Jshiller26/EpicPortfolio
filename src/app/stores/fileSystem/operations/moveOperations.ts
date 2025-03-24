@@ -58,6 +58,15 @@ export const moveItem = (
   // Ensure the name is unique in the target folder
   const uniqueName = generateUniqueFilename(targetFolder as Folder, item.name, item.type, newItems);
   
+  if (item.type === 'file' && uniqueName !== item.name) {
+    const file = item as File;
+    const isPdfFile = file.name.toLowerCase().endsWith('.pdf');
+    
+    if (isPdfFile && !file.originalFileName) {
+      (newItems[itemId] as File).originalFileName = file.name;
+    }
+  }
+  
   // Remove from old parent
   if (item.parentId) {
     const oldParent = newItems[item.parentId] as Folder;

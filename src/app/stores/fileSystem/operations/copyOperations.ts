@@ -34,6 +34,14 @@ export const copyItemAndChildren = (
     modified: new Date()
   };
 
+  if (item.type === 'file') {
+    const file = item as File;
+    
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      (itemCopy as File).originalFileName = file.originalFileName || file.name;
+    }
+  }
+
   // If it's a folder, copy all children
   if (item.type === 'folder') {
     const folder = item as Folder;

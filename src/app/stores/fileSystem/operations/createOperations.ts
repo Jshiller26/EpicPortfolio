@@ -63,20 +63,28 @@ export const createFile = (
   const uniqueName = generateUniqueFilename(parent, name, 'file', state.items);
   const extension = uniqueName.includes('.') ? uniqueName.split('.').pop()! : '';
   
+  const isPdf = uniqueName.toLowerCase().endsWith('.pdf');
+  
+  const newFile: File = {
+    id: newId,
+    name: uniqueName,
+    type: 'file' as const,
+    path: joinPaths(parentPath, uniqueName),
+    created: new Date(),
+    modified: new Date(),
+    parentId,
+    extension,
+    content,
+    size: size || content.length
+  };
+  
+  if (isPdf) {
+    newFile.originalFileName = uniqueName;
+  }
+  
   const newItems = {
     ...state.items,
-    [newId]: {
-      id: newId,
-      name: uniqueName,
-      type: 'file' as const,
-      path: joinPaths(parentPath, uniqueName),
-      created: new Date(),
-      modified: new Date(),
-      parentId,
-      extension,
-      content,
-      size: size || content.length
-    } as File,
+    [newId]: newFile,
     [parentId]: {
       ...parent,
       children: [...parent.children, newId],

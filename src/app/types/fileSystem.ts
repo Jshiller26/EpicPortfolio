@@ -25,6 +25,7 @@ export interface File extends FileSystemItem {
   type: 'file';
   extension?: string;
   content: string;
+  originalFileName?: string; // Added to track the original filename for pdfs
 }
 
 export interface AppItem extends FileSystemItem {
