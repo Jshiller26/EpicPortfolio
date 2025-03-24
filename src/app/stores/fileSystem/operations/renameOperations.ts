@@ -49,19 +49,24 @@ export const renameItem = (
   // Get parent path - use null as fallback to ensure it's never undefined
   const parentPath = item.parentId ? (newItems[item.parentId].path || null) : null;
   
+  if (item.type === 'file') {
+    const file = item as File;
+    const isPdfFile = file.name.toLowerCase().endsWith('.pdf');
+    
+    if (isPdfFile && !file.originalFileName) {
+      (newItems[itemId] as File).originalFileName = file.name;
+    }
+    const extension = finalName.includes('.') ? finalName.split('.').pop()! : '';
+    (newItems[itemId] as File).extension = extension;
+  }
+  
   // Update item name and path
   newItems[itemId] = {
-    ...item,
+    ...newItems[itemId],
     name: finalName,
     path: parentPath ? `${parentPath}\\${finalName}` : finalName,
     modified: new Date()
   };
-  
-  // If it's a file, update extension
-  if (item.type === 'file') {
-    const extension = finalName.includes('.') ? finalName.split('.').pop()! : '';
-    (newItems[itemId] as File).extension = extension;
-  }
   
   // If it's a folder, update paths for all children
   if (item.type === 'folder') {

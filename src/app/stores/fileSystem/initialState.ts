@@ -1,5 +1,24 @@
 import { FileSystemState, Folder, File } from '../../types/fileSystem';
 
+const addOriginalFileNameToPdfs = (state: FileSystemState): FileSystemState => {
+  const newItems = { ...state.items };
+  
+  Object.keys(newItems).forEach(key => {
+    const item = newItems[key];
+    if (item.type === 'file') {
+      const file = item as File;
+      if (file.extension === 'pdf') {
+        (newItems[key] as File).originalFileName = file.name;
+      }
+    }
+  });
+  
+  return {
+    ...state,
+    items: newItems
+  };
+};
+
 // Set up initial file system structure
 const initialState: FileSystemState = {
   items: {
@@ -116,7 +135,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'idea',
       content: '/pdfs/I.D.E.A Museum.pdf',
-      size: 2048
+      size: 2048,
+      originalFileName: 'I.D.E.A Museum.pdf'
     } as File,
     
     'idea-face-creatures': {
@@ -234,7 +254,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'knights',
       content: '/pdfs/Knights.pdf',
-      size: 2048
+      size: 2048,
+      originalFileName: 'Knights.pdf'
     } as File,
     
     'knights-puzzle-explainer': {
@@ -247,7 +268,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'knights',
       content: '/pdfs/KnightsPuzzleExplainer.pdf',
-      size: 1756
+      size: 1756,
+      originalFileName: 'KnightsPuzzleExplainer.pdf'
     } as File,
     
     'knights-image-1': {
@@ -323,7 +345,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'documents',
       content: '[PDF content would be here]',
-      size: 250
+      size: 250,
+      originalFileName: 'Resume.pdf'
     } as File,
     
     'download-file-1': {
@@ -336,7 +359,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'downloads',
       content: '[PDF content would be here]',
-      size: 1024
+      size: 1024,
+      originalFileName: 'Interesting-Article.pdf'
     } as File,
     
     'download-file-2': {
@@ -374,7 +398,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'emc',
       content: '/pdfs/EMC BizQuiz.pdf',
-      size: 2048
+      size: 2048,
+      originalFileName: 'EMC BizQuiz.pdf'
     } as File,
     
     'emc-photobooth-pdf': {
@@ -387,7 +412,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'emc',
       content: '/pdfs/EMC Photobooth.pdf',
-      size: 1845
+      size: 1845,
+      originalFileName: 'EMC Photobooth.pdf'
     } as File,
     
     // Other Files folder
@@ -413,7 +439,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'emc-other-files',
       content: '/pdfs/Emc App Transfer Manual.pdf',
-      size: 1024
+      size: 1024,
+      originalFileName: 'EMC App Transfer Manual.pdf'
     } as File,
     
     'change-overlay-manual': {
@@ -426,7 +453,8 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'emc-other-files',
       content: '/pdfs/Emc Change Overlay Manual.pdf',
-      size: 1356
+      size: 1356,
+      originalFileName: 'EMC Change Overlay Manual.pdf'
     } as File,
     
     'emc-image-1': {
@@ -475,5 +503,6 @@ const initialState: FileSystemState = {
     operation: null
   }
 };
+export const initialStateWithPdfNames = addOriginalFileNameToPdfs(initialState);
 
 export default initialState;
