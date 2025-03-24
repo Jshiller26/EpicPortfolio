@@ -9,12 +9,14 @@ interface WindowState {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
+  baseId: string;
 }
 
 interface WindowStore {
   windows: Record<string, WindowState>;
   activeWindowId: string | null;
   highestZIndex: number;
+  instanceCounters: Record<string, number>;
   
   // Core window management
   openWindow: (id: string) => void;
@@ -32,73 +34,73 @@ interface WindowStore {
 
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 };
 
+const getOffsetPosition = (existingPosition: { x: number; y: number }) => {
+  return {
+    x: existingPosition.x + 20,
+    y: existingPosition.y + 20
+  };
+};
+
 export const useWindowStore = create<WindowStore>()(
   persist(
     (set, get) => ({
       windows: {},
       activeWindowId: null,
       highestZIndex: 100,
+      instanceCounters: {},
       
-      openWindow: (id) => {
-        const { windows, highestZIndex } = get();
-        const existingWindow = windows[id];
+      openWindow: (baseId) => {
+        const { windows, highestZIndex, instanceCounters } = get();
         
-        if (existingWindow) {
-          // If window exists but is minimized, restore it
-          if (existingWindow.isMinimized) {
-            set({
-              windows: {
-                ...windows,
-                [id]: {
-                  ...existingWindow,
-                  isMinimized: false,
-                  zIndex: highestZIndex + 1
-                }
-              },
-              activeWindowId: id,
-              highestZIndex: highestZIndex + 1
-            });
-          } else {
-            // Just make it active
-            set({
-              windows: {
-                ...windows,
-                [id]: {
-                  ...existingWindow,
-                  zIndex: highestZIndex + 1
-                }
-              },
-              activeWindowId: id,
-              highestZIndex: highestZIndex + 1
-            });
+        const counter = (instanceCounters[baseId] || 0) + 1;
+        const uniqueId = `${baseId}-${counter}`;
+        
+        const existingWindows = Object.values(windows).filter(
+          window => window.baseId === baseId
+        );
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight - 48; // Subtract taskbar height
+        
+        let defaultPosition = {
+          x: Math.max(0, screenWidth / 2 - DEFAULT_WINDOW_SIZE.width / 2),
+          y: Math.max(0, screenHeight / 2 - DEFAULT_WINDOW_SIZE.height / 2)
+        };
+        
+        if (existingWindows.length > 0) {
+          const lastPosition = existingWindows[existingWindows.length - 1].position;
+          defaultPosition = getOffsetPosition(lastPosition);
+          
+          if (defaultPosition.x + DEFAULT_WINDOW_SIZE.width > screenWidth) {
+            defaultPosition.x = 50;
           }
-        } else {
-          // Create new window with default values
-          const screenWidth = window.innerWidth;
-          const screenHeight = window.innerHeight - 48; // Subtract taskbar height
-          
-          const defaultPosition = {
-            x: Math.max(0, screenWidth / 2 - DEFAULT_WINDOW_SIZE.width / 2),
-            y: Math.max(0, screenHeight / 2 - DEFAULT_WINDOW_SIZE.height / 2)
-          };
-          
-          set({
-            windows: {
-              ...windows,
-              [id]: {
-                id,
-                isOpen: true,
-                isMinimized: false,
-                isMaximized: false,
-                position: defaultPosition,
-                size: DEFAULT_WINDOW_SIZE,
-                zIndex: highestZIndex + 1
-              }
-            },
-            activeWindowId: id,
-            highestZIndex: highestZIndex + 1
-          });
+          if (defaultPosition.y + DEFAULT_WINDOW_SIZE.height > screenHeight) {
+            defaultPosition.y = 50;
+          }
         }
+        
+        set({
+          windows: {
+            ...windows,
+            [uniqueId]: {
+              id: uniqueId,
+              baseId: baseId,
+              isOpen: true,
+              isMinimized: false,
+              isMaximized: false,
+              position: defaultPosition,
+              size: DEFAULT_WINDOW_SIZE,
+              zIndex: highestZIndex + 1
+            }
+          },
+          activeWindowId: uniqueId,
+          highestZIndex: highestZIndex + 1,
+          instanceCounters: {
+            ...instanceCounters,
+            [baseId]: counter
+          }
+        });
+        
+        return uniqueId;
       },
       
       closeWindow: (id) => {
@@ -257,7 +259,10 @@ export const useWindowStore = create<WindowStore>()(
     }),
     {
       name: 'window-store',
-      partialize: (state) => ({ windows: state.windows }),
+      partialize: (state) => ({ 
+        windows: state.windows,
+        instanceCounters: state.instanceCounters
+      }),
     }
   )
 );

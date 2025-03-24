@@ -4,7 +4,7 @@ import { useWindowStore } from '../../stores/windowStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import NavigationBar from './fileExplorer/NavigationBar';
 import FileList from './fileExplorer/FileList';
-import { useClipboardStore } from '../../stores/clipboardStore';
+// import { useClipboardStore } from '../../stores/clipboardStore';
 
 interface FileExplorerProps {
   initialPath?: string;
@@ -19,6 +19,18 @@ function isFile(item: FileSystemItem): item is File {
   return item.type === 'file';
 }
 
+const getContentId = (windowId: string) => {
+  if (!windowId) return '';
+  
+  const parts = windowId.split('-');
+  if (parts.length < 3) return '';
+  
+  parts.shift();
+  parts.pop();
+  
+  return parts.join('-');
+};
+
 export const FileExplorer: React.FC<FileExplorerProps> = ({ 
   initialPath,
   windowId
@@ -26,7 +38,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const fileSystem = useFileSystemStore();
   const windowStore = useWindowStore();
   const openWindow = windowStore.openWindow;
-  const clipboard = useClipboardStore();
+  // const clipboard = useClipboardStore();
   
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -44,48 +56,42 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     : [];
 
   // Listen for window events
-  useEffect(() => {
-    const handleWindowOpen = (e: CustomEvent) => {
-      if (e.detail && e.detail.windowId) {
-        openWindow(e.detail.windowId);
-      }
-    };
+  // useEffect(() => {
+  //   const handleWindowOpen = (e: CustomEvent) => {
+  //     if (e.detail && e.detail.windowId) {
+  //       openWindow(e.detail.windowId);
+  //     }
+  //   };
 
-    // Add event listener
-    window.addEventListener('openWindow', handleWindowOpen as EventListener);
+  //   window.addEventListener('openWindow', handleWindowOpen as EventListener);
 
-    // Clipboard keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Make sure we're in a file explorer context and not editing text somewhere
-      if (e.target && (e.target as HTMLElement).tagName !== 'INPUT' && 
-          (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.target && (e.target as HTMLElement).tagName !== 'INPUT' && 
+  //         (e.target as HTMLElement).tagName !== 'TEXTAREA') {
         
-        // Only process if current folder is valid
-        if (currentFolder && currentFolder.id) {
-          // Ctrl+V to paste
-          if (e.ctrlKey && e.key === 'v') {
-            if (clipboard.item) {
-              if (clipboard.operation === 'cut') {
-                fileSystem.moveItem(clipboard.item.id, currentFolder.id);
-              } else if (clipboard.operation === 'copy') {
-                fileSystem.copyItem(clipboard.item.id, currentFolder.id);
-              }
-              clipboard.clear();
-              e.preventDefault();
-            }
-          }
-        }
-      }
-    };
+  //       if (currentFolder && currentFolder.id) {
+  //         if (e.ctrlKey && e.key === 'v') {
+  //           if (clipboard.item) {
+  //             if (clipboard.operation === 'cut') {
+  //               fileSystem.moveItem(clipboard.item.id, currentFolder.id);
+  //             } else if (clipboard.operation === 'copy') {
+  //               fileSystem.copyItem(clipboard.item.id, currentFolder.id);
+  //             }
+  //             clipboard.clear();
+  //             e.preventDefault();
+  //           }
+  //         }
+  //       }
+  //     }
+  //   };
     
-    window.addEventListener('keydown', handleKeyDown);
+  //   window.addEventListener('keydown', handleKeyDown);
 
-    // Cleanup
-    return () => {
-      window.removeEventListener('openWindow', handleWindowOpen as EventListener);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [openWindow, clipboard, currentFolder, fileSystem]);
+  //   return () => {
+  //     window.removeEventListener('openWindow', handleWindowOpen as EventListener);
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, [openWindow, clipboard, currentFolder, fileSystem]);
 
   // Initialize path
   useEffect(() => {
@@ -93,7 +99,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     let pathToUse = initialPath;
     
     if (windowId && windowId.startsWith('explorer-')) {
-      const folderId = windowId.replace('explorer-', '');
+      const folderId = getContentId(windowId);
       const folder = fileSystem.items[folderId];
       
       if (folder && folder.type === 'folder' && folder.path) {

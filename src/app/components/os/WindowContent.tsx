@@ -14,48 +14,70 @@ interface WindowContentProps {
   windowId: string;
 }
 
-export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
-  const fileSystem = useFileSystemStore();
+const getWindowType = (windowId: string) => {
+  const parts = windowId.split('-');
+  if (parts.length < 2) return '';
+  
+  if (windowId.startsWith('vscode-')) {
+    return 'vscode';
+  }
+  return parts[0];
+};
 
+const getContentId = (windowId: string) => {
+  const parts = windowId.split('-');
+  if (parts.length < 3) return '';
+  
+  if (windowId.startsWith('vscode-')) {
+    return 'new';
+  }
+  
+  parts.shift();
+  parts.pop();
+  
+  return parts.join('-');
+};
+
+export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
+  const fileSystem = useFileSystemStore();  
+  const windowType = getWindowType(windowId);
+  const contentId = getContentId(windowId);
+  
   // Handle specific window types
-  if (windowId.startsWith('explorer-')) {
+  if (windowType === 'explorer') {
     // File Explorer
     return <FileExplorer windowId={windowId} />;
-  } else if (windowId.startsWith('editor-')) {
+  } else if (windowType === 'editor') {
     // Text Editor
-    const fileId = windowId.replace('editor-', '');
-    const file = fileSystem.items[fileId] as File;
+    const file = fileSystem.items[contentId] as File;
     
     if (file && file.type === 'file') {
       if (isTextFile(file)) {
-        return <TextEditor fileId={fileId} />;
+        return <TextEditor fileId={contentId} />;
       } else {
         return <div className="p-4">This file type is not supported by the text editor.</div>;
       }
     }
     return <div className="p-4">File not found.</div>;
-  } else if (windowId.startsWith('vscode-')) {
+  } else if (windowType === 'vscode') {
     return <BlankTextEditor windowId={windowId} />;
-  } else if (windowId.startsWith('image-')) {
-    const fileId = windowId.replace('image-', '');
-    return <ImageViewer fileId={fileId} />;
-  } else if (windowId.startsWith('pdf-')) {
-    const fileId = windowId.replace('pdf-', '');
-    const file = fileSystem.items[fileId] as File;
+  } else if (windowType === 'image') {
+    return <ImageViewer fileId={contentId} />;
+  } else if (windowType === 'pdf') {
+    const file = fileSystem.items[contentId] as File;
     
     if (file && file.type === 'file') {
-      return <PDFViewer fileId={fileId} />;
+      return <PDFViewer fileId={contentId} />;
     }
     return <div className="p-4">PDF not found.</div>;
-  } else if (windowId.startsWith('video-')) {
-    const fileId = windowId.replace('video-', '');
-    const file = fileSystem.items[fileId] as File;
+  } else if (windowType === 'video') {
+    const file = fileSystem.items[contentId] as File;
     
     if (file && file.type === 'file') {
-      return <VideoPlayer fileId={fileId} />;
+      return <VideoPlayer fileId={contentId} />;
     }
     return <div className="p-4">Video not found.</div>;
-  } else if (windowId.startsWith('chrome-')) {
+  } else if (windowType === 'chrome') {
     return <Browser windowId={windowId} />;
   }
   

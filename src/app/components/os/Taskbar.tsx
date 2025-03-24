@@ -15,6 +15,32 @@ interface TaskbarProps {
   isSearchOpen: boolean;
 }
 
+const getWindowType = (windowId: string) => {
+  const parts = windowId.split('-');
+  if (parts.length < 2) return windowId;
+  
+  if (windowId.startsWith('vscode-')) {
+    return 'vscode-new';
+  }
+  
+  const windowType = parts[0];
+  return windowType;
+};
+
+const groupWindowsByType = (windows: Record<string, any>) => {
+  const groupedWindows: Record<string, string[]> = {};
+  
+  Object.keys(windows).forEach(windowId => {
+    const baseId = getWindowType(windowId);
+    if (!groupedWindows[baseId]) {
+      groupedWindows[baseId] = [];
+    }
+    groupedWindows[baseId].push(windowId);
+  });
+  
+  return groupedWindows;
+};
+
 export const Taskbar: React.FC<TaskbarProps> = ({
   onWindowSelect,
   onStartClick,
@@ -24,13 +50,11 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const [currentDate, setCurrentDate] = useState<string>('');
   const [searchText, setSearchText] = useState<string>('');
   const [searchResults, setSearchResults] = useState<FileSystemItem[]>([]);
-  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-  
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);  
   const fileSystem = useFileSystemStore();
   const windows = useWindowStore(state => state.windows);
   const activeWindowId = useWindowStore(state => state.activeWindowId);
-  const openWindow = useWindowStore(state => state.openWindow);
-  
+  const openWindow = useWindowStore(state => state.openWindow);  
   const openWindowIds = Object.keys(windows);
 
   useEffect(() => {
@@ -214,18 +238,23 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
         {/* Pinned apps */}
         <div className="flex space-x-1">
-          {pinnedApps.map((appId) => {
-            const isOpen = openWindowIds.includes(appId);
-            const isActive = activeWindowId === appId;            
+          {pinnedApps.map((appType) => {
+            const isOpen = groupedWindows[appType] && groupedWindows[appType].length > 0;
+            const isActive = isOpen && groupedWindows[appType].some(id => id === activeWindowId);
+            
+            const handlePinnedAppClick = () => {
+              onWindowSelect(appType);
+            };
+            
             return (
-              <div key={appId} className="relative">
+              <div key={appType} className="relative">
                 <button 
                   className={`p-2 rounded-md hover:bg-black/10 ${isActive ? 'bg-black/10' : ''}`}
-                  onClick={() => onWindowSelect(appId)}
+                  onClick={handlePinnedAppClick}
                 >
                   <img 
-                    src={getIconForWindow(appId)}
-                    alt={appId}
+                    src={getIconForWindow(appType + "-1")}
+                    alt={appType}
                     className="w-5 h-5"
                   />
                 </button>
@@ -243,22 +272,34 @@ export const Taskbar: React.FC<TaskbarProps> = ({
 
         {/* Running apps (that aren't pinned) */}
         <div className="flex items-center space-x-1">
-          {runningApps.map((windowId) => {
-            const isActive = activeWindowId === windowId;
+          {runningAppTypes.map((appType) => {
+            const instanceIds = groupedWindows[appType];
+            const isActive = instanceIds.some(id => id === activeWindowId);
+            
+            const handleRunningAppClick = () => {
+              if (instanceIds.length > 0) {
+                onWindowSelect(instanceIds[0]);
+              }
+            };
             
             return (
-              <div key={windowId} className="relative">
+              <div key={appType} className="relative">
                 <button
-                  onClick={() => onWindowSelect(windowId)}
+                  onClick={handleRunningAppClick}
                   className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
                     isActive ? 'bg-black/10' : ''
                   }`}
                 >
                   <img 
-                    src={getIconForWindow(windowId)}
-                    alt={windowId}
+                    src={getIconForWindow(instanceIds[0])}
+                    alt={appType}
                     className="w-5 h-5 object-contain"
                   />
+                  {instanceIds.length > 1 && (
+                    <span className="absolute -right-1 -bottom-1 bg-gray-200 text-gray-700 rounded-full text-[10px] w-4 h-4 flex items-center justify-center">
+                      {instanceIds.length}
+                    </span>
+                  )}
                 </button>
                 <div 
                   className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${

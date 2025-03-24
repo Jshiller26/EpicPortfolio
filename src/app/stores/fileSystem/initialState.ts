@@ -24,7 +24,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'desktop',
-      children: ['emc', 'knights', 'pandora']
+      children: ['emc', 'knights', 'idea', 'pandora']
     } as Folder,
     
     'documents': {
@@ -82,6 +82,146 @@ const initialState: FileSystemState = {
       parentId: 'my-projects',
       children: ['knights-pdf', 'knights-puzzle-explainer', 'knights-image-1', 'knights-image-2', 'knights-demo-video']
     } as Folder,
+    
+    // I.D.E.A. Museum folder
+    'idea': {
+      id: 'idea',
+      name: 'I.D.E.A Museum',
+      type: 'folder',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'my-projects',
+      children: [
+        'idea-pdf', 
+        'idea-face-creatures', 
+        'idea-finished', 
+        'idea-install-1', 
+        'idea-install-2', 
+        'idea-music-box', 
+        'idea-tree', 
+        'idea-lighting', 
+        'idea-sound'
+      ]
+    } as Folder,
+    
+    // I.D.E.A. Museum files
+    'idea-pdf': {
+      id: 'idea-pdf',
+      name: 'I.D.E.A Museum.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\I.D.E.A Museum.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/pdfs/I.D.E.A Museum.pdf',
+      size: 2048
+    } as File,
+    
+    'idea-face-creatures': {
+      id: 'idea-face-creatures',
+      name: 'ideaFaceCreatures.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideaFaceCreatures.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideaFaceCreatures.jpg',
+      size: 2850
+    } as File,
+    
+    'idea-finished': {
+      id: 'idea-finished',
+      name: 'ideaFinished.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideaFinished.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideaFinished.jpg',
+      size: 3050
+    } as File,
+    
+    'idea-install-1': {
+      id: 'idea-install-1',
+      name: 'ideaInstall1.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideaInstall1.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideaInstall1.jpg',
+      size: 2750
+    } as File,
+    
+    'idea-install-2': {
+      id: 'idea-install-2',
+      name: 'ideaInstall2.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideaInstall2.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideaInstall2.jpg',
+      size: 2650
+    } as File,
+    
+    'idea-music-box': {
+      id: 'idea-music-box',
+      name: 'ideamusicbox.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideamusicbox.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideamusicbox.jpg',
+      size: 2950
+    } as File,
+    
+    'idea-tree': {
+      id: 'idea-tree',
+      name: 'ideatree.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\ideatree.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/ideatree.jpg',
+      size: 3150
+    } as File,
+    
+    'idea-lighting': {
+      id: 'idea-lighting',
+      name: 'lightingScreenshot.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\lightingScreenshot.png',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/lightingScreenshot.png',
+      size: 1850
+    } as File,
+    
+    'idea-sound': {
+      id: 'idea-sound',
+      name: 'soundscreenshot.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\I.D.E.A Museum\\soundscreenshot.png',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'idea',
+      content: '/images/projects/idea/soundscreenshot.png',
+      size: 1750
+    } as File,
     
     // Knights Escape Room files
     'knights-pdf': {
