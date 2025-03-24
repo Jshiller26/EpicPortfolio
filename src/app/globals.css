@@ -147,3 +147,34 @@ body.dragging * {
 .animate-fade-in {
   animation: fadeIn 0.15s ease-out forwards;
 }
+
+/* Windows 11 search animations */
+@keyframes searchBarAppear {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-search-appear {
+  animation: searchBarAppear 0.2s ease-out forwards;
+}
+
+@keyframes searchResultsAppear {
+  from {
+    transform: translateY(10px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-search-results {
+  animation: searchResultsAppear 0.15s ease-out forwards;
+}
