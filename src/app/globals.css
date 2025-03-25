@@ -178,3 +178,18 @@ body.dragging * {
 .animate-search-results {
   animation: searchResultsAppear 0.15s ease-out forwards;
 }
+
+@keyframes startMenuAppear {
+  from {
+    transform: translateY(10px) translateX(-50%) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-start-menu {
+  animation: startMenuAppear 0.15s ease-out forwards;
+}

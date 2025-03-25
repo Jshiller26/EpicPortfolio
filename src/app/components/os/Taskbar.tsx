@@ -5,6 +5,7 @@ import { getIconForWindow} from '@/app/utils/iconUtils';
 import { searchFileSystem } from '@/app/utils/searchUtils';
 import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
+import { StartMenu } from './StartMenu'; // Import the new StartMenu component
 
 interface TaskbarProps {
   onWindowSelect: (windowId: string) => void;
@@ -188,11 +189,22 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     setShowSearchResults(false);
   };
 
+  const handleCloseStartMenu = () => {
+    onStartClick();
+  };
+
   // Determine pinned apps and running apps for the taskbar
   const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
 
   return (
     <>
+      {/* Start Menu */}
+      <StartMenu 
+        isOpen={isStartOpen} 
+        onClose={handleCloseStartMenu} 
+        onItemClick={onWindowSelect} 
+      />
+      
       {/* Search results */}
       {showSearchResults && (
         <>
@@ -310,140 +322,145 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       )}
       
       {/* Windows 11 Taskbar */}
-      <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg flex items-center px-3 z-50">
-        <div className="flex-1 flex items-center justify-center space-x-2">
-          {/* Start button */}
-          <button
-            onClick={onStartClick}
-            className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
-              isStartOpen ? 'bg-black/10' : ''
-            }`}
-          >
-            <img 
-              src="/images/desktop/icons8-windows-11.svg" 
-              alt="Start" 
-              className="w-6 h-6"
-            />
-          </button>
-
-          {/* Search bar with fixed width */}
-          <div className="relative">
-            <div className="flex items-center bg-black/5 rounded-md hover:bg-black/10 transition-colors w-48">
-              <div className="flex items-center pl-3 flex-shrink-0">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder={searchText ? "" : "Type here to search"}
-                value={searchText}
-                onChange={handleSearchChange}
-                onFocus={handleSearchFocus}
-                className="py-1.5 px-2 bg-transparent outline-none text-sm w-full"
+      <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg z-50">
+        <div className="h-full flex items-center justify-between px-3">
+          {/* Empty space on left side bc centering issues*/}
+          <div className="w-24"></div>
+          {/* Center section with taskbar items */}
+          <div className="flex items-center justify-center space-x-2">
+            {/* Start button */}
+            <button
+              onClick={onStartClick}
+              className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
+                isStartOpen ? 'bg-black/10' : ''
+              }`}
+            >
+              <img 
+                src="/images/desktop/icons8-windows-11.svg" 
+                alt="Start" 
+                className="w-6 h-6"
               />
-              {searchText && (
-                <button
-                  onClick={() => {
-                    setSearchText('');
-                    setShowSearchResults(false);
-                  }}
-                  className="p-1 mr-1 text-gray-500 hover:text-gray-700 flex-shrink-0"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
+            </button>
 
-          {/* Pinned apps */}
-          <div className="flex space-x-1">
-            {pinnedApps.map((appType) => {
-              const isOpen = groupedWindows[appType] && groupedWindows[appType].length > 0;
-              const isActive = isOpen && groupedWindows[appType].some(id => id === activeWindowId);
-              
-              const handlePinnedAppClick = () => {
-                onWindowSelect(appType);
-              };
-              
-              return (
-                <div key={appType} className="relative">
-                  <button 
-                    className={`p-2 rounded-md hover:bg-black/10 ${isActive ? 'bg-black/10' : ''}`}
-                    onClick={handlePinnedAppClick}
+            {/* Search bar with fixed width */}
+            <div className="relative">
+              <div className="flex items-center bg-black/5 rounded-md hover:bg-black/10 transition-colors w-48">
+                <div className="flex items-center pl-3 flex-shrink-0">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder={searchText ? "" : "Type here to search"}
+                  value={searchText}
+                  onChange={handleSearchChange}
+                  onFocus={handleSearchFocus}
+                  className="py-1.5 px-2 bg-transparent outline-none text-sm w-full"
+                />
+                {searchText && (
+                  <button
+                    onClick={() => {
+                      setSearchText('');
+                      setShowSearchResults(false);
+                    }}
+                    className="p-1 mr-1 text-gray-500 hover:text-gray-700 flex-shrink-0"
                   >
-                    <img 
-                      src={getIconForWindow(appType)}
-                      alt={appType}
-                      className="w-5 h-5"
-                    />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
-                  {isOpen && (
+                )}
+              </div>
+            </div>
+
+            {/* Pinned apps */}
+            <div className="flex space-x-1">
+              {pinnedApps.map((appType) => {
+                const isOpen = groupedWindows[appType] && groupedWindows[appType].length > 0;
+                const isActive = isOpen && groupedWindows[appType].some(id => id === activeWindowId);
+                
+                const handlePinnedAppClick = () => {
+                  onWindowSelect(appType);
+                };
+                
+                return (
+                  <div key={appType} className="relative">
+                    <button 
+                      className={`p-2 rounded-md hover:bg-black/10 ${isActive ? 'bg-black/10' : ''}`}
+                      onClick={handlePinnedAppClick}
+                    >
+                      <img 
+                        src={getIconForWindow(appType)}
+                        alt={appType}
+                        className="w-5 h-5"
+                      />
+                    </button>
+                    {isOpen && (
+                      <div 
+                        className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${
+                          isActive ? 'bg-blue-500' : 'bg-gray-500'
+                        } rounded-full`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Running apps (that aren't pinned) */}
+            <div className="flex items-center space-x-1">
+              {runningAppTypes.map((appType) => {
+                const instanceIds = groupedWindows[appType];
+                const isActive = instanceIds.some(id => id === activeWindowId);
+                
+                const handleRunningAppClick = () => {
+                  if (instanceIds.length > 0) {
+                    onWindowSelect(instanceIds[0]);
+                  }
+                };
+                
+                return (
+                  <div key={appType} className="relative">
+                    <button
+                      onClick={handleRunningAppClick}
+                      className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
+                        isActive ? 'bg-black/10' : ''
+                      }`}
+                    >
+                      <img 
+                        src={getIconForWindow(instanceIds[0])}
+                        alt={appType}
+                        className="w-5 h-5 object-contain"
+                      />
+                      {instanceIds.length > 1 && (
+                        <span className="absolute -right-1 -bottom-1 bg-gray-200 text-gray-700 rounded-full text-[10px] w-4 h-4 flex items-center justify-center">
+                          {instanceIds.length}
+                        </span>
+                      )}
+                    </button>
                     <div 
                       className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${
                         isActive ? 'bg-blue-500' : 'bg-gray-500'
                       } rounded-full`}
                     />
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-
-          {/* Running apps (that aren't pinned) */}
-          <div className="flex items-center space-x-1">
-            {runningAppTypes.map((appType) => {
-              const instanceIds = groupedWindows[appType];
-              const isActive = instanceIds.some(id => id === activeWindowId);
-              
-              const handleRunningAppClick = () => {
-                if (instanceIds.length > 0) {
-                  onWindowSelect(instanceIds[0]);
-                }
-              };
-              
-              return (
-                <div key={appType} className="relative">
-                  <button
-                    onClick={handleRunningAppClick}
-                    className={`p-2 rounded-md hover:bg-black/10 transition-colors ${
-                      isActive ? 'bg-black/10' : ''
-                    }`}
-                  >
-                    <img 
-                      src={getIconForWindow(instanceIds[0])}
-                      alt={appType}
-                      className="w-5 h-5 object-contain"
-                    />
-                    {instanceIds.length > 1 && (
-                      <span className="absolute -right-1 -bottom-1 bg-gray-200 text-gray-700 rounded-full text-[10px] w-4 h-4 flex items-center justify-center">
-                        {instanceIds.length}
-                      </span>
-                    )}
-                  </button>
-                  <div 
-                    className={`absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 ${
-                      isActive ? 'bg-blue-500' : 'bg-gray-500'
-                    } rounded-full`}
-                  />
-                </div>
-              );
-            })}
+          
+          {/* Right section - System tray */}
+          <div className="flex items-center w-24 justify-end">
+            <div className="flex flex-col items-end px-3 cursor-default">
+              <div className="text-xs font-medium">{currentTime}</div>
+              <div className="text-xs">{currentDate}</div>
+            </div>
+            <button 
+              className="ml-1 w-3 hover:bg-black/10 h-full"
+              onClick={() => {/* Show desktop */}}
+            />
           </div>
-        </div>
-
-        {/* Right section - System tray */}
-        <div className="flex items-center">
-          <div className="flex flex-col items-end px-3 cursor-default">
-            <div className="text-xs font-medium">{currentTime}</div>
-            <div className="text-xs">{currentDate}</div>
-          </div>
-          <button 
-            className="ml-1 w-3 hover:bg-black/10 h-full"
-            onClick={() => {/* Show desktop */}}
-          />
         </div>
       </div>
     </>
