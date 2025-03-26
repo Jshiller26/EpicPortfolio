@@ -40,6 +40,8 @@ export const getIconForItem = (item: FileSystemItem): string => {
         switch (contentObj.appId) {
           case 'vscode':
             return '/images/desktop/icons8-vscode.svg';
+          case 'gameboy':
+            return '/images/icons/games/gameboyIcon.png';
           default:
             return '/images/desktop/icons8-shortcut.svg';
         }
@@ -64,6 +66,8 @@ export const getIconForItem = (item: FileSystemItem): string => {
     return '/images/desktop/textFileIcon.png';
   } else if (extension === 'exe') {
     return '/images/desktop/icons8-app.svg';
+  } else if (['gb', 'gbc', 'gba'].includes(extension)) {
+    return '/images/icons/games/gameboyIcon.png';
   }
   
   return '/images/desktop/icons8-file.svg';
@@ -90,6 +94,8 @@ export const getIconForWindow = (windowId: string): string => {
       return '/images/desktop/icons8-chrome.svg';
     case 'edge':
       return '/images/desktop/icons8-microsoft-edge.svg';
+    case 'gameboy':
+      return '/images/icons/games/gameboyIcon.png';
     default:
       return '/images/desktop/icons8-file.svg';
   }
@@ -105,6 +111,12 @@ export const isTextFile = (file: File): boolean => {
 export const isVideoFile = (file: File): boolean => {
   const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'mkv', 'flv'];
   return !!file.extension && videoExtensions.includes(file.extension.toLowerCase());
+};
+
+// Check if a file is a game ROM file
+export const isGameROMFile = (file: File): boolean => {
+  const gameExtensions = ['gb', 'gbc', 'gba', 'nes', 'snes', 'smc', 'z64', 'n64', 'nds'];
+  return !!file.extension && gameExtensions.includes(file.extension.toLowerCase());
 };
 
 // Check if a file is an app shortcut
@@ -192,6 +204,8 @@ export const getWindowTitle = (windowId: string, items: Record<string, FileSyste
       return 'Google Chrome';
     case 'edge':
       return 'Microsoft Edge';
+    case 'gameboy':
+      return contentId ? `GameBoy - ${contentId}` : 'GameBoy Emulator';
     default:
       return 'Window';
   }

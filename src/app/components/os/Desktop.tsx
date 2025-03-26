@@ -30,7 +30,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   // Get window IDs for rendering
   const windowIds = Object.keys(windows);
   
-  // Initialize the drag cursor fix
   useEffect(() => {
     initDragCursorFix();
   }, []);
