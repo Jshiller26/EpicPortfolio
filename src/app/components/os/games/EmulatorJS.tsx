@@ -126,7 +126,8 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
       
       // Clear any pending timeouts or intervals that might be causing the error
       const highestTimeoutId = setTimeout(() => {}, 0);
-      for (let i = 0; i < highestTimeoutId; i++) {
+      const numericTimeoutId = Number(highestTimeoutId);
+      for (let i = 0; i < numericTimeoutId; i++) {
         clearTimeout(i);
       }
     };
@@ -156,7 +157,7 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
 declare global {
   interface Window {
     EJS_terminate?: () => void;
-    setImmediate?: (callback: (...args: any[]) => void, ...args: any[]) => number;
+    setImmediate?: (callback: (...args: unknown[]) => void, ...args: unknown[]) => number;
     clearImmediate?: (immediateId: number) => void;
   }
 }
