@@ -52,6 +52,43 @@ export const useWindowStore = create<WindowStore>()(
       openWindow: (baseId) => {
         const { windows, highestZIndex, instanceCounters } = get();
         
+        if (baseId.startsWith('gameboy')) {
+          const existingGameBoyWindow = Object.values(windows).find(
+            window => window.baseId.startsWith('gameboy') && window.isOpen
+          );
+          
+          if (existingGameBoyWindow) {
+            if (existingGameBoyWindow.isMinimized) {
+              set({
+                windows: {
+                  ...windows,
+                  [existingGameBoyWindow.id]: {
+                    ...existingGameBoyWindow,
+                    isMinimized: false,
+                    zIndex: highestZIndex + 1
+                  }
+                },
+                activeWindowId: existingGameBoyWindow.id,
+                highestZIndex: highestZIndex + 1
+              });
+            } else {
+              set({
+                windows: {
+                  ...windows,
+                  [existingGameBoyWindow.id]: {
+                    ...existingGameBoyWindow,
+                    zIndex: highestZIndex + 1
+                  }
+                },
+                activeWindowId: existingGameBoyWindow.id,
+                highestZIndex: highestZIndex + 1
+              });
+            }
+            
+            return existingGameBoyWindow.id;
+          }
+        }
+        
         const counter = (instanceCounters[baseId] || 0) + 1;
         const uniqueId = `${baseId}-${counter}`;
         

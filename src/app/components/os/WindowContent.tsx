@@ -9,6 +9,7 @@ import PDFViewer from './PDFViewer';
 import VideoPlayer from './VideoPlayer';
 import Browser from './browser/Browser';
 import ImageViewer from './ImageViewer';
+import GameBoy from './games/GameBoy';
 
 interface WindowContentProps {
   windowId: string;
@@ -79,6 +80,9 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     return <div className="p-4">Video not found.</div>;
   } else if (windowType === 'chrome') {
     return <Browser windowId={windowId} />;
+  } else if (windowType === 'gameboy') {
+    const gameName = contentId || 'PokemonEmerald';
+    return <GameBoy game={gameName} />;
   }
   
   // Default content for unknown window types

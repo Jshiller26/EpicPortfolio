@@ -17,6 +17,7 @@ import {
 // Import renamed components
 import { DesktopIcon } from './DesktopIcon';
 import { VSCodeIcon } from './VSCodeIcon';
+import { GameBoyIcon } from './GameBoyIcon';
 import { DesktopContextMenuHandler } from './DesktopContextMenuHandler';
 
 interface DesktopIconsProps {
@@ -25,7 +26,6 @@ interface DesktopIconsProps {
 
 const GRID_SIZE = 76;
 
-// Create a fake app item to represent VS Code
 const createAppItem = (appId: string, appName: string): FileSystemItem => {
   return {
     id: appId,
@@ -49,7 +49,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const clipboard = useClipboardStore();
   
   const [appItems] = useState<Record<string, FileSystemItem>>({
-    'vscode': createAppItem('vscode', 'VS Code')
+    'vscode': createAppItem('vscode', 'VS Code'),
+    'gameboy': createAppItem('gameboy', 'GameBoy')
   });
   
   const [isDragging, setIsDragging] = useState(false);
@@ -71,9 +72,11 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   // Initialize icon positions with desktop children
   const { 
     iconPositions, 
-    vsCodePosition, 
+    vsCodePosition,
+    gameBoyPosition, 
     setIconPositions,
     setVsCodePosition,
+    setGameBoyPosition,
     newItems,
     findNextAvailablePosition,
     isPositionOccupied,
@@ -171,6 +174,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (appItems[itemId]) {
       if (itemId === 'vscode') {
         onOpenWindow('vscode-new');
+      } else if (itemId === 'gameboy') {
+        onOpenWindow('gameboy-PokemonEmerald');
       } else {
         onOpenWindow(itemId);
       }
@@ -513,10 +518,13 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         itemId = dragData.itemId;        
         const isAppItem = Boolean(dragData.isApp);
         
-        if (itemId === 'vscode' || isAppItem) {
+        if (itemId === 'vscode' || itemId === 'gameboy' || isAppItem) {
           if (itemId === 'vscode') {
             const vsCodeId = createFile('VS Code.exe', folderId, '', 0);
             console.log(`Created VS Code file in folder: ${vsCodeId}`);
+          } else if (itemId === 'gameboy') {
+            const gameBoyId = createFile('GameBoy.exe', folderId, '', 0);
+            console.log(`Created GameBoy file in folder: ${gameBoyId}`);
           } else {
             createAppShortcut(itemId, folderId);
           }
@@ -584,6 +592,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       if (!isPositionOccupied(x, y, itemId)) {
         if (itemId === 'vscode') {
           setVsCodePosition({ x, y });
+        } else if (itemId === 'gameboy') {
+          setGameBoyPosition({ x, y });
         } else {
           setIconPositions(prev => ({
             ...prev,
@@ -595,6 +605,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         
         if (itemId === 'vscode') {
           setVsCodePosition(position);
+        } else if (itemId === 'gameboy') {
+          setGameBoyPosition(position);
         } else {
           setIconPositions(prev => ({
             ...prev,
@@ -633,15 +645,33 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         const isApp = item.type === 'app';
         
         // Get the appropriate position for the item
-        let position = isApp && itemId === 'vscode' 
-          ? vsCodePosition 
-          : iconPositions[itemId];
+        let position;
+        if (isApp) {
+          if (itemId === 'vscode') {
+            position = vsCodePosition;
+          } else if (itemId === 'gameboy') {
+            position = gameBoyPosition;
+          } else {
+            position = iconPositions[itemId];
+          }
+        } else {
+          position = iconPositions[itemId];
+        }
         
         if (!position) {
           const newPosition = findNextAvailablePosition(0, 0, itemId);
           
-          if (isApp && itemId === 'vscode') {
-            setVsCodePosition(newPosition);
+          if (isApp) {
+            if (itemId === 'vscode') {
+              setVsCodePosition(newPosition);
+            } else if (itemId === 'gameboy') {
+              setGameBoyPosition(newPosition);
+            } else {
+              setIconPositions(prev => ({
+                ...prev,
+                [itemId]: newPosition
+              }));
+            }
           } else {
             setIconPositions(prev => ({
               ...prev,
@@ -655,18 +685,32 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         const isNewItem = newItems.has(itemId);
         const isCut = clipboard.operation === 'cut' && clipboard.item?.id === itemId;
         
-        if (isApp && itemId === 'vscode') {
-          return (
-            <VSCodeIcon
-              key={itemId}
-              position={position}
-              isDragging={isDragging}
-              onContextMenu={(e) => handleContextMenu(e, itemId)}
-              onDragStart={(e) => handleDragStart(e, itemId)}
-              onDragEnd={handleDragEnd}
-              onDoubleClick={() => handleOpen(itemId)}
-            />
-          );
+        if (isApp) {
+          if (itemId === 'vscode') {
+            return (
+              <VSCodeIcon
+                key={itemId}
+                position={position}
+                isDragging={isDragging}
+                onContextMenu={(e) => handleContextMenu(e, itemId)}
+                onDragStart={(e) => handleDragStart(e, itemId)}
+                onDragEnd={handleDragEnd}
+                onDoubleClick={() => handleOpen(itemId)}
+              />
+            );
+          } else if (itemId === 'gameboy') {
+            return (
+              <GameBoyIcon
+                key={itemId}
+                position={position}
+                isDragging={isDragging}
+                onContextMenu={(e) => handleContextMenu(e, itemId)}
+                onDragStart={(e) => handleDragStart(e, itemId)}
+                onDragEnd={handleDragEnd}
+                onDoubleClick={() => handleOpen(itemId)}
+              />
+            );
+          }
         }
         
         return (
@@ -685,7 +729,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             onDragEnd={handleDragEnd}
             onDoubleClick={() => handleOpen(itemId)}
             onDragOver={item.type === 'folder' ? (e) => handleFolderDragOver(e, itemId) : undefined}
-            onDrop={item.type === 'folder' ? handleFolderDrop : undefined}
+            onDrop={item.type === 'folder' ? (e) => handleFolderDrop(e, itemId) : undefined}
             onRenameChange={handleRenameChange}
             onRenameKeyDown={handleRenameKeyDown}
             onRenameComplete={handleRenameComplete}

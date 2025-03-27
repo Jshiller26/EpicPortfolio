@@ -82,6 +82,22 @@ export const handleOpenItem = (
       return;
     }
     
+    if (item.type === 'file') {
+      const file = item as File;
+      if (file.content) {
+        try {
+          const contentObj = JSON.parse(file.content);
+          if (contentObj.type === 'appShortcut' && contentObj.appId) {
+            if (contentObj.appId === 'gameboy') {
+              onOpenWindow('GBA Emulator');
+              return;
+            }
+          }
+        } catch {
+        }
+      }
+    }
+    
     // Handle file opening based on file extension
     const file = item as File;
     const extension = file.extension ? file.extension.toLowerCase() : '';
@@ -116,9 +132,18 @@ export const handleOpenItem = (
       case 'avi':
         onOpenWindow(`video-${itemId}`);
         break;
+      case 'gb':
+      case 'gbc':
+      case 'gba':
+        // Open in GameBoy Emulator
+        const romName = file.name.substring(0, file.name.lastIndexOf('.'));
+        onOpenWindow(`gameboy-${romName}`);
+        break;
       case 'exe':
         if (file.name.toLowerCase().includes('vs code') || file.name.toLowerCase() === 'vscode.exe') {
           onOpenWindow('vscode-new');
+        } else if (file.name.toLowerCase().includes('gameboy')) {
+          onOpenWindow('GBA Emulator');
         } else {
           console.log(`Launching app: ${file.name}`);
         }
