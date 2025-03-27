@@ -9,7 +9,7 @@ const GameBoy: React.FC<GameBoyProps> = ({ game = 'PokemonEmerald' }) => {
   const [errorMessage] = useState<string | null>(null);
   
   useEffect(() => {
-    return () => {
+    const handleWindowClosed = () => {
       document.querySelectorAll('audio').forEach(audio => {
         if (!audio.paused) {
           audio.pause();
@@ -24,8 +24,18 @@ const GameBoy: React.FC<GameBoyProps> = ({ game = 'PokemonEmerald' }) => {
         }
       });
       
+      document.querySelectorAll('div[id^="emjs-"]').forEach(element => {
+        element.remove();
+      });
+      
+      document.querySelectorAll('script[src*="emulatorjs"]').forEach(script => {
+        script.remove();
+      });
+      
       console.log('GameBoy component unmounted and cleaned up');
     };
+    
+    return handleWindowClosed;
   }, []);
   
   return (

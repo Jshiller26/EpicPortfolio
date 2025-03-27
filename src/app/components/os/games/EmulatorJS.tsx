@@ -5,6 +5,9 @@ interface EmulatorJSProps {
   fullscreen?: boolean;
 }
 
+// Use a global flag to track if the emulator is already loaded
+let emulatorScriptsLoaded = false;
+
 const EmulatorJS: React.FC<EmulatorJSProps> = ({ 
   rom = 'PokemonEmerald', 
   fullscreen = true 
@@ -12,6 +15,50 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const initialized = useRef<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Function to properly clean up the EmulatorJS resources
+  const cleanupEmulator = () => {
+    // Clean up EJS_terminate function if available
+    if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
+      try {
+        window.EJS_terminate();
+      } catch (error) {
+        console.error('Error terminating EmulatorJS:', error);
+      }
+    }
+
+    // Clean up audio elements
+    document.querySelectorAll('audio').forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.srcObject = null;
+        audio.remove();
+      }
+    });
+
+    // Remove all EmulatorJS specific divs
+    document.querySelectorAll('div[id^="emjs-"]').forEach(element => {
+      element.remove();
+    });
+
+    // Clear all variables defined by EmulatorJS
+    delete window.EJS_player;
+    delete window.EJS_core;
+    delete window.EJS_pathtodata;
+    delete window.EJS_gameUrl;
+    delete window.EJS_defaultOptions;
+    delete window.EJS_volume;
+    
+    // Clear any pending timeouts that might be causing errors
+    const numericTimeoutId = Number(setTimeout(() => {}, 0));
+    for (let i = 0; i < numericTimeoutId; i++) {
+      clearTimeout(i);
+    }
+    
+    // Reset the emulator loaded flag
+    emulatorScriptsLoaded = false;
+    initialized.current = false;
+  };
   
   useEffect(() => {
     if (!containerRef.current || initialized.current) return;
@@ -54,45 +101,37 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
     };
     
     const initializeEmulatorScripts = (romPath: string) => {
-      // Create EJS_player script variable
-      const playerScript = document.createElement('script');
-      playerScript.textContent = 'EJS_player = "#game";';
+      // Define global EmulatorJS variables for this instance
+      window.EJS_player = "#game";
+      window.EJS_core = "gba";
+      window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+      window.EJS_gameUrl = romPath;
+      window.EJS_defaultOptions = { "gba": {"sound": true, "vsync": true} };
+      window.EJS_volume = 0.5;
       
-      const coreScript = document.createElement('script');
-      coreScript.textContent = 'EJS_core = "gba";';
-      
-      const pathScript = document.createElement('script');
-      pathScript.textContent = 'EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";';
-      
-      const gameUrlScript = document.createElement('script');
-      gameUrlScript.textContent = `EJS_gameUrl = "${romPath}";`;
-      
-      const optionsScript = document.createElement('script');
-      optionsScript.textContent = 'EJS_defaultOptions = { "gba": {"sound": true, "vsync": true} };';
-      
-      // Add volume control
-      const volumeScript = document.createElement('script');
-      volumeScript.textContent = 'EJS_volume = 0.5;';
-      
-      // Create loader script
-      const loaderScript = document.createElement('script');
-      loaderScript.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-      loaderScript.onerror = () => {
-        setError('Error loading EmulatorJS. Please check your internet connection and try again.');
-        if (containerRef.current) {
-          containerRef.current.innerHTML = '<div style="color: red; padding: 20px;">Error loading EmulatorJS. Please check your internet connection and try again.</div>';
+      // Create loader script only if it hasn't been loaded before
+      if (!emulatorScriptsLoaded) {
+        const loaderScript = document.createElement('script');
+        loaderScript.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+        loaderScript.onerror = () => {
+          setError('Error loading EmulatorJS. Please check your internet connection and try again.');
+          if (containerRef.current) {
+            containerRef.current.innerHTML = '<div style="color: red; padding: 20px;">Error loading EmulatorJS. Please check your internet connection and try again.</div>';
+          }
+        };
+        
+        document.body.appendChild(loaderScript);
+        emulatorScriptsLoaded = true;
+      } else {
+        // If already loaded, we need to manually trigger the emulator boot process
+        if (typeof window.EJS_emulator === 'function') {
+          try {
+            window.EJS_emulator();
+          } catch (error) {
+            console.error('Error re-initializing emulator:', error);
+            setError('Error re-initializing emulator. Please try again.');
+          }
         }
-      };
-      
-      // Append scripts to document
-      if (containerRef.current) {
-        containerRef.current.appendChild(playerScript);
-        containerRef.current.appendChild(coreScript);
-        containerRef.current.appendChild(pathScript);
-        containerRef.current.appendChild(optionsScript);
-        containerRef.current.appendChild(volumeScript);
-        containerRef.current.appendChild(gameUrlScript);
-        containerRef.current.appendChild(loaderScript);
       }
       
       initialized.current = true;
@@ -102,34 +141,7 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
     
     // Cleanup function
     return () => {
-      initialized.current = false;
-      
-      if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
-        try {
-          window.EJS_terminate();
-        } catch (error) {
-          console.error('Error terminating EmulatorJS:', error);
-        }
-      }
-
-      document.querySelectorAll('audio').forEach(audio => {
-        if (!audio.paused) {
-          audio.pause();
-          audio.srcObject = null;
-          audio.remove();
-        }
-      });
-
-      document.querySelectorAll('div[id^="emjs-"]').forEach(element => {
-        element.remove();
-      });
-      
-      // Clear any pending timeouts or intervals that might be causing the error
-      const highestTimeoutId = setTimeout(() => {}, 0);
-      const numericTimeoutId = Number(highestTimeoutId);
-      for (let i = 0; i < numericTimeoutId; i++) {
-        clearTimeout(i);
-      }
+      cleanupEmulator();
     };
   }, [rom]);
   
@@ -157,6 +169,13 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
 declare global {
   interface Window {
     EJS_terminate?: () => void;
+    EJS_emulator?: () => void;
+    EJS_player?: string;
+    EJS_core?: string;
+    EJS_pathtodata?: string;
+    EJS_gameUrl?: string;
+    EJS_defaultOptions?: Record<string, unknown>;
+    EJS_volume?: number;
     setImmediate?: (callback: (...args: unknown[]) => void, ...args: unknown[]) => number;
     clearImmediate?: (immediateId: number) => void;
   }
