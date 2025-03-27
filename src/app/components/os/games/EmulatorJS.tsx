@@ -105,7 +105,29 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
       initialized.current = false;
       
       if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
-        window.EJS_terminate();
+        try {
+          window.EJS_terminate();
+        } catch (error) {
+          console.error('Error terminating EmulatorJS:', error);
+        }
+      }
+
+      document.querySelectorAll('audio').forEach(audio => {
+        if (!audio.paused) {
+          audio.pause();
+          audio.srcObject = null;
+          audio.remove();
+        }
+      });
+
+      document.querySelectorAll('div[id^="emjs-"]').forEach(element => {
+        element.remove();
+      });
+      
+      // Clear any pending timeouts or intervals that might be causing the error
+      const highestTimeoutId = setTimeout(() => {}, 0);
+      for (let i = 0; i < highestTimeoutId; i++) {
+        clearTimeout(i);
       }
     };
   }, [rom]);
@@ -134,6 +156,8 @@ const EmulatorJS: React.FC<EmulatorJSProps> = ({
 declare global {
   interface Window {
     EJS_terminate?: () => void;
+    setImmediate?: (callback: (...args: any[]) => void, ...args: any[]) => number;
+    clearImmediate?: (immediateId: number) => void;
   }
 }
 

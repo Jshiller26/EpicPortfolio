@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EmulatorJS from './EmulatorJS';
 
 interface GameBoyProps {
@@ -7,6 +7,26 @@ interface GameBoyProps {
 
 const GameBoy: React.FC<GameBoyProps> = ({ game = 'PokemonEmerald' }) => {
   const [errorMessage] = useState<string | null>(null);
+  
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll('audio').forEach(audio => {
+        if (!audio.paused) {
+          audio.pause();
+          audio.srcObject = null;
+        }
+      });
+      
+      document.querySelectorAll('canvas').forEach(canvas => {
+        const context = canvas.getContext('2d');
+        if (context) {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      });
+      
+      console.log('GameBoy component unmounted and cleaned up');
+    };
+  }, []);
   
   return (
     <div className="w-full h-full flex flex-col">

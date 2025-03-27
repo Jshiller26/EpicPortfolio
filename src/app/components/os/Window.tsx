@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Minus, Square, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindowStore } from '@/app/stores/windowStore';
@@ -26,6 +26,26 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   const unmaximizeWindow = useWindowStore(state => state.unmaximizeWindow);
   const closeWindow = useWindowStore(state => state.closeWindow);
   
+  // cleanup for GBA emulator
+  useEffect(() => {
+    return () => {
+      if (id.startsWith('gameboy-')) {
+          document.querySelectorAll('audio').forEach(audio => {
+          audio.pause();
+          audio.srcObject = null;
+        });
+        
+        if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
+          try {
+            window.EJS_terminate();
+          } catch (error) {
+            console.error('Error terminating EmulatorJS:', error);
+          }
+        }
+      }
+    };
+  }, [id]);
+  
   // Check if window exists
   if (!windowState) return null;
   
@@ -47,6 +67,17 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   };
   
   const handleClose = () => {
+    if (id.startsWith('gameboy-')) {
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.srcObject = null;
+      });
+      
+      if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
+        window.EJS_terminate();
+      }
+    }
+    
     closeWindow(id);
   };
   
