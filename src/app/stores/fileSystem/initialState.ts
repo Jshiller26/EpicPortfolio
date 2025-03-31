@@ -319,8 +319,62 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'my-projects',
-      children: []
+      children: ['pandora-pdf', 'pandora-image-1', 'pandora-image-2', 'pandora-video']
     } as Folder,
+    
+    // Pandora Kiosk files
+    'pandora-pdf': {
+      id: 'pandora-pdf',
+      name: 'Pandora.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\Pandora Kiosk\\Pandora.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'pandora',
+      content: '/pdfs/Pandora.pdf',
+      size: 1845,
+      originalFileName: 'Pandora.pdf'
+    } as File,
+    
+    'pandora-image-1': {
+      id: 'pandora-image-1',
+      name: 'Pandora1.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Pandora Kiosk\\Pandora1.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'pandora',
+      content: '/images/projects/pandora/Pandora1.jpg',
+      size: 3050
+    } as File,
+    
+    'pandora-image-2': {
+      id: 'pandora-image-2',
+      name: 'Pandora2.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Pandora Kiosk\\Pandora2.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'pandora',
+      content: '/images/projects/pandora/Pandora2.jpg',
+      size: 2950
+    } as File,
+    
+    'pandora-video': {
+      id: 'pandora-video',
+      name: 'PandoraVid.mp4',
+      type: 'file',
+      extension: 'mp4',
+      path: 'C:\\Desktop\\My Projects\\Pandora Kiosk\\PandoraVid.mp4',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'pandora',
+      content: '/videos/projects/pandora/PandoraVid.mp4',
+      size: 28500
+    } as File,
     
     'readme': {
       id: 'readme',
