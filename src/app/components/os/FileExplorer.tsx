@@ -55,44 +55,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     ? currentFolder.children.map(id => fileSystem.items[id]).filter(Boolean)
     : [];
 
-  // Listen for window events
-  // useEffect(() => {
-  //   const handleWindowOpen = (e: CustomEvent) => {
-  //     if (e.detail && e.detail.windowId) {
-  //       openWindow(e.detail.windowId);
-  //     }
-  //   };
-
-  //   window.addEventListener('openWindow', handleWindowOpen as EventListener);
-
-  //   const handleKeyDown = (e: KeyboardEvent) => {
-  //     if (e.target && (e.target as HTMLElement).tagName !== 'INPUT' && 
-  //         (e.target as HTMLElement).tagName !== 'TEXTAREA') {
-        
-  //       if (currentFolder && currentFolder.id) {
-  //         if (e.ctrlKey && e.key === 'v') {
-  //           if (clipboard.item) {
-  //             if (clipboard.operation === 'cut') {
-  //               fileSystem.moveItem(clipboard.item.id, currentFolder.id);
-  //             } else if (clipboard.operation === 'copy') {
-  //               fileSystem.copyItem(clipboard.item.id, currentFolder.id);
-  //             }
-  //             clipboard.clear();
-  //             e.preventDefault();
-  //           }
-  //         }
-  //       }
-  //     }
-  //   };
-    
-  //   window.addEventListener('keydown', handleKeyDown);
-
-  //   return () => {
-  //     window.removeEventListener('openWindow', handleWindowOpen as EventListener);
-  //     window.removeEventListener('keydown', handleKeyDown);
-  //   };
-  // }, [openWindow, clipboard, currentFolder, fileSystem]);
-
   // Initialize path
   useEffect(() => {
     if (initializedRef.current) return;    
@@ -108,7 +70,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     }
     
     if (!pathToUse) {
-      pathToUse = 'C:\\Desktop';
+      pathToUse = 'C:';
     }
     
     const pathExists = Object.values(fileSystem.items).some(item => item.path === pathToUse);
@@ -119,9 +81,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setHistoryIndex(0);
       initializedRef.current = true;
     } else {
-      const desktopPath = 'C:\\Desktop';
-      setLocalPath(desktopPath);
-      setNavigationHistory([desktopPath]);
+      const rootPath = 'C:';
+      setLocalPath(rootPath);
+      setNavigationHistory([rootPath]);
       setHistoryIndex(0);
       initializedRef.current = true;
     }

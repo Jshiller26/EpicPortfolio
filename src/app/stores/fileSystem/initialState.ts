@@ -22,7 +22,19 @@ const addOriginalFileNameToPdfs = (state: FileSystemState): FileSystemState => {
 // Set up initial file system structure
 const initialState: FileSystemState = {
   items: {
-    // Root desktop folder
+    // Root C: drive
+    'c-drive': {
+      id: 'c-drive',
+      name: 'C:',
+      type: 'folder',
+      path: 'C:',
+      created: new Date(),
+      modified: new Date(),
+      parentId: null,
+      children: ['desktop', 'downloads', 'documents', 'pictures', 'program-files']
+    } as Folder,
+    
+    // Main folders in C:
     'desktop': {
       id: 'desktop',
       name: 'Desktop',
@@ -30,8 +42,52 @@ const initialState: FileSystemState = {
       path: 'C:\\Desktop',
       created: new Date(),
       modified: new Date(),
-      parentId: null,
-      children: ['my-projects', 'documents', 'pictures', 'downloads', 'readme']
+      parentId: 'c-drive',
+      children: ['my-projects', 'readme']
+    } as Folder,
+    
+    'downloads': {
+      id: 'downloads',
+      name: 'Downloads',
+      type: 'folder',
+      path: 'C:\\Downloads',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'c-drive',
+      children: ['download-file-1', 'download-file-2']
+    } as Folder,
+    
+    'documents': {
+      id: 'documents',
+      name: 'Documents',
+      type: 'folder',
+      path: 'C:\\Documents',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'c-drive',
+      children: ['resume']
+    } as Folder,
+    
+    'pictures': {
+      id: 'pictures',
+      name: 'Pictures',
+      type: 'folder',
+      path: 'C:\\Pictures',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'c-drive',
+      children: ['screenshots']
+    } as Folder,
+    
+    'program-files': {
+      id: 'program-files',
+      name: 'Program Files',
+      type: 'folder',
+      path: 'C:\\Program Files',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'c-drive',
+      children: []
     } as Folder,
     
     // Desktop subfolders
@@ -44,39 +100,6 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'desktop',
       children: ['emc', 'knights', 'idea', 'pandora']
-    } as Folder,
-    
-    'documents': {
-      id: 'documents',
-      name: 'Documents',
-      type: 'folder',
-      path: 'C:\\Desktop\\Documents',
-      created: new Date(),
-      modified: new Date(),
-      parentId: 'desktop',
-      children: ['resume']
-    } as Folder,
-    
-    'pictures': {
-      id: 'pictures',
-      name: 'Pictures',
-      type: 'folder',
-      path: 'C:\\Desktop\\Pictures',
-      created: new Date(),
-      modified: new Date(),
-      parentId: 'desktop',
-      children: ['screenshots']
-    } as Folder,
-    
-    'downloads': {
-      id: 'downloads',
-      name: 'Downloads',
-      type: 'folder',
-      path: 'C:\\Desktop\\Downloads',
-      created: new Date(),
-      modified: new Date(),
-      parentId: 'desktop',
-      children: ['download-file-1', 'download-file-2']
     } as Folder,
     
     // Projects subfolders
@@ -394,7 +417,7 @@ const initialState: FileSystemState = {
       name: 'Resume.pdf',
       type: 'file',
       extension: 'pdf',
-      path: 'C:\\Desktop\\Documents\\Resume.pdf',
+      path: 'C:\\Documents\\Resume.pdf',
       created: new Date(),
       modified: new Date(),
       parentId: 'documents',
@@ -408,7 +431,7 @@ const initialState: FileSystemState = {
       name: 'Interesting-Article.pdf',
       type: 'file',
       extension: 'pdf',
-      path: 'C:\\Desktop\\Downloads\\Interesting-Article.pdf',
+      path: 'C:\\Downloads\\Interesting-Article.pdf',
       created: new Date(),
       modified: new Date(),
       parentId: 'downloads',
@@ -422,7 +445,7 @@ const initialState: FileSystemState = {
       name: 'Cool-Project.zip',
       type: 'file',
       extension: 'zip',
-      path: 'C:\\Desktop\\Downloads\\Cool-Project.zip',
+      path: 'C:\\Downloads\\Cool-Project.zip',
       created: new Date(),
       modified: new Date(),
       parentId: 'downloads',
@@ -434,7 +457,7 @@ const initialState: FileSystemState = {
       id: 'screenshots',
       name: 'Screenshots',
       type: 'folder',
-      path: 'C:\\Desktop\\Pictures\\Screenshots',
+      path: 'C:\\Pictures\\Screenshots',
       created: new Date(),
       modified: new Date(),
       parentId: 'pictures',
@@ -482,7 +505,7 @@ const initialState: FileSystemState = {
       children: ['app-transfer-manual', 'change-overlay-manual', 'emc-image-1', 'emc-image-2', 'emc-image-3']
     } as Folder,
     
-    // Other Files contentsS
+    // Other Files contents
     'app-transfer-manual': {
       id: 'app-transfer-manual',
       name: 'EMC App Transfer Manual.pdf',
@@ -550,7 +573,7 @@ const initialState: FileSystemState = {
       size: 1875
     } as File
   },
-  currentPath: 'C:\\Desktop',
+  currentPath: 'C:',
   selectedItems: [],
   clipboard: {
     items: [],
