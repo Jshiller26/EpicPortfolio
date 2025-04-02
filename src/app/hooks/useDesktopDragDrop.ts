@@ -6,8 +6,6 @@ interface UseDesktopDragDropProps {
   findNextAvailablePosition: (startX: number, startY: number, excludeItemId?: string) => { x: number, y: number };
   isPositionOccupied: (x: number, y: number, excludeItemId?: string) => boolean;
   setIconPositions: React.Dispatch<React.SetStateAction<Record<string, { x: number, y: number }>>>;
-  setVsCodePosition: React.Dispatch<React.SetStateAction<{ x: number, y: number }>>;
-  setGameBoyPosition: React.Dispatch<React.SetStateAction<{ x: number, y: number }>>;
   moveItem: (itemId: string, targetId: string, callback?: (movedItemId: string) => void) => void;
   createFile: (name: string, parentId: string, content: string, size: number) => string;
   appItems: Record<string, FileSystemItem>;
@@ -20,8 +18,6 @@ export const useDesktopDragDrop = ({
   findNextAvailablePosition,
   isPositionOccupied,
   setIconPositions,
-  setVsCodePosition,
-  setGameBoyPosition,
   moveItem,
   createFile,
   appItems,
@@ -146,13 +142,14 @@ export const useDesktopDragDrop = ({
         itemId = dragData.itemId;        
         const isAppItem = Boolean(dragData.isApp);
         
-        if (itemId === 'vscode' || itemId === 'gameboy' || isAppItem) {
-          if (itemId === 'vscode') {
-            const vsCodeId = createFile('VS Code.exe', folderId, '', 0);
-            console.log(`Created VS Code file in folder: ${vsCodeId}`);
-          } else if (itemId === 'gameboy') {
-            const gameBoyId = createFile('GameBoy.exe', folderId, '', 0);
-            console.log(`Created GameBoy file in folder: ${gameBoyId}`);
+        // Handle app shortcuts
+        if (isAppItem || appItems[itemId]) {
+          const app = appItems[itemId];
+          if (app) {
+            const appName = app.name || 'App';
+            const exeFileName = `${appName}.exe`;
+            createFile(exeFileName, folderId, '', 0);
+            console.log(`Created ${appName} file in folder`);
           } else {
             createAppShortcut(itemId, folderId);
           }
@@ -215,31 +212,17 @@ export const useDesktopDragDrop = ({
       const x = Math.min(maxCols * gridSize, Math.floor(relativeX / gridSize) * gridSize);
       const y = Math.min(maxRows * gridSize, Math.floor(relativeY / gridSize) * gridSize);
       
-      
       if (!isPositionOccupied(x, y, itemId)) {
-        if (itemId === 'vscode') {
-          setVsCodePosition({ x, y });
-        } else if (itemId === 'gameboy') {
-          setGameBoyPosition({ x, y });
-        } else {
-          setIconPositions(prev => ({
-            ...prev,
-            [itemId]: { x, y }
-          }));
-        }
+        setIconPositions(prev => ({
+          ...prev,
+          [itemId]: { x, y }
+        }));
       } else {
         const position = findNextAvailablePosition(0, 0, itemId);
-        
-        if (itemId === 'vscode') {
-          setVsCodePosition(position);
-        } else if (itemId === 'gameboy') {
-          setGameBoyPosition(position);
-        } else {
-          setIconPositions(prev => ({
-            ...prev,
-            [itemId]: position
-          }));
-        }
+        setIconPositions(prev => ({
+          ...prev,
+          [itemId]: position
+        }));
       }
     } catch (error) {
       console.error('Error processing drop:', error);

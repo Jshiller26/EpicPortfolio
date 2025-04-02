@@ -1,13 +1,14 @@
-import { FileSystemItem, File } from '@/app/types/fileSystem';
+import { FileSystemItem, File} from '@/app/types/fileSystem';
+import { APPS } from '@/app/config/appConfig';
 
 // Helper to get the base window type from a window ID
-const getWindowType = (windowId: string) => {
+export const getWindowType = (windowId: string) => {
   const parts = windowId.split('-');
   if (parts.length < 2) return '';
   return parts[0];
 };
 
-const getContentId = (windowId: string) => {
+export const getContentId = (windowId: string) => {
   const parts = windowId.split('-');
   if (parts.length < 3) return '';
   
@@ -22,29 +23,26 @@ const getContentId = (windowId: string) => {
 
 // Get the icon path for a file system item
 export const getIconForItem = (item: FileSystemItem): string => {
+  if (item.type === 'app' && item.iconPath) {
+    return item.iconPath;
+  }
+  
+  // Handle folders
   if (item.type === 'folder') {
     return '/images/desktop/icons8-folder.svg';
   }
   
-  if (isVSCodeItem(item)) {
-    return '/images/desktop/icons8-vscode.svg';
-  }
-  
-  // Handle different file types
   const file = item as File;
   
   if (file.content) {
     try {
       const contentObj = JSON.parse(file.content);
       if (contentObj.type === 'appShortcut' && contentObj.appId) {
-        switch (contentObj.appId) {
-          case 'vscode':
-            return '/images/desktop/icons8-vscode.svg';
-          case 'gameboy':
-            return '/images/icons/games/gameboyIcon.png';
-          default:
-            return '/images/desktop/icons8-shortcut.svg';
+        const app = APPS[contentObj.appId];
+        if (app) {
+          return app.iconPath;
         }
+        return '/images/desktop/icons8-shortcut.svg';
       }
     } catch {
     }
@@ -77,13 +75,16 @@ export const getIconForItem = (item: FileSystemItem): string => {
 export const getIconForWindow = (windowId: string): string => {
   const windowType = getWindowType(windowId);
   
+  const app = APPS[windowType];
+  if (app) {
+    return app.iconPath;
+  }
+  
   switch (windowType) {
     case 'explorer':
       return '/images/desktop/icons8-folder.svg';
     case 'editor':
       return '/images/desktop/textFileIcon.png';
-    case 'vscode':
-      return '/images/desktop/icons8-vscode.svg';
     case 'image':
       return '/images/desktop/imageFileIcon.png';
     case 'pdf':
@@ -94,8 +95,6 @@ export const getIconForWindow = (windowId: string): string => {
       return '/images/desktop/icons8-chrome.svg';
     case 'edge':
       return '/images/desktop/icons8-microsoft-edge.svg';
-    case 'gameboy':
-      return '/images/icons/games/gameboyIcon.png';
     default:
       return '/images/desktop/icons8-file.svg';
   }
@@ -143,31 +142,15 @@ export const getAppIdFromShortcut = (file: File): string | null => {
   }
 };
 
-export const isVSCodeItem = (item: FileSystemItem): boolean => {
-  if (
-    item.name.toLowerCase().includes('vs code') || 
-    item.name.toLowerCase() === 'vscode.exe'
-  ) {
-    return true;
-  }
-  
-  // Additionally check for VS Code shortcuts if needed
-  if (item.type === 'file' && (item as File).content) {
-    try {
-      const content = JSON.parse((item as File).content);
-      return content.type === 'appShortcut' && content.appId === 'vscode';
-    } catch {
-      return false;
-    }
-  }
-  
-  return false;
-};
-
 // Get the window title based on its ID and file system data
 export const getWindowTitle = (windowId: string, items: Record<string, FileSystemItem>, currentPath: string): string => {
   const windowType = getWindowType(windowId);
   const contentId = getContentId(windowId);
+  
+  const app = APPS[windowType];
+  if (app && app.windowTitle) {
+    return contentId ? `${app.windowTitle} - ${contentId}` : app.windowTitle;
+  }
   
   switch (windowType) {
     case 'explorer': {
@@ -186,8 +169,6 @@ export const getWindowTitle = (windowId: string, items: Record<string, FileSyste
       const file = items[contentId];
       return file ? file.name : 'Text Editor';
     }
-    case 'vscode':
-      return 'Visual Studio Code - Untitled.txt';
     case 'image': {
       const file = items[contentId];
       return file ? file.name : 'Image Viewer';
@@ -200,12 +181,6 @@ export const getWindowTitle = (windowId: string, items: Record<string, FileSyste
       const file = items[contentId];
       return file ? file.name : 'Video Player';
     }
-    case 'chrome':
-      return 'Google Chrome';
-    case 'edge':
-      return 'Microsoft Edge';
-    case 'gameboy':
-      return contentId ? `GameBoy - ${contentId}` : 'GameBoy Emulator';
     default:
       return 'Window';
   }

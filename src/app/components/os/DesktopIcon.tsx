@@ -22,6 +22,7 @@ interface DesktopIconProps {
   onRenameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRenameKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onRenameComplete?: () => void;
+  iconSrc?: string; // Optional override for app icons
 }
 
 export const DesktopIcon: React.FC<DesktopIconProps> = ({
@@ -42,13 +43,17 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   onDrop,
   onRenameChange,
   onRenameKeyDown,
-  onRenameComplete
+  onRenameComplete,
+  iconSrc
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Custom icon source for app icons or default from item
+  const iconSource = iconSrc || getIconForItem(item);
 
   React.useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -223,7 +228,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">
         <img
-          src={getIconForItem(item)}
+          src={iconSource}
           alt={item.name}
           className="w-8 h-8 pointer-events-none"
           draggable="false"
