@@ -8,11 +8,7 @@ export interface IconPosition {
 
 export interface UseIconPositionsReturn {
   iconPositions: Record<string, IconPosition>;
-  vsCodePosition: IconPosition;
-  gameBoyPosition: IconPosition;
   setIconPositions: React.Dispatch<React.SetStateAction<Record<string, IconPosition>>>;
-  setVsCodePosition: React.Dispatch<React.SetStateAction<IconPosition>>;
-  setGameBoyPosition: React.Dispatch<React.SetStateAction<IconPosition>>;
   newItems: Set<string>;
   findNextAvailablePosition: (startX: number, startY: number, excludeItemId?: string) => IconPosition;
   isPositionOccupied: (x: number, y: number, excludeItemId?: string) => boolean;
@@ -26,11 +22,10 @@ const GRID_SIZE = 76;
 
 // Custom hook to manage icon positions
 export const useIconPositions = (
-  desktopChildren: string[] = []
+  desktopChildren: string[] = [],
+  appIds: string[] = []
 ): UseIconPositionsReturn => {
   const [iconPositions, setIconPositions] = useState<Record<string, IconPosition>>({});
-  const [vsCodePosition, setVsCodePosition] = useState<IconPosition>({ x: 0, y: 0 });
-  const [gameBoyPosition, setGameBoyPosition] = useState<IconPosition>({ x: 0, y: GRID_SIZE });
   const [ready, setReady] = useState(false);
   
   // Track newly created or pasted items to avoid transition
@@ -45,18 +40,10 @@ export const useIconPositions = (
   }, []);
 
   const isPositionOccupied = useCallback((x: number, y: number, excludeItemId?: string): boolean => {
-    if (vsCodePosition.x === x && vsCodePosition.y === y && excludeItemId !== 'vscode') {
-      return true;
-    }
-    
-    if (gameBoyPosition.x === x && gameBoyPosition.y === y && excludeItemId !== 'gameboy') {
-      return true;
-    }
-    
     return Object.entries(iconPositions).some(([id, pos]) => {
       return pos.x === x && pos.y === y && id !== excludeItemId;
     });
-  }, [iconPositions, vsCodePosition, gameBoyPosition]);
+  }, [iconPositions]);
 
   const findNextAvailablePosition = useCallback((startX: number, startY: number, excludeItemId?: string): IconPosition => {
     if (!isPositionOccupied(startX, startY, excludeItemId)) {
@@ -92,6 +79,7 @@ export const useIconPositions = (
     
     const occupied: Record<string, boolean> = {};
     
+    // First place items with saved positions
     items.forEach(itemId => {
       if (savedPositions[itemId]) {
         const pos = savedPositions[itemId];
@@ -110,6 +98,7 @@ export const useIconPositions = (
       }
     });
     
+    // Then place items without saved positions
     items.forEach(itemId => {
       if (positions[itemId]) return;
       
@@ -123,11 +112,15 @@ export const useIconPositions = (
           if (!occupied[posKey]) {
             positions[itemId] = { x, y };
             occupied[posKey] = true;
-            return;
+            break;
           }
         }
+        if (positions[itemId]) break;
       }
-      positions[itemId] = { x: 0, y: 0 };
+      
+      if (!positions[itemId]) {
+        positions[itemId] = { x: 0, y: 0 };
+      }
     });
     
     return positions;
@@ -135,45 +128,10 @@ export const useIconPositions = (
 
   const computeInitialPositions = useCallback((
     allItems: string[], 
-    savedIconPositions: Record<string, IconPosition> = {},
-    savedVsCodePos?: IconPosition,
-    savedGameBoyPos?: IconPosition
+    savedPositions: Record<string, IconPosition> = {}
   ) => {
-    const allItemsCopy = [...allItems];
-    
-    // Add app icons if not present
-    if (!allItemsCopy.includes('vscode')) {
-      allItemsCopy.unshift('vscode');
-    }
-    
-    if (!allItemsCopy.includes('gameboy')) {
-      allItemsCopy.unshift('gameboy');
-    }
-    
-    const combinedSavedPositions: Record<string, IconPosition> = { ...savedIconPositions };
-    
-    if (savedVsCodePos) {
-      combinedSavedPositions['vscode'] = savedVsCodePos;
-    }
-    
-    if (savedGameBoyPos) {
-      combinedSavedPositions['gameboy'] = savedGameBoyPos;
-    }
-    
-    const allPositions = arrangeIconsInGrid(allItemsCopy, combinedSavedPositions);
-    
-    // Extract app positions from the results
-    const vsCodePos = allPositions['vscode'] || { x: 0, y: 0 };
-    const gameBoyPos = allPositions['gameboy'] || { x: 0, y: GRID_SIZE };
-    
-    delete allPositions['vscode'];
-    delete allPositions['gameboy'];
-    
-    return {
-      iconPositions: allPositions,
-      vsCodePosition: vsCodePos,
-      gameBoyPosition: gameBoyPos
-    };
+    const positions = arrangeIconsInGrid(allItems, savedPositions);
+    return positions;
   }, [arrangeIconsInGrid]);
 
   // Add a new icon position
@@ -234,13 +192,11 @@ export const useIconPositions = (
         if (Object.keys(iconPositions).length > 0) {
           localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
         }
-        localStorage.setItem('vsCodeIconPosition', JSON.stringify(vsCodePosition));
-        localStorage.setItem('gameBoyIconPosition', JSON.stringify(gameBoyPosition));
       } catch (error) {
         console.error('Error saving icon positions:', error);
       }
     }
-  }, [iconPositions, vsCodePosition, gameBoyPosition, ready]);
+  }, [iconPositions, ready]);
 
   const ensureIconsVisible = useCallback(() => {
     if (!ready) return;
@@ -252,27 +208,6 @@ export const useIconPositions = (
     let needsUpdate = false;
     const updatedPositions = { ...iconPositions };
     
-    // Check VS Code icon position
-    if (vsCodePosition.x > maxX || vsCodePosition.y > maxY) {
-      setVsCodePosition(prev => {
-        if (prev.x <= maxX) {
-          return { x: prev.x, y: Math.min(prev.y, maxY) };
-        }
-        return findNextAvailablePosition(0, 0, 'vscode');
-      });
-    }
-    
-    // Check GameBoy icon position
-    if (gameBoyPosition.x > maxX || gameBoyPosition.y > maxY) {
-      setGameBoyPosition(prev => {
-        if (prev.x <= maxX) {
-          return { x: prev.x, y: Math.min(prev.y, maxY) };
-        }
-        return findNextAvailablePosition(0, 0, 'gameboy');
-      });
-    }
-    
-    // Check other icon positions
     Object.entries(iconPositions).forEach(([id, pos]) => {
       if (pos.x > maxX || pos.y > maxY) {
         needsUpdate = true;
@@ -288,7 +223,7 @@ export const useIconPositions = (
     if (needsUpdate) {
       setIconPositions(updatedPositions);
     }
-  }, [ready, getWindowDimensions, iconPositions, vsCodePosition, gameBoyPosition, findNextAvailablePosition]);
+  }, [ready, getWindowDimensions, iconPositions, findNextAvailablePosition]);
 
   // Load saved positions on component mount
   useEffect(() => {
@@ -296,50 +231,31 @@ export const useIconPositions = (
       try {
         // Try to load saved positions from localStorage
         const savedIconPositions = localStorage.getItem('desktopIconPositions');
-        const savedVsCodePos = localStorage.getItem('vsCodeIconPosition');
-        const savedGameBoyPos = localStorage.getItem('gameBoyIconPosition');
+        const parsedPositions = savedIconPositions ? JSON.parse(savedIconPositions) : {};
         
-        const parsedIconPositions = savedIconPositions ? JSON.parse(savedIconPositions) : {};
-        const parsedVsCodePos = savedVsCodePos ? JSON.parse(savedVsCodePos) : undefined;
-        const parsedGameBoyPos = savedGameBoyPos ? JSON.parse(savedGameBoyPos) : undefined;
+        const allItems = [...desktopChildren, ...appIds];
         
         // Compute positions for all items
-        const { 
-          iconPositions: initialPositions, 
-          vsCodePosition: initialVsCodePos,
-          gameBoyPosition: initialGameBoyPos 
-        } = computeInitialPositions(
-            [...desktopChildren, 'vscode', 'gameboy'],
-            parsedIconPositions,
-            parsedVsCodePos,
-            parsedGameBoyPos
-          );
+        const initialPositions = computeInitialPositions(allItems, parsedPositions);
         
         setIconPositions(initialPositions);
-        setVsCodePosition(initialVsCodePos);
-        setGameBoyPosition(initialGameBoyPos);
       } catch (error) {
         console.error('Error loading icon positions:', error);
         
-        const { 
-          iconPositions: initialPositions, 
-          vsCodePosition: initialVsCodePos,
-          gameBoyPosition: initialGameBoyPos 
-        } = computeInitialPositions([...desktopChildren, 'vscode', 'gameboy']);
-        
+        const allItems = [...desktopChildren, ...appIds];
+        const initialPositions = computeInitialPositions(allItems);
         setIconPositions(initialPositions);
-        setVsCodePosition(initialVsCodePos);
-        setGameBoyPosition(initialGameBoyPos);
       }
       
       setReady(true);
     }
-  }, [computeInitialPositions, desktopChildren]);
+  }, [computeInitialPositions, desktopChildren, appIds]);
 
   // Handle new desktop items without positions
   useEffect(() => {
-    if (ready && desktopChildren) {
-      const itemsWithoutPositions = desktopChildren.filter(id => !iconPositions[id]);
+    if (ready) {
+      const allItems = [...desktopChildren, ...appIds];
+      const itemsWithoutPositions = allItems.filter(id => !iconPositions[id]);
       
       if (itemsWithoutPositions.length > 0) {
         console.log("Found new items without positions:", itemsWithoutPositions);
@@ -370,7 +286,7 @@ export const useIconPositions = (
         });
       }
     }
-  }, [ready, desktopChildren, iconPositions, findNextAvailablePosition]);
+  }, [ready, desktopChildren, appIds, iconPositions, findNextAvailablePosition]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ready) {
@@ -389,15 +305,11 @@ export const useIconPositions = (
   // Save positions to localStorage when they change
   useEffect(() => {
     savePositions();
-  }, [iconPositions, vsCodePosition, gameBoyPosition, savePositions]);
+  }, [iconPositions, savePositions]);
 
   return {
     iconPositions,
-    vsCodePosition,
-    gameBoyPosition,
     setIconPositions,
-    setVsCodePosition,
-    setGameBoyPosition,
     newItems,
     findNextAvailablePosition,
     isPositionOccupied,

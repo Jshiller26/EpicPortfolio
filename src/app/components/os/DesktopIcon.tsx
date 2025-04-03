@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -22,6 +23,7 @@ interface DesktopIconProps {
   onRenameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRenameKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onRenameComplete?: () => void;
+  iconSrc?: string; // Optional override for app icons
 }
 
 export const DesktopIcon: React.FC<DesktopIconProps> = ({
@@ -42,15 +44,27 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   onDrop,
   onRenameChange,
   onRenameKeyDown,
-  onRenameComplete
+  onRenameComplete,
+  iconSrc
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileSystem = useFileSystemStore();
 
-  React.useEffect(() => {
+  // Get icon for this item - use custom icon source or auto-detect
+  const iconSource = iconSrc || getIconForItem(item);
+
+  // Check if this item is selected in the file system
+  useEffect(() => {
+    const selectedItems = fileSystem.selectedItems;
+    setIsSelected(selectedItems.includes(itemId));
+  }, [fileSystem.selectedItems, itemId]);
+
+  useEffect(() => {
     if (isRenaming && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -195,9 +209,18 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Select this item
+    fileSystem.selectItems([itemId]);
+    
+    // Prevent event from bubbling up (which would deselect)
+    e.stopPropagation();
+  };
+
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
+  const selectedClass = isSelected ? 'bg-blue-500/30' : '';
 
   return (
     <div
@@ -206,6 +229,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
+        ${selectedClass}
         ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
@@ -220,10 +244,11 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onDoubleClick={onDoubleClick}
+      onClick={handleClick}
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">
         <img
-          src={getIconForItem(item)}
+          src={iconSource}
           alt={item.name}
           className="w-8 h-8 pointer-events-none"
           draggable="false"

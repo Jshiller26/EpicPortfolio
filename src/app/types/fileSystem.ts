@@ -12,6 +12,13 @@ export interface FileSystemItem {
   created?: Date;
   modified?: Date;
   size?: number;
+  extension?: string;
+  
+  // App-specific properties
+  appType?: string;
+  iconPath?: string;
+  windowTitle?: string;
+  windowComponent?: string;
 }
 
 // Interface for folder items
@@ -28,9 +35,12 @@ export interface File extends FileSystemItem {
   originalFileName?: string; // Added to track the original filename for pdfs
 }
 
+// Interface for app items
 export interface AppItem extends FileSystemItem {
   type: 'app';
-  appId: string; // ID used by the window system
+  appType: string;
+  iconPath: string;
+  extension: string;
 }
 
 export type FileSystemState = {

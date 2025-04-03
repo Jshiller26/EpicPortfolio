@@ -1,5 +1,6 @@
 import { FileSystemItem, Folder, File } from '@/app/types/fileSystem';
 import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
+import { openItem } from '@/app/utils/appUtils';
 
 // Create a new folder with a unique name
 export const createUniqueFolder = (
@@ -55,14 +56,7 @@ export const createUniqueTextFile = (
   return newId;
 };
 
-// Get the initial new name for renaming, handling file extensions
-export const getInitialRenameName = (item: FileSystemItem): string => {
-  if (item.type === 'file' && item.name.includes('.')) {
-    // For files, exclude extension when renaming
-    return item.name.substring(0, item.name.lastIndexOf('.'));
-  }
-  return item.name;
-};
+export { getInitialRenameName } from '@/app/utils/appUtils';
 
 // Handle opening a file or folder
 export const handleOpenItem = (
@@ -73,32 +67,14 @@ export const handleOpenItem = (
   const item = items[itemId];
   if (!item) return;
   
+  if (openItem(item, onOpenWindow)) {
+    return;
+  }
+  
   if (item.type === 'folder') {
     const windowId = `explorer-${itemId}`;
     onOpenWindow(windowId);
-  } else {
-    if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
-      onOpenWindow('vscode-new');
-      return;
-    }
-    
-    if (item.type === 'file') {
-      const file = item as File;
-      if (file.content) {
-        try {
-          const contentObj = JSON.parse(file.content);
-          if (contentObj.type === 'appShortcut' && contentObj.appId) {
-            if (contentObj.appId === 'gameboy') {
-              onOpenWindow('GBA Emulator');
-              return;
-            }
-          }
-        } catch {
-        }
-      }
-    }
-    
-    // Handle file opening based on file extension
+  } else if (item.type === 'file') {
     const file = item as File;
     const extension = file.extension ? file.extension.toLowerCase() : '';
     
@@ -138,15 +114,6 @@ export const handleOpenItem = (
         // Open in GameBoy Emulator
         const romName = file.name.substring(0, file.name.lastIndexOf('.'));
         onOpenWindow(`gameboy-${romName}`);
-        break;
-      case 'exe':
-        if (file.name.toLowerCase().includes('vs code') || file.name.toLowerCase() === 'vscode.exe') {
-          onOpenWindow('vscode-new');
-        } else if (file.name.toLowerCase().includes('gameboy')) {
-          onOpenWindow('GBA Emulator');
-        } else {
-          console.log(`Launching app: ${file.name}`);
-        }
         break;
       default:
         // Default file handler

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Taskbar } from './Taskbar';
 import { DesktopIcons } from './DesktopIcons';
 import { Window } from './Window';
@@ -20,6 +21,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [isFading, setIsFading] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const router = useRouter();
+  const fileSystem = useFileSystemStore();
   
   // Get window information from the store
   const windows = useWindowStore(state => state.windows);
@@ -64,7 +66,11 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     }, 500);
   };
 
-  const handleGlobalClick = () => {
+  const handleGlobalClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      fileSystem.selectItems([]);
+    }
+    
     if (showShutdownDialog) {
       handleDialogClose();
     }
