@@ -1,5 +1,5 @@
 import { FileSystemItem, File} from '@/app/types/fileSystem';
-import { APPS } from '@/app/config/appConfig';
+import { APPS, getAppInfo } from '@/app/config/appConfig';
 
 // Helper to get the base window type from a window ID
 export const getWindowType = (windowId: string) => {
@@ -26,27 +26,47 @@ export const getIconForItem = (item: FileSystemItem): string => {
   if (item.type === 'app' && item.iconPath) {
     return item.iconPath;
   }
+  if (item.type === 'app' && item.appType && APPS[item.appType]) {
+    return APPS[item.appType].iconPath;
+  }
   
   // Handle folders
   if (item.type === 'folder') {
     return '/images/desktop/icons8-folder.svg';
   }
   
-  const file = item as File;
-  
-  if (file.content) {
-    try {
-      const contentObj = JSON.parse(file.content);
-      if (contentObj.type === 'appShortcut' && contentObj.appId) {
-        const app = APPS[contentObj.appId];
-        if (app) {
-          return app.iconPath;
+  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
+    const appInfo = getAppInfo(item);
+    if (appInfo) {
+      return appInfo.iconPath;
+    }
+    return '/images/desktop/icons8-app.svg';
+  }
+  if (item.type === 'file') {
+    const file = item as File;
+    
+    if (file.content) {
+      try {
+        const contentObj = JSON.parse(file.content);
+        if (contentObj.type === 'app' && contentObj.appId) {
+          const app = APPS[contentObj.appId];
+          if (app) {
+            return app.iconPath;
+          }
+        }      
+        if (contentObj.type === 'appShortcut' && contentObj.appId) {
+          const app = APPS[contentObj.appId];
+          if (app) {
+            return app.iconPath;
+          }
+          return '/images/desktop/icons8-shortcut.svg';
         }
-        return '/images/desktop/icons8-shortcut.svg';
+      } catch {
       }
-    } catch {
     }
   }
+  
+  const file = item as File;
   
   if (!file.extension) {
     return '/images/desktop/icons8-file.svg';
@@ -118,6 +138,29 @@ export const isGameROMFile = (file: File): boolean => {
   return !!file.extension && gameExtensions.includes(file.extension.toLowerCase());
 };
 
+export const isAppFile = (item: FileSystemItem): boolean => {
+  if (item.type === 'app') return true;
+  
+  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
+    return true;
+  }
+  
+  if (item.type === 'file') {
+    const file = item as File;
+    if (!file.content) return false;
+    
+    try {
+      const content = JSON.parse(file.content);
+      return (content.type === 'app' && !!content.appId) || 
+             (content.type === 'appShortcut' && !!content.appId);
+    } catch {
+      return false;
+    }
+  }
+  
+  return false;
+};
+
 // Check if a file is an app shortcut
 export const isAppShortcut = (file: File): boolean => {
   if (!file.content) return false;
@@ -130,16 +173,33 @@ export const isAppShortcut = (file: File): boolean => {
   }
 };
 
-// Get app ID from a shortcut file
-export const getAppIdFromShortcut = (file: File): string | null => {
-  if (!isAppShortcut(file)) return null;
-  
-  try {
-    const content = JSON.parse(file.content);
-    return content.appId;
-  } catch {
-    return null;
+export const getAppIdFromFile = (item: FileSystemItem): string | null => {
+  if (item.type === 'app' && item.appType) {
+    return item.appType;
   }
+  
+  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
+    const appInfo = getAppInfo(item);
+    if (appInfo) {
+      return appInfo.id;
+    }
+  }
+  
+  if (item.type === 'file') {
+    const file = item as File;
+    if (!file.content) return null;
+    
+    try {
+      const content = JSON.parse(file.content);
+      if ((content.type === 'app' || content.type === 'appShortcut') && content.appId) {
+        return content.appId;
+      }
+    } catch {
+      return null;
+    }
+  }
+  
+  return null;
 };
 
 // Get the window title based on its ID and file system data

@@ -12,6 +12,7 @@ export interface FileSystemItem {
   created?: Date;
   modified?: Date;
   size?: number;
+  extension?: string;
   
   // App-specific properties
   appType?: string;
@@ -39,6 +40,7 @@ export interface AppItem extends FileSystemItem {
   type: 'app';
   appType: string;
   iconPath: string;
+  extension: string;
 }
 
 export type FileSystemState = {

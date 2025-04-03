@@ -4,6 +4,9 @@ import FileListItem from './FileListItem';
 import FileExplorerContextMenu from './ContextMenu';
 import { createPortal } from 'react-dom';
 import { useFileSystemStore } from '../../../stores/fileSystemStore';
+import { APPS } from '../../../config/appConfig';
+
+const AppMovedEvent = 'desktopAppMoved';
 
 interface FileListProps {
   items: FileSystemItem[];
@@ -48,24 +51,75 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
     e.dataTransfer.dropEffect = 'move';
   };
 
+  // Create app file from desktop app
+  const createAppFileFromDesktopApp = (appId: string, targetFolderId: string) => {
+    // Get direct app info from APPS object
+    const appInfo = APPS[appId];
+    if (!appInfo) {
+      console.error('Could not get app info for:', appId);
+      return;
+    }
+    
+    // Create file with app data
+    const fileName = `${appInfo.name}.exe`;
+    const appData = {
+      type: 'app',
+      appId: appInfo.id,
+      appType: appInfo.id
+    };
+    
+    // Create the file in the target folder
+    const newFileId = fileSystem.createFile(fileName, targetFolderId, JSON.stringify(appData), 0);
+    
+    // Dispatch event to notify the desktop that an app has been moved
+    const event = new CustomEvent(AppMovedEvent, { 
+      detail: { appId }
+    });
+    window.dispatchEvent(event);
+  };
+
   // Handle drop for the file list
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
+    if (!currentFolderId) return;
+    
     try {
       const jsonData = e.dataTransfer.getData('application/json');
-      if (!jsonData) return;
+      const textData = e.dataTransfer.getData('text/plain');
       
-      const dragData = JSON.parse(jsonData);
+      let itemId = textData;
+      let source = 'unknown';
+      let isApp = false;
+      let isDesktopApp = false;
+      let appType = '';
       
-      if (!currentFolderId) return;
-      
-      if (dragData.source === 'desktop' && dragData.itemId) {
-        fileSystem.moveItem(dragData.itemId, currentFolderId);
+      if (jsonData) {
+        try {
+          const dragData = JSON.parse(jsonData);
+          itemId = dragData.itemId || textData;
+          source = dragData.source || 'unknown';
+          isApp = Boolean(dragData.isApp);
+          isDesktopApp = Boolean(dragData.isDesktopApp);
+          appType = dragData.appType || '';
+        } catch (err) {
+          console.error('Error parsing drag data JSON:', err);
+        }
       }
-      else if (dragData.source === 'fileExplorer' && dragData.itemId && dragData.sourceFolderId !== currentFolderId) {
-        fileSystem.moveItem(dragData.itemId, currentFolderId);
+      
+      if (!itemId) return;
+      
+      if (source === 'desktop' && isDesktopApp) {
+        createAppFileFromDesktopApp(itemId, currentFolderId);
+        return;
+      }
+      if (itemId) {
+        const item = fileSystem.items[itemId];
+        if (item && item.parentId === currentFolderId) {
+          return;
+        }
+        fileSystem.moveItem(itemId, currentFolderId);
       }
     } catch (error) {
       console.error('Error processing drop:', error);

@@ -3,6 +3,10 @@ import Image from 'next/image';
 import { FileSystemItem } from '../../../types/fileSystem';
 import { formatFileSize, getItemTypeString } from '../../../stores/fileSystem/utils/pathUtils';
 import { useFileSystemStore } from '../../../stores/fileSystemStore';
+import { getIconForItem } from '../../../utils/iconUtils';
+import { getAppInfo } from '../../../config/appConfig';
+import { openItem } from '../../../utils/appUtils';
+import { useWindowStore } from '../../../stores/windowStore';
 
 interface FileListItemProps {
   item: FileSystemItem;
@@ -18,6 +22,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
   currentFolderId 
 }) => {
   const fileSystem = useFileSystemStore();
+  const windowStore = useWindowStore();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
@@ -100,7 +105,10 @@ const FileListItem: React.FC<FileListItemProps> = ({
     const dragData = {
       itemId: item.id,
       sourceFolderId: currentFolderId,
-      source: 'fileExplorer'
+      source: 'fileExplorer',
+      isApp: item.type === 'app' || 
+             item.extension === 'exe' || 
+             (item.name && item.name.toLowerCase().endsWith('.exe'))
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
@@ -177,7 +185,21 @@ const FileListItem: React.FC<FileListItemProps> = ({
       if (draggedItemId === item.id) return;
       
       if (dragData.source === 'desktop') {
-        fileSystem.moveItem(draggedItemId, item.id);
+        // Handle desktop items being dropped
+        if (dragData.isDesktopApp) {
+          const appInfo = getAppInfo({ id: draggedItemId, name: '', type: 'app', parentId: null });
+          if (appInfo) {
+            const fileName = `${appInfo.name}.exe`;
+            const appData = {
+              type: 'app',
+              appId: appInfo.id,
+              appType: appInfo.id
+            };
+            fileSystem.createFile(fileName, item.id, JSON.stringify(appData), 0);
+          }
+        } else {
+          fileSystem.moveItem(draggedItemId, item.id);
+        }
       } else if (dragData.source === 'fileExplorer') {
         if (dragData.sourceFolderId === item.id) return;
         
@@ -188,41 +210,36 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
-  // Get appropriate icon for the file type
+  const handleItemClick = () => {
+  };
   const getFileIcon = () => {
-    if (item.type === 'folder') {
-      return "/images/desktop/icons8-folder.svg";
-    }
-    
-    if (item.type === 'file') {
-      const extension = item.name.includes('.') ? item.name.split('.').pop()?.toLowerCase() : '';
-      
-      if (extension === 'pdf') {
-        return "/images/desktop/pdfFileIcon.png";
-      } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(extension || '')) {
-        return "/images/desktop/imageFileIcon.png";
-      } else if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension || '')) {
-        return "/images/desktop/videoFileIcon.png";
-      } else if (['txt', 'md', 'js', 'jsx', 'ts', 'tsx', 'html', 'css'].includes(extension || '')) {
-        return "/images/desktop/textFileIcon.png";
-      } else if (extension === 'exe') {
-        return "/images/desktop/icons8-application.svg";
-      }
-    }
-    
-    return "/images/desktop/icons8-file.svg";
+    return getIconForItem(item);
   };
 
   return (
     <tr
       className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
-      onDoubleClick={() => !isRenaming && onDoubleClick(item)}
+      onDoubleClick={() => {
+        if (isRenaming) return;
+        
+        // Try to use our new openItem utility for app files
+        const isAppFile = item.type === 'app' || 
+                         item.extension === 'exe' || 
+                         item.name.toLowerCase().endsWith('.exe');
+                         
+        if (isAppFile) {
+          openItem(item, windowStore.openWindow);
+        } else {
+          onDoubleClick(item);
+        }
+      }}
       onContextMenu={(e) => !isRenaming && onContextMenu(e, item)}
       draggable={!isRenaming}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleItemClick}
     >
       <td className="px-4 py-1">
         <div className="flex items-center gap-2 relative">

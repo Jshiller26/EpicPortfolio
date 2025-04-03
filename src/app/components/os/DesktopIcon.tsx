@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -50,12 +51,20 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const [isVisible, setIsVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileSystem = useFileSystemStore();
 
   // Custom icon source for app icons or default from item
   const iconSource = iconSrc || getIconForItem(item);
 
-  React.useEffect(() => {
+  // Check if this item is selected in the file system
+  useEffect(() => {
+    const selectedItems = fileSystem.selectedItems;
+    setIsSelected(selectedItems.includes(itemId));
+  }, [fileSystem.selectedItems, itemId]);
+
+  useEffect(() => {
     if (isRenaming && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -80,9 +89,16 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const handleDragStart = (e: React.DragEvent) => {
     setIsVisible(false);
     
+    // Get if the item is a desktop app (VS Code, GameBoy, etc.)
+    const isDesktopApp = item.parentId === 'desktop' && item.type === 'app';
+    
     const dragData = {
       itemId: itemId,
-      source: 'desktop'
+      source: 'desktop',
+      isApp: item.type === 'app' || 
+             item.extension === 'exe' || 
+             (item.name && item.name.toLowerCase().endsWith('.exe')),
+      isDesktopApp: isDesktopApp
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
@@ -200,9 +216,15 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    fileSystem.selectItems([itemId]);
+    e.stopPropagation();
+  };
+
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
+  const selectedClass = isSelected ? 'bg-blue-500/30' : '';
 
   return (
     <div
@@ -211,6 +233,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
+        ${selectedClass}
         ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
@@ -225,6 +248,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onDoubleClick={onDoubleClick}
+      onClick={handleClick}
     >
       <div className="w-8 h-8 flex items-center justify-center mb-1">
         <img

@@ -4,7 +4,7 @@ import { useWindowStore } from '../../stores/windowStore';
 import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import NavigationBar from './fileExplorer/NavigationBar';
 import FileList from './fileExplorer/FileList';
-// import { useClipboardStore } from '../../stores/clipboardStore';
+import { openItem } from '../../utils/appUtils';
 
 interface FileExplorerProps {
   initialPath?: string;
@@ -38,7 +38,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const fileSystem = useFileSystemStore();
   const windowStore = useWindowStore();
   const openWindow = windowStore.openWindow;
-  // const clipboard = useClipboardStore();
   
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -163,11 +162,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         navigateToPath(item.path);
       }
     } else if (isFile(item)) {
-      console.log('Opening file:', item.name, 'with extension:', item.extension);
-      
-      if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
-        openWindow('vscode-new');
-        return;
+      const isAppFile = 
+                       item.extension === 'exe' || 
+                       item.name.toLowerCase().endsWith('.exe');
+                       
+      if (isAppFile) {
+        if (openItem(item, openWindow)) {
+          return;
+        }
       }
       
       // Handle text files with the editor
@@ -180,11 +182,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       } else if (isVideoFile(item)) {
         openWindow(`video-${item.id}`);
       } else if (item.extension?.toLowerCase() === 'exe') {
-        if (item.name.toLowerCase().includes('vs code') || item.name.toLowerCase() === 'vscode.exe') {
-          openWindow('vscode-new');
-        } else {
-          console.log(`Launching app: ${item.name}`);
-          alert(`Application cannot be launched.`);
+        console.log(`Attempting to launch app: ${item.name}`);
+        if (!openItem(item, openWindow)) {
+          alert(`Application ${item.name} cannot be launched.`);
         }
       } else {
         alert(`File type ${item.extension ? '.' + item.extension : 'unknown'} is not supported.`);

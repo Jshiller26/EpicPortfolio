@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
+import { getAppInfo, APPS } from '@/app/config/appConfig';
+import { v4 as uuidv4 } from 'uuid'; 
 
 interface UseDesktopDragDropProps {
   removeIconPosition: (itemId: string) => void;
@@ -11,6 +13,7 @@ interface UseDesktopDragDropProps {
   appItems: Record<string, FileSystemItem>;
   items: Record<string, FileSystemItem>;
   newItems: Set<string>;
+  handleDesktopAppMoved: (appId: string) => void; // New callback for handling app icon movement
 }
 
 export const useDesktopDragDrop = ({
@@ -22,7 +25,8 @@ export const useDesktopDragDrop = ({
   createFile,
   appItems,
   items,
-  newItems
+  newItems,
+  handleDesktopAppMoved
 }: UseDesktopDragDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const draggedItemRef = useRef<string | null>(null);
@@ -34,14 +38,18 @@ export const useDesktopDragDrop = ({
     // Store the current dragged item ID
     draggedItemRef.current = itemId;
     
-    const dragData: {
-      itemId: string;
-      source: string;
-      isApp: boolean;
-    } = {
+    const item = items[itemId] || appItems[itemId];
+    const isDesktopApp = appItems[itemId] !== undefined;
+    const isApp = item?.type === 'app' || 
+                 (item?.extension === 'exe') || 
+                 (item?.name && item.name.toLowerCase().endsWith('.exe'));
+    
+    const dragData = {
       itemId: itemId,
       source: 'desktop',
-      isApp: appItems[itemId] !== undefined
+      isApp: isApp,
+      isDesktopApp: isDesktopApp,
+      appType: item?.appType
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
@@ -72,26 +80,81 @@ export const useDesktopDragDrop = ({
     }
   };
 
-  const createAppShortcut = (appId: string, targetFolderId: string) => {
-    const app = appItems[appId];
-    if (!app) {
-      console.error(`App not found: ${appId}`);
-      return;
+  // Create a copy of an app file
+  const createAppFileFromDesktopApp = (sourceId: string, targetFolderId: string): string | null => {
+    const sourceItem = appItems[sourceId];
+    if (!sourceItem) {
+      console.error(`Source app not found: ${sourceId}`);
+      return null;
     }
     
     const targetFolder = items[targetFolderId];
-    if (!targetFolder) {
-      console.error(`Target folder not found: ${targetFolderId}`);
-      return;
-    }
-    if (targetFolder.type !== 'folder') {
-      console.error(`Target is not a folder: ${targetFolderId}, type: ${targetFolder.type}`);
-      return;
+    if (!targetFolder || targetFolder.type !== 'folder') {
+      console.error(`Target folder not found or invalid: ${targetFolderId}`);
+      return null;
     }
     
-    const shortcutName = `${app.name} Shortcut.lnk`;
+    // Use direct access to APPS instead of getAppInfo
+    const appInfo = APPS[sourceId];
+    if (!appInfo) {
+      console.error(`App info not found in APPS for: ${sourceId}`);
+      return null;
+    }
     
-    createFile(shortcutName, 'desktop', JSON.stringify({ type: 'appShortcut', appId }), 0);
+    const fileName = sourceItem.name;
+    
+    const appData = {
+      type: 'app',
+      appId: appInfo.id,
+      appType: sourceItem.appType || appInfo.id
+    };
+    
+    const newFileId = createFile(fileName, targetFolderId, JSON.stringify(appData), 0);
+    
+    handleDesktopAppMoved(sourceId);
+    
+    return newFileId;
+  };
+
+  const handleFolderDrop = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      let itemId: string;
+      let isAppItem = false;
+      let isDesktopApp = false;
+      
+      if (jsonData) {
+        const dragData = JSON.parse(jsonData);
+        itemId = dragData.itemId;
+        isAppItem = Boolean(dragData.isApp);
+        isDesktopApp = Boolean(dragData.isDesktopApp);
+      } else {
+        itemId = e.dataTransfer.getData('text/plain');
+        const item = items[itemId] || appItems[itemId];
+        isAppItem = item?.type === 'app' || 
+                    item?.extension === 'exe' || 
+                    (item?.name && item.name.toLowerCase().endsWith('.exe'));
+        isDesktopApp = appItems[itemId] !== undefined;
+      }
+      
+      if (!itemId || itemId === folderId) return;
+      
+      const targetFolder = items[folderId];
+      if (!targetFolder || targetFolder.type !== 'folder') return;
+  
+      if (isDesktopApp) {
+        createAppFileFromDesktopApp(itemId, folderId);
+        return;
+      }
+      
+      moveItem(itemId, folderId, () => {
+        removeIconPosition(itemId);
+      });
+    } catch (error) {
+      console.error('Error processing folder drop:', error);
+    }
   };
 
   const handleFileExplorerDrop = (itemId: string, e: React.DragEvent, gridSize: number) => {
@@ -128,50 +191,6 @@ export const useDesktopDragDrop = ({
         finalNewItems.delete(movedItemId);
       }, 500);
     });
-  };
-
-  const handleFolderDrop = (e: React.DragEvent, folderId: string) => {
-    e.preventDefault();
-    
-    try {
-      const jsonData = e.dataTransfer.getData('application/json');
-      let itemId: string;
-      
-      if (jsonData) {
-        const dragData = JSON.parse(jsonData);
-        itemId = dragData.itemId;        
-        const isAppItem = Boolean(dragData.isApp);
-        
-        // Handle app shortcuts
-        if (isAppItem || appItems[itemId]) {
-          const app = appItems[itemId];
-          if (app) {
-            const appName = app.name || 'App';
-            const exeFileName = `${appName}.exe`;
-            createFile(exeFileName, folderId, '', 0);
-            console.log(`Created ${appName} file in folder`);
-          } else {
-            createAppShortcut(itemId, folderId);
-          }
-          return;
-        }
-      } else {
-        itemId = e.dataTransfer.getData('text/plain');
-      }
-      
-      // Dont try to move a folder into itself
-      if (!itemId || itemId === folderId) return;
-      
-      const targetFolder = items[folderId];
-      
-      if (targetFolder && targetFolder.type === 'folder') {
-        moveItem(itemId, folderId, () => {
-          removeIconPosition(itemId);
-        });
-      }
-    } catch (error) {
-      console.error('Error processing folder drop:', error);
-    }
   };
 
   const handleDrop = (e: React.DragEvent, gridSize: number) => {
