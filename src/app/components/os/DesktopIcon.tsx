@@ -55,7 +55,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
 
-  // Custom icon source for app icons or default from item
+  // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
 
   // Check if this item is selected in the file system
@@ -89,16 +89,9 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const handleDragStart = (e: React.DragEvent) => {
     setIsVisible(false);
     
-    // Get if the item is a desktop app (VS Code, GameBoy, etc.)
-    const isDesktopApp = item.parentId === 'desktop' && item.type === 'app';
-    
     const dragData = {
       itemId: itemId,
-      source: 'desktop',
-      isApp: item.type === 'app' || 
-             item.extension === 'exe' || 
-             (item.name && item.name.toLowerCase().endsWith('.exe')),
-      isDesktopApp: isDesktopApp
+      source: 'desktop'
     };
     
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
@@ -217,7 +210,10 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    // Select this item
     fileSystem.selectItems([itemId]);
+    
+    // Prevent event from bubbling up (which would deselect)
     e.stopPropagation();
   };
 

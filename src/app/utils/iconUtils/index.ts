@@ -1,5 +1,6 @@
 import { FileSystemItem, File} from '@/app/types/fileSystem';
 import { APPS, getAppInfo } from '@/app/config/appConfig';
+import { isExeFile } from '@/app/utils/appUtils';
 
 // Helper to get the base window type from a window ID
 export const getWindowType = (windowId: string) => {
@@ -23,11 +24,12 @@ export const getContentId = (windowId: string) => {
 
 // Get the icon path for a file system item
 export const getIconForItem = (item: FileSystemItem): string => {
-  if (item.type === 'app' && item.iconPath) {
-    return item.iconPath;
-  }
-  if (item.type === 'app' && item.appType && APPS[item.appType]) {
-    return APPS[item.appType].iconPath;
+  if (isExeFile(item)) {
+    const appInfo = getAppInfo(item);
+    if (appInfo) {
+      return appInfo.iconPath;
+    }
+    return '/images/desktop/icons8-app.svg'; // Default exe icon
   }
   
   // Handle folders
@@ -35,25 +37,20 @@ export const getIconForItem = (item: FileSystemItem): string => {
     return '/images/desktop/icons8-folder.svg';
   }
   
-  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
-    const appInfo = getAppInfo(item);
-    if (appInfo) {
-      return appInfo.iconPath;
-    }
-    return '/images/desktop/icons8-app.svg';
-  }
   if (item.type === 'file') {
     const file = item as File;
     
     if (file.content) {
       try {
         const contentObj = JSON.parse(file.content);
-        if (contentObj.type === 'app' && contentObj.appId) {
+        
+        if ((contentObj.type === 'app' || contentObj.type === 'appExe') && contentObj.appId) {
           const app = APPS[contentObj.appId];
           if (app) {
             return app.iconPath;
           }
-        }      
+        }
+        
         if (contentObj.type === 'appShortcut' && contentObj.appId) {
           const app = APPS[contentObj.appId];
           if (app) {
@@ -139,26 +136,7 @@ export const isGameROMFile = (file: File): boolean => {
 };
 
 export const isAppFile = (item: FileSystemItem): boolean => {
-  if (item.type === 'app') return true;
-  
-  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
-    return true;
-  }
-  
-  if (item.type === 'file') {
-    const file = item as File;
-    if (!file.content) return false;
-    
-    try {
-      const content = JSON.parse(file.content);
-      return (content.type === 'app' && !!content.appId) || 
-             (content.type === 'appShortcut' && !!content.appId);
-    } catch {
-      return false;
-    }
-  }
-  
-  return false;
+  return isExeFile(item);
 };
 
 // Check if a file is an app shortcut
@@ -174,11 +152,7 @@ export const isAppShortcut = (file: File): boolean => {
 };
 
 export const getAppIdFromFile = (item: FileSystemItem): string | null => {
-  if (item.type === 'app' && item.appType) {
-    return item.appType;
-  }
-  
-  if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
+  if (isExeFile(item)) {
     const appInfo = getAppInfo(item);
     if (appInfo) {
       return appInfo.id;
@@ -191,7 +165,7 @@ export const getAppIdFromFile = (item: FileSystemItem): string | null => {
     
     try {
       const content = JSON.parse(file.content);
-      if ((content.type === 'app' || content.type === 'appShortcut') && content.appId) {
+      if ((content.type === 'app' || content.type === 'appExe' || content.type === 'appShortcut') && content.appId) {
         return content.appId;
       }
     } catch {

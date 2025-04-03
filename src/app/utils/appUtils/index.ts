@@ -2,22 +2,23 @@ import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { getAppInfo } from '@/app/config/appConfig';
 import { useWindowStore } from '@/app/stores/windowStore';
 
+export const isExeFile = (item: FileSystemItem): boolean => {
+  if (item.extension === 'exe' || item.name.toLowerCase().endsWith('.exe')) {
+    return true;
+  }
+  
+  if ('appType' in item) {
+    return true;
+  }
+  
+  return false;
+};
+
 export const openItem = (
   item: FileSystemItem, 
   onOpenWindow?: (windowId: string) => void
 ): boolean => {
-  // Handle apps
-  if (item.type === 'app') {
-    if (onOpenWindow) {
-      onOpenWindow(item.appType || item.id);
-    } else {
-      useWindowStore.getState().openWindow(item.appType || item.id);
-    }
-    return true;
-  }
-  
-  // Handle .exe files
-  if ((item.extension === 'exe' || item.name.toLowerCase().endsWith('.exe'))) {
+  if (isExeFile(item)) {
     const appInfo = getAppInfo(item);
     
     if (appInfo) {
@@ -114,15 +115,7 @@ export const openItem = (
 };
 
 export const getInitialRenameName = (item: FileSystemItem): string => {
-  // For .exe files, remove the extension for editing
-  if (item.type === 'app' || 
-      item.extension === 'exe' || 
-      item.name.toLowerCase().endsWith('.exe')) {
-    return item.name.replace(/\.exe$/i, '');
-  }
-  
-  // For normal files with extensions
-  if (item.extension) {
+  if (item.extension || (item.name && item.name.includes('.'))) {
     const lastDotIndex = item.name.lastIndexOf('.');
     if (lastDotIndex > 0) {
       return item.name.substring(0, lastDotIndex);
@@ -133,14 +126,11 @@ export const getInitialRenameName = (item: FileSystemItem): string => {
 };
 
 export const getFinalRenameName = (item: FileSystemItem, newName: string): string => {
-  if (item.type === 'app' || 
-      item.extension === 'exe' || 
-      item.name.toLowerCase().endsWith('.exe')) {
-    return `${newName}.exe`;
-  }
-  
   if (item.extension) {
     return `${newName}.${item.extension}`;
+  } else if (item.name && item.name.includes('.')) {
+    const extension = item.name.substring(item.name.lastIndexOf('.') + 1);
+    return `${newName}.${extension}`;
   }
   
   return newName;

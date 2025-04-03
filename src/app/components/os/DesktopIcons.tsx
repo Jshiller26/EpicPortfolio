@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
-import { Folder, FileSystemItem } from '@/app/types/fileSystem';
+import { Folder, FileSystemItem, File } from '@/app/types/fileSystem';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { openItem, getInitialRenameName } from '@/app/utils/appUtils';
 import { createAppItems, APPS } from '@/app/config/appConfig';
@@ -15,8 +15,6 @@ import { useDesktopCreation } from '@/app/utils/desktopCreationUtils';
 // Import components
 import { DesktopIcon } from './DesktopIcon';
 import { DesktopContextMenuHandler } from './DesktopContextMenuHandler';
-
-const AppMovedEvent = 'desktopAppMoved';
 
 interface DesktopIconsProps {
   onOpenWindow: (windowId: string) => void;
@@ -34,11 +32,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const renameItem = fileSystem.renameItem;
   const moveItem = fileSystem.moveItem;
   
-  // Create app items from our centralized config and track which ones are visible
-  const [appItems]= useState<Record<string, FileSystemItem>>(createAppItems());
-  // Track which desktop app icons are hidden (when moved to folders)
-  const [hiddenAppIcons, setHiddenAppIcons] = useState<Set<string>>(new Set());
-
   // Track any file system changes
   const desktopChildrenRef = useRef<string[]>([]);
   
@@ -50,37 +43,55 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     findNextAvailablePosition,
     isPositionOccupied,
     removeIconPosition  
-  } = useIconPositions(desktop?.children || [], Object.keys(appItems).filter(id => !hiddenAppIcons.has(id)));
+  } = useIconPositions(desktop?.children || [], []);
 
+  // Create default apps (VS Code and GameBoy) on the desktop
+  useEffect(() => {
+    if (!desktop) return; // Wait for desktop to be available
+    
+    // Get the app files configuration
+    const appExeFiles = createAppItems();
+    const requiredApps = ['vscode', 'gameboy']; // List of apps that should always be on desktop
+    
+    // Check for each required app
+    requiredApps.forEach(appId => {
+      const appFile = appExeFiles[appId];
+      if (!appFile) return;
+      
+      // Check if this exe file already exists on desktop
+      const exeExists = desktop.children.some(childId => {
+        const child = items[childId];
+        if (!child) return false;
+        
+        // Look for file with matching name
+        if (child.type === 'file' && child.name === appFile.name) {
+          return true;
+        }
+        
+        return false;
+      });
+      
+      // If exe doesn't exist, create it
+      if (!exeExists) {
+        console.log(`Creating ${appFile.name} on desktop`);
+        createFile(
+          appFile.name,
+          'desktop',
+          appFile.content,
+          0
+        );
+      }
+    });
+  }, [desktop, items]);
+
+  // Define handleOpenItem function for the file operations hook
   const handleOpenItem = (itemId: string, items: Record<string, FileSystemItem>, openWindow: (windowId: string) => void) => {
     const item = items[itemId];
     if (!item) return;
+    
+    // Use the new openItem utility
     openItem(item, openWindow);
   };
-
-  // Method to handle when a desktop app is moved to a folder
-  const handleDesktopAppMoved = (appId: string) => {
-    setHiddenAppIcons(prev => {
-      const updated = new Set(prev);
-      updated.add(appId);
-      return updated;
-    });
-    removeIconPosition(appId);
-  };
-
-  useEffect(() => {
-    const handleAppMovedEvent = (e: CustomEvent) => {
-      if (e.detail && e.detail.appId) {
-        handleDesktopAppMoved(e.detail.appId);
-      }
-    };
-
-    window.addEventListener(AppMovedEvent, handleAppMovedEvent as EventListener);
-    
-    return () => {
-      window.removeEventListener(AppMovedEvent, handleAppMovedEvent as EventListener);
-    };
-  }, []);
 
   // File Operations Hook
   const fileOperations = useDesktopFileOperations({
@@ -90,7 +101,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     removeIconPosition,
     handleOpenItem,
     onOpenWindow,
-    appItems
+    appItems: {}  // No longer need special app items
   });
 
   // Clipboard Hook
@@ -159,10 +170,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     setIconPositions,
     moveItem,
     createFile,
-    appItems,
+    appItems: {},  // No longer need special app items
     items,
     newItems,
-    handleDesktopAppMoved
+    handleDesktopAppMoved: () => {} // No longer needed
   });
 
   // Monitor for file system changes
@@ -213,12 +224,63 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   }, [fileOperations.lastCreatedItemId, fileOperations.isRenaming, items]);
 
-  const allItems = [
-    ...Object.values(appItems).filter(item => !hiddenAppIcons.has(item.id)), // Only visible app icons
-    ...(desktop?.type === 'folder' 
-      ? desktop.children.map(itemId => items[itemId]).filter(Boolean) 
-      : [])
-  ];
+  // Handle keyboard shortcuts for copy/paste
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if we have selected items
+      if (fileSystem.selectedItems.length === 0) return;
+      
+      // Copy: Ctrl+C
+      if (e.ctrlKey && e.key === 'c') {
+        const selectedItemId = fileSystem.selectedItems[0];
+        if (selectedItemId) {
+          const item = items[selectedItemId];
+          if (item) {
+            clipboardOps.handleCopy(selectedItemId);
+            console.log('Copied item to clipboard:', item.name);
+          }
+        }
+      }
+      
+      // Cut: Ctrl+X
+      if (e.ctrlKey && e.key === 'x') {
+        const selectedItemId = fileSystem.selectedItems[0];
+        if (selectedItemId) {
+          const item = items[selectedItemId];
+          if (item) {
+            clipboardOps.handleCut(selectedItemId);
+            console.log('Cut item to clipboard:', item.name);
+          }
+        }
+      }
+      
+      // Paste: Ctrl+V
+      if (e.ctrlKey && e.key === 'v') {
+        if (clipboardOps.clipboard.item) {
+          clipboardOps.handlePaste();
+          console.log('Pasted item from clipboard');
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    fileSystem.selectedItems, 
+    items, 
+    clipboardOps.handleCopy, 
+    clipboardOps.handleCut, 
+    clipboardOps.handlePaste,
+    clipboardOps.clipboard.item
+  ]);
+
+  // Get all desktop items from file system
+  const allItems = desktop?.type === 'folder' 
+    ? desktop.children.map(itemId => items[itemId]).filter(Boolean) 
+    : [];
 
   return (
     <div 
@@ -232,7 +294,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         if (!item) return null;
         
         const itemId = item.id;
-        const isApp = item.type === 'app';
         
         // Get the position for this item
         let position = iconPositions[itemId];
@@ -249,24 +310,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         
         const isNewItem = newItems.has(itemId);
         const isCut = clipboardOps.clipboard.operation === 'cut' && clipboardOps.clipboard.item?.id === itemId;
-        
-        let iconSrc = undefined;
-        if (isApp && item.iconPath) {
-          iconSrc = item.iconPath;
-        } else if (isApp && item.appType && APPS[item.appType]) {
-          const app = APPS[item.appType];
-          iconSrc = app.iconPath;
-        } else if (item.extension === 'exe' || (item.name && item.name.toLowerCase().endsWith('.exe'))) {
-          const appName = item.name.replace(/\.exe$/i, '');
-          const matchingApp = Object.values(APPS).find(app => 
-            app.name === appName || 
-            app.name.toLowerCase() === appName.toLowerCase()
-          );
-          
-          if (matchingApp) {
-            iconSrc = matchingApp.iconPath;
-          }
-        }
         
         return (
           <DesktopIcon
@@ -288,7 +331,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             onRenameChange={fileOperations.handleRenameChange}
             onRenameKeyDown={fileOperations.handleRenameKeyDown}
             onRenameComplete={fileOperations.handleRenameComplete}
-            iconSrc={iconSrc}
           />
         );
       })}
