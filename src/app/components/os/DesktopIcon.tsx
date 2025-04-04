@@ -3,6 +3,7 @@ import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
+import { getDisplayName } from '@/app/utils/displayUtils';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -57,6 +58,10 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
 
   // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
+
+  const displayName = item.type === 'file' 
+    ? getDisplayName(item.name)
+    : item.name;
 
   // Check if this item is selected in the file system
   useEffect(() => {
@@ -268,7 +273,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         />
       ) : (
         <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
-          {item.name}
+          {displayName}
         </div>
       )}
     </div>
