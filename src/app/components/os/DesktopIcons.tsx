@@ -3,7 +3,7 @@ import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Folder, FileSystemItem} from '@/app/types/fileSystem';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { openItem, getInitialRenameName } from '@/app/utils/appUtils';
-import { createAppItems} from '@/app/config/appConfig';
+import { createAppItems } from '@/app/config/appConfig';
 
 // Import hooks
 import { useDesktopContextMenu } from '@/app/hooks/useDesktopContextMenu';
@@ -48,66 +48,93 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   useEffect(() => {
     if (!desktop) return;
     
-    const appExeFiles = createAppItems();
-    const requiredApps = ['vscode', 'gameboy'];
-    const createdApps: string[] = [];
+    setTimeout(() => {
+      const myProjectsId = Object.values(items).find(
+        item => item.name === 'My Projects' && item.parentId === 'desktop'
+      )?.id;
+      
+      const readmeId = Object.values(items).find(
+        item => item.name === 'README.txt' && item.parentId === 'desktop'
+      )?.id;
+      
+      const vsCodeId = Object.values(items).find(
+        item => item.name === 'VS Code.exe' && item.parentId === 'desktop'
+      )?.id;
+      
+      const gameBoyId = Object.values(items).find(
+        item => item.name === 'GameBoy.exe' && item.parentId === 'desktop'
+      )?.id;
+
+      const updatedPositions: Record<string, { x: number, y: number }> = {};
+      
+      if (myProjectsId) {
+        updatedPositions[myProjectsId] = { x: 0, y: 0 };
+      }
+      
+      if (vsCodeId) {
+        updatedPositions[vsCodeId] = { x: 0, y: GRID_SIZE };
+      }
+      
+      if (readmeId) {
+        updatedPositions[readmeId] = { x: 0, y: GRID_SIZE * 2 };
+      }
+      
+      if (gameBoyId) {
+        updatedPositions[gameBoyId] = { x: 0, y: GRID_SIZE * 3 };
+      }
+      
+      if (Object.keys(updatedPositions).length > 0) {
+        setIconPositions(prev => ({
+          ...prev,
+          ...updatedPositions
+        }));
+      }
+    }, 100);
+  }, [desktop, items, setIconPositions]);
+
+  useEffect(() => {
+    if (!desktop) return;
     
-    // Check for each required app
-    requiredApps.forEach((appId, index) => {
-      const appFile = appExeFiles[appId];
-      if (!appFile) return;
-      
-      // Check if this exe file already exists on desktop
-      const exeExists = desktop.children.some(childId => {
-        const child = items[childId];
-        if (!child) return false;
-        
-        // Look for file with matching name
-        if (child.type === 'file' && child.name === appFile.name) {
-          return true;
-        }
-        
-        return false;
-      });
-      
-      // If exe doesn't exist, create it
-      if (!exeExists) {
-        console.log(`Creating ${appFile.name} on desktop`);
-        const newItemId = createFile(
-          appFile.name,
-          'desktop',
-          appFile.content,
-          0
-        );
-        
-        if (newItemId) {
-          createdApps.push(newItemId);
-          
-          const column = index % 3;
-          const row = Math.floor(index / 3);
-          
-          const position = {
-            x: column * GRID_SIZE, 
-            y: row * GRID_SIZE
-          };
-          
-          setTimeout(() => {
-            setIconPositions(prev => ({
-              ...prev,
-              [newItemId]: position
-            }));
-          }, 0);
-        }
+    const exeFiles = createAppItems();
+    const requiredExeFiles = ['vscode', 'gameboy'];
+
+    const existingExeIds = new Set<string>();
+    
+    Object.values(items).forEach(item => {
+      if (item.type === 'file') {
+        requiredExeFiles.forEach(requiredId => {
+          const exeFile = exeFiles[requiredId];
+          if (exeFile && item.name === exeFile.name) {
+            existingExeIds.add(requiredId);
+          }
+        });
       }
     });
-  }, [desktop, items]);
+    
+    requiredExeFiles.forEach((exeId, index) => {
+      if (existingExeIds.has(exeId)) {
+        return;
+      }
+      
+      const exeFile = exeFiles[exeId];
+      if (!exeFile) return;
+      
+      console.log(`Creating ${exeFile.name} on desktop`);
+      const newItemId = createFile(
+        exeFile.name,
+        'desktop',
+        exeFile.content,
+        0
+      );
+      
+    });
+  }, [desktop, items, createFile]);
 
   // Define handleOpenItem function for the file operations hook
   const handleOpenItem = (itemId: string, items: Record<string, FileSystemItem>, openWindow: (windowId: string) => void) => {
     const item = items[itemId];
     if (!item) return;
     
-    // Use the new openItem utility
     openItem(item, openWindow);
   };
 
@@ -119,7 +146,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     removeIconPosition,
     handleOpenItem,
     onOpenWindow,
-    appItems: {} 
+    appItems: {}
   });
 
   // Clipboard Hook
@@ -188,10 +215,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     setIconPositions,
     moveItem,
     createFile,
-    appItems: {},  // No longer need special app items
+    appItems: {},
     items,
     newItems,
-    handleDesktopAppMoved: () => {} // No longer needed
+    handleDesktopAppMoved: () => {}
   });
 
   // Monitor for file system changes
@@ -217,7 +244,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             
             const col = (startIndex + index) % maxColumns;
             const row = Math.floor((startIndex + index) / maxColumns);
-    
+            
             const x = col * GRID_SIZE;
             const y = row * GRID_SIZE;
             
@@ -266,7 +293,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       }
     }
   }, [fileOperations.lastCreatedItemId, fileOperations.isRenaming, items]);
-
 
   // Get all desktop items from file system
   const allItems = desktop?.type === 'folder' 
