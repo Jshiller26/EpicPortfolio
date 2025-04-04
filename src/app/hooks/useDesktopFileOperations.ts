@@ -26,9 +26,7 @@ export const useDesktopFileOperations = ({
   const [newName, setNewName] = useState('');
   const [lastCreatedItemId, setLastCreatedItemId] = useState<string | null>(null);
 
-  // Handle opening items, with special handling for apps and exe files
   const handleOpen = (itemId: string) => {
-    // Check if it's a direct app from app items
     if (appItems[itemId]) {
       onOpenWindow(itemId);
       return;
@@ -54,12 +52,14 @@ export const useDesktopFileOperations = ({
       
       if (item.type === 'file' && 'content' in item) {
         try {
-          const content = JSON.parse(item.content);
-          if (content.type === 'app' && content.appId) {
-            onOpenWindow(content.appId);
-            return;
+          if (typeof item.content === 'string') {
+            const content = JSON.parse(item.content);
+            if (content.type === 'app' && content.appId) {
+              onOpenWindow(content.appId);
+              return;
+            }
           }
-        } catch (e) {
+        } catch {
         }
       }
     }
@@ -111,9 +111,7 @@ export const useDesktopFileOperations = ({
     }
   };
 
-  const handleProperties = (itemId: string) => {
-    // In the future, implement properties dialog
-    console.log('Properties:', itemId);
+  const handleProperties = () => {
   };
 
   return {
