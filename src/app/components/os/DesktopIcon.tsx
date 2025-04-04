@@ -33,7 +33,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   position,
   isRenaming,
   newName,
-  isDragging,
   isNewItem,
   isCut,
   onContextMenu,
@@ -49,12 +48,14 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   iconSrc
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
+  const [isDraggingThis, setIsDraggingThis] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
+  const positionRef = useRef(position);
 
   // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
@@ -62,6 +63,10 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const displayName = item.type === 'file' 
     ? getDisplayName(item.name)
     : item.name;
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   // Check if this item is selected in the file system
   useEffect(() => {
@@ -77,22 +82,24 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   }, [isRenaming]);
 
   useEffect(() => {
-    if (isNewItem || isDragging) {
+    if (isNewItem) {
+      setLastPosition(position);
       return;
     }
 
-    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
-      setIsVisible(false);
-      
-      setTimeout(() => {
-        setLastPosition(position);
-        setIsVisible(true);
-      }, 50);
+    if (isDraggingThis) {
+      return;
     }
-  }, [position, lastPosition, isNewItem, isDragging]);
+
+    // If position changed, update
+    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
+      // Always set last position to ensure we have the latest value
+      setLastPosition(position);
+    }
+  }, [position, lastPosition, isNewItem, isDraggingThis]);
 
   const handleDragStart = (e: React.DragEvent) => {
-    setIsVisible(false);
+    setIsDraggingThis(true);
     
     const dragData = {
       itemId: itemId,
@@ -112,12 +119,26 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleDragEnd = () => {
-    setLastPosition(position);
-    setIsVisible(true);
+    setIsDraggingThis(false);
+    setLastPosition(positionRef.current);
     
     // Remove dragging class from body
     document.body.classList.remove('dragging');
     document.body.classList.remove('dragging-over-folder');
+    
+    // Force save to localStorage
+    if (typeof localStorage !== 'undefined') {
+      const savedPositions = localStorage.getItem('desktopIconPositions');
+      if (savedPositions) {
+        try {
+          const positions = JSON.parse(savedPositions);
+          positions[itemId] = positionRef.current;
+          localStorage.setItem('desktopIconPositions', JSON.stringify(positions));
+        } catch (e) {
+          console.error('Error saving position to localStorage', e);
+        }
+      }
+    }
     
     onDragEnd();
   };
@@ -238,7 +259,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
-        transition: 'none'
+        transition: isDraggingThis ? 'none' : 'transform 0.05s ease-out'
       }}
       draggable="true"
       onContextMenu={(e) => onContextMenu(e, itemId)}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { isExeFile } from '@/app/utils/appUtils';
 
@@ -26,6 +26,22 @@ export const useDesktopDragDrop = ({
 }: UseDesktopDragDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const draggedItemRef = useRef<string | null>(null);
+  const positionsRef = useRef<Record<string, { x: number, y: number }>>({});
+
+  useEffect(() => {
+    const savePositionsOnDragEnd = () => {
+      setTimeout(() => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('desktopIconPositions', JSON.stringify(positionsRef.current));
+        }
+      }, 100);
+    };
+
+    window.addEventListener('mouseup', savePositionsOnDragEnd);
+    return () => {
+      window.removeEventListener('mouseup', savePositionsOnDragEnd);
+    };
+  }, []);
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
     setIsDragging(true);
@@ -52,6 +68,10 @@ export const useDesktopDragDrop = ({
     setIsDragging(false);
     // Reset dragged item
     draggedItemRef.current = null;
+    
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('desktopIconPositions', JSON.stringify(positionsRef.current));
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -93,6 +113,13 @@ export const useDesktopDragDrop = ({
       
       moveItem(itemId, folderId, () => {
         removeIconPosition(itemId);
+        
+        setIconPositions(prev => {
+          const updated = { ...prev };
+          delete updated[itemId];
+          positionsRef.current = updated;
+          return updated;
+        });
       });
     } catch (error) {
       console.error('Error processing folder drop:', error);
@@ -116,22 +143,36 @@ export const useDesktopDragDrop = ({
       updatedNewItems.add(movedItemId);
       
       if (!isPositionOccupied(x, y, movedItemId)) {
-        setIconPositions(prev => ({
-          ...prev,
-          [movedItemId]: { x, y }
-        }));
+        setIconPositions(prev => {
+          const updated = {
+            ...prev,
+            [movedItemId]: { x, y }
+          };
+          positionsRef.current = updated;
+          return updated;
+        });
       } else {
         const position = findNextAvailablePosition(0, 0, movedItemId);
-        setIconPositions(prev => ({
-          ...prev,
-          [movedItemId]: position
-        }));
+        setIconPositions(prev => {
+          const updated = {
+            ...prev,
+            [movedItemId]: position
+          };
+          positionsRef.current = updated;
+          return updated;
+        });
       }
       
       setTimeout(() => {
         const finalNewItems = new Set(newItems);
         finalNewItems.delete(movedItemId);
       }, 500);
+      
+      if (typeof localStorage !== 'undefined') {
+        setTimeout(() => {
+          localStorage.setItem('desktopIconPositions', JSON.stringify(positionsRef.current));
+        }, 100);
+      }
     });
   };
 
@@ -174,16 +215,30 @@ export const useDesktopDragDrop = ({
       const y = Math.min(maxRows * gridSize, Math.floor(relativeY / gridSize) * gridSize);
       
       if (!isPositionOccupied(x, y, itemId)) {
-        setIconPositions(prev => ({
-          ...prev,
-          [itemId]: { x, y }
-        }));
+        setIconPositions(prev => {
+          const updated = {
+            ...prev,
+            [itemId]: { x, y }
+          };
+          positionsRef.current = updated;
+          return updated;
+        });
       } else {
         const position = findNextAvailablePosition(0, 0, itemId);
-        setIconPositions(prev => ({
-          ...prev,
-          [itemId]: position
-        }));
+        setIconPositions(prev => {
+          const updated = {
+            ...prev,
+            [itemId]: position
+          };
+          positionsRef.current = updated;
+          return updated;
+        });
+      }
+      
+      if (typeof localStorage !== 'undefined') {
+        setTimeout(() => {
+          localStorage.setItem('desktopIconPositions', JSON.stringify(positionsRef.current));
+        }, 100);
       }
     } catch (error) {
       console.error('Error processing drop:', error);

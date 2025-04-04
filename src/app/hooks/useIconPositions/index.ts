@@ -368,8 +368,10 @@ export const useIconPositions = (
 
   // Save positions to localStorage when they change
   useEffect(() => {
-    savePositions();
-  }, [iconPositions, savePositions]);
+    if (ready) {
+      savePositions();
+    }
+  }, [iconPositions, savePositions, ready]);
 
   return {
     iconPositions,
