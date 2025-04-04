@@ -67,7 +67,9 @@ export const useIconPositions = (
       }
     }
     
-    return { x: 0, y: 0 };
+    const fallbackX = (excludeItemId?.charCodeAt(0) || 0) % maxColumns * GRID_SIZE;
+    const fallbackY = (excludeItemId?.charCodeAt(1) || 0) % maxRows * GRID_SIZE;
+    return { x: fallbackX, y: fallbackY };
   }, [isPositionOccupied, getWindowDimensions]);
 
   const arrangeIconsInGrid = useCallback((items: string[], savedPositions: Record<string, IconPosition> = {}) => {
@@ -80,7 +82,7 @@ export const useIconPositions = (
     const occupied: Record<string, boolean> = {};
     
     // First place items with saved positions
-    items.forEach(itemId => {
+    items.forEach((itemId, index) => {
       if (savedPositions[itemId]) {
         const pos = savedPositions[itemId];
         
@@ -93,33 +95,76 @@ export const useIconPositions = (
           if (!occupied[posKey]) {
             positions[itemId] = pos;
             occupied[posKey] = true;
+          } else {
+            let newPos = { 
+              x: (index % maxColumns) * GRID_SIZE, 
+              y: Math.floor(index / maxColumns) * GRID_SIZE 
+            };
+            
+            while (occupied[`${newPos.x},${newPos.y}`] && 
+                  newPos.y < maxRows * GRID_SIZE) {
+              index++;
+              newPos = { 
+                x: (index % maxColumns) * GRID_SIZE, 
+                y: Math.floor(index / maxColumns) * GRID_SIZE 
+              };
+            }
+            
+            positions[itemId] = newPos;
+            occupied[`${newPos.x},${newPos.y}`] = true;
           }
+        } else {
+          let newPos = { 
+            x: (index % maxColumns) * GRID_SIZE, 
+            y: Math.floor(index / maxColumns) * GRID_SIZE 
+          };
+          
+          while (occupied[`${newPos.x},${newPos.y}`] && 
+                newPos.y < maxRows * GRID_SIZE) {
+            index++;
+            newPos = { 
+              x: (index % maxColumns) * GRID_SIZE, 
+              y: Math.floor(index / maxColumns) * GRID_SIZE 
+            };
+          }
+          
+          positions[itemId] = newPos;
+          occupied[`${newPos.x},${newPos.y}`] = true;
         }
       }
     });
     
     // Then place items without saved positions
-    items.forEach(itemId => {
+    items.forEach((itemId, index) => {
       if (positions[itemId]) return;
       
-      // Find the first available position in the grid
-      for (let col = 0; col <= maxColumns; col++) {
-        for (let row = 0; row <= maxRows; row++) {
-          const x = col * GRID_SIZE;
-          const y = row * GRID_SIZE;
-          const posKey = `${x},${y}`;
-          
-          if (!occupied[posKey]) {
-            positions[itemId] = { x, y };
-            occupied[posKey] = true;
-            break;
+      let col = index % maxColumns;
+      let row = Math.floor(index / maxColumns);
+      let assigned = false;
+      
+      while (!assigned && row <= maxRows) {
+        const x = col * GRID_SIZE;
+        const y = row * GRID_SIZE;
+        const posKey = `${x},${y}`;
+        
+        if (!occupied[posKey]) {
+          positions[itemId] = { x, y };
+          occupied[posKey] = true;
+          assigned = true;
+        } else {
+          col = (col + 1) % maxColumns;
+          if (col === 0) {
+            row++;
           }
         }
-        if (positions[itemId]) break;
       }
-      
-      if (!positions[itemId]) {
-        positions[itemId] = { x: 0, y: 0 };
+      if (!assigned) {
+        const fallbackCol = (itemId.charCodeAt(0) || index) % maxColumns;
+        const fallbackRow = (itemId.charCodeAt(1) || index) % maxRows;
+        positions[itemId] = { 
+          x: fallbackCol * GRID_SIZE, 
+          y: fallbackRow * GRID_SIZE 
+        };
       }
     });
     
@@ -260,13 +305,32 @@ export const useIconPositions = (
       if (itemsWithoutPositions.length > 0) {
         console.log("Found new items without positions:", itemsWithoutPositions);
         
-        // Update positions for new items
         setIconPositions(prev => {
           const updatedPositions = { ...prev };
+          const occupiedPositions = new Set(
+            Object.values(updatedPositions).map(pos => `${pos.x},${pos.y}`)
+          );
           
-          itemsWithoutPositions.forEach(itemId => {
-            const position = findNextAvailablePosition(0, 0, itemId);
-            updatedPositions[itemId] = position;
+          const startIndex = Object.keys(updatedPositions).length;
+          
+          itemsWithoutPositions.forEach((itemId, index) => {
+            const { width } = getWindowDimensions();
+            const maxColumns = Math.floor((width - GRID_SIZE) / GRID_SIZE);
+            
+            const col = (startIndex + index) % maxColumns;
+            const row = Math.floor((startIndex + index) / maxColumns);
+            
+            const x = col * GRID_SIZE;
+            const y = row * GRID_SIZE;
+            
+            const posKey = `${x},${y}`;
+            
+            if (!occupiedPositions.has(posKey)) {
+              updatedPositions[itemId] = { x, y };
+              occupiedPositions.add(posKey);
+            } else {
+              updatedPositions[itemId] = findNextAvailablePosition(0, 0, itemId);
+            }
             
             setNewItems(prevItems => {
               const updated = new Set(prevItems);
@@ -286,7 +350,7 @@ export const useIconPositions = (
         });
       }
     }
-  }, [ready, desktopChildren, appIds, iconPositions, findNextAvailablePosition]);
+  }, [ready, desktopChildren, appIds, iconPositions, findNextAvailablePosition, getWindowDimensions]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ready) {

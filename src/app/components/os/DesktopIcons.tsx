@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
-import { Folder, FileSystemItem, File } from '@/app/types/fileSystem';
+import { Folder, FileSystemItem} from '@/app/types/fileSystem';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { openItem, getInitialRenameName } from '@/app/utils/appUtils';
-import { createAppItems, APPS } from '@/app/config/appConfig';
+import { createAppItems} from '@/app/config/appConfig';
 
 // Import hooks
 import { useDesktopContextMenu } from '@/app/hooks/useDesktopContextMenu';
@@ -45,16 +45,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     removeIconPosition  
   } = useIconPositions(desktop?.children || [], []);
 
-  // Create default apps (VS Code and GameBoy) on the desktop
   useEffect(() => {
-    if (!desktop) return; // Wait for desktop to be available
+    if (!desktop) return;
     
-    // Get the app files configuration
     const appExeFiles = createAppItems();
-    const requiredApps = ['vscode', 'gameboy']; // List of apps that should always be on desktop
+    const requiredApps = ['vscode', 'gameboy'];
+    const createdApps: string[] = [];
     
     // Check for each required app
-    requiredApps.forEach(appId => {
+    requiredApps.forEach((appId, index) => {
       const appFile = appExeFiles[appId];
       if (!appFile) return;
       
@@ -74,12 +73,31 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       // If exe doesn't exist, create it
       if (!exeExists) {
         console.log(`Creating ${appFile.name} on desktop`);
-        createFile(
+        const newItemId = createFile(
           appFile.name,
           'desktop',
           appFile.content,
           0
         );
+        
+        if (newItemId) {
+          createdApps.push(newItemId);
+          
+          const column = index % 3;
+          const row = Math.floor(index / 3);
+          
+          const position = {
+            x: column * GRID_SIZE, 
+            y: row * GRID_SIZE
+          };
+          
+          setTimeout(() => {
+            setIconPositions(prev => ({
+              ...prev,
+              [newItemId]: position
+            }));
+          }, 0);
+        }
       }
     });
   }, [desktop, items]);
@@ -101,7 +119,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     removeIconPosition,
     handleOpenItem,
     onOpenWindow,
-    appItems: {}  // No longer need special app items
+    appItems: {} 
   });
 
   // Clipboard Hook
@@ -187,13 +205,38 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       if (newItemsAdded.length > 0) {
         console.log("New items added to desktop:", newItemsAdded);
         
-        newItemsAdded.forEach(itemId => {
+        const occupiedPositions = new Set(
+          Object.values(iconPositions).map(pos => `${pos.x},${pos.y}`)
+        );
+        
+        const startIndex = Object.keys(iconPositions).length;
+        
+        newItemsAdded.forEach((itemId, index) => {
           if (!iconPositions[itemId]) {
-            const nextPosition = findNextAvailablePosition(0, 0, itemId);
-            setIconPositions(prev => ({
-              ...prev,
-              [itemId]: nextPosition
-            }));
+            const maxColumns = Math.floor(window.innerWidth / GRID_SIZE) - 1; 
+            
+            const col = (startIndex + index) % maxColumns;
+            const row = Math.floor((startIndex + index) / maxColumns);
+    
+            const x = col * GRID_SIZE;
+            const y = row * GRID_SIZE;
+            
+            const posKey = `${x},${y}`;
+            
+            if (!occupiedPositions.has(posKey)) {
+              setIconPositions(prev => ({
+                ...prev,
+                [itemId]: { x, y }
+              }));
+              occupiedPositions.add(posKey);
+            } else {
+              const nextPosition = findNextAvailablePosition(0, 0, itemId);
+              setIconPositions(prev => ({
+                ...prev,
+                [itemId]: nextPosition
+              }));
+              occupiedPositions.add(`${nextPosition.x},${nextPosition.y}`);
+            }
             
             const updatedNewItems = new Set(newItems);
             updatedNewItems.add(itemId);
@@ -224,58 +267,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   }, [fileOperations.lastCreatedItemId, fileOperations.isRenaming, items]);
 
-  // Handle keyboard shortcuts for copy/paste
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle if we have selected items
-      if (fileSystem.selectedItems.length === 0) return;
-      
-      // Copy: Ctrl+C
-      if (e.ctrlKey && e.key === 'c') {
-        const selectedItemId = fileSystem.selectedItems[0];
-        if (selectedItemId) {
-          const item = items[selectedItemId];
-          if (item) {
-            clipboardOps.handleCopy(selectedItemId);
-            console.log('Copied item to clipboard:', item.name);
-          }
-        }
-      }
-      
-      // Cut: Ctrl+X
-      if (e.ctrlKey && e.key === 'x') {
-        const selectedItemId = fileSystem.selectedItems[0];
-        if (selectedItemId) {
-          const item = items[selectedItemId];
-          if (item) {
-            clipboardOps.handleCut(selectedItemId);
-            console.log('Cut item to clipboard:', item.name);
-          }
-        }
-      }
-      
-      // Paste: Ctrl+V
-      if (e.ctrlKey && e.key === 'v') {
-        if (clipboardOps.clipboard.item) {
-          clipboardOps.handlePaste();
-          console.log('Pasted item from clipboard');
-        }
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [
-    fileSystem.selectedItems, 
-    items, 
-    clipboardOps.handleCopy, 
-    clipboardOps.handleCut, 
-    clipboardOps.handlePaste,
-    clipboardOps.clipboard.item
-  ]);
 
   // Get all desktop items from file system
   const allItems = desktop?.type === 'folder' 
@@ -294,11 +285,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         if (!item) return null;
         
         const itemId = item.id;
-        
-        // Get the position for this item
         let position = iconPositions[itemId];
         
-        // If position doesn't exist, create a new one
         if (!position) {
           const newPosition = findNextAvailablePosition(0, 0, itemId);
           setIconPositions(prev => ({
