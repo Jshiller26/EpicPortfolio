@@ -111,7 +111,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       }
     });
     
-    requiredExeFiles.forEach((exeId, index) => {
+    requiredExeFiles.forEach(exeId => {
       if (existingExeIds.has(exeId)) {
         return;
       }
@@ -120,7 +120,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       if (!exeFile) return;
       
       console.log(`Creating ${exeFile.name} on desktop`);
-      const newItemId = createFile(
+      createFile(
         exeFile.name,
         'desktop',
         exeFile.content,
