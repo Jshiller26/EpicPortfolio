@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Editor, { Monaco } from "@monaco-editor/react";
+import Editor, { OnMount } from "@monaco-editor/react";
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Save, Check } from 'lucide-react';
-import { editor } from 'monaco-editor';
 
 interface BlankTextEditorProps {
   windowId: string;
 }
+
+type EditorType = {
+  getPosition: () => { lineNumber: number; column: number } | null;
+};
 
 const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
   const fileSystem = useFileSystemStore();
@@ -17,7 +20,7 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<EditorType | null>(null);
 
   useEffect(() => {
     setIsLoading(false);
@@ -117,7 +120,6 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
       
       const leftPosition = findLeftSidePosition();
       
-      // Update the icon positions in localStorage
       try {
         let iconPositions: Record<string, {x: number, y: number}> = {};
         
@@ -126,16 +128,13 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
           iconPositions = JSON.parse(saved);
         }
         
-        // Add the new file's position
         iconPositions[newFileId] = leftPosition;
         
-        // Save back to localStorage
         localStorage.setItem('desktopIconPositions', JSON.stringify(iconPositions));
       } catch (error) {
         console.error('Error saving icon positions:', error);
       }
       
-      // Update state
       setFileName(finalFileName);
       setIsDirty(false);
       setSaveSuccess(true);
@@ -150,11 +149,10 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
     }
   };
 
-  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    editorRef.current = editor;
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor as EditorType;
     setIsLoading(false);
     
-    // Configure editor
     monaco.editor.defineTheme('customTheme', {
       base: 'vs-dark',
       inherit: true,
@@ -173,7 +171,6 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
     
     monaco.editor.setTheme('customTheme');
     
-    // Update editor DOM to make line highlight more subtle
     const styleElement = document.createElement('style');
     styleElement.textContent = `
       .monaco-editor .current-line {
@@ -184,7 +181,6 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
     document.head.appendChild(styleElement);
   };
 
-  // Count the number of lines in the content
   const lineCount = content.split('\n').length;
 
   return (
@@ -226,7 +222,6 @@ const BlankTextEditor: React.FC<BlankTextEditorProps> = ({ }) => {
         )}
       </div>
       
-      {/* Combined status bar with all information and save button */}
       <div className="absolute bottom-0 left-0 right-0 h-9 bg-[#007acc] text-white flex items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <div className="text-xs">{fileName} - {language}</div>
