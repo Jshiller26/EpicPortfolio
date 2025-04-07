@@ -1,4 +1,5 @@
 import { FileSystemState, Folder, FileSystemItem } from '../../../types/fileSystem';
+import { isProtectedItem } from '../utils/protectionUtils';
 
 export const collectItemsToDelete = (
   id: string,
@@ -23,6 +24,11 @@ export const deleteItem = (
   state: FileSystemState,
   itemId: string
 ): FileSystemState => {
+  if (isProtectedItem(itemId)) {
+    console.warn(`Cannot delete protected item: ${itemId}`);
+    return state;
+  }
+
   const newItems = { ...state.items };
   const item = newItems[itemId];
   if (!item) return state;

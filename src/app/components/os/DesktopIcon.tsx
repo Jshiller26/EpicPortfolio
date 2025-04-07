@@ -4,6 +4,7 @@ import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { getDisplayName } from '@/app/utils/displayUtils';
+import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -52,6 +53,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
   const positionRef = useRef(position);
+  const isProtected = isProtectedItem(itemId);
 
   // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
@@ -72,6 +74,12 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   }, [isRenaming]);
 
   const handleDragStart = (e: React.DragEvent) => {
+    // Prevent dragging protected items
+    if (isProtected) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     
     const dragData = {
       itemId: itemId,
@@ -91,6 +99,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleDragEnd = () => {
+    if (isProtected) return;
     
     // Remove dragging class from body
     document.body.classList.remove('dragging');
@@ -221,23 +230,25 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
+  const protectedClasses = isProtected ? 'cursor-default' : 'cursor-pointer';
 
   const isAtCharLimit = newName.length >= 15;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute flex flex-col items-center group cursor-pointer w-[70px] h-[70px] p-1 rounded 
+      className={`absolute flex flex-col items-center group ${protectedClasses} w-[70px] h-[70px] p-1 rounded 
         ${isDropTarget ? 'bg-gray-500/40' : 'hover:bg-gray-500/20'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
-        ${folderClasses} ${dropTargetClasses}`}
+        ${folderClasses} ${dropTargetClasses}
+        ${isProtected ? 'system-item-protected' : ''}`}
       style={{
         transform: `translate(${position.x}px, ${position.y}px)`,
         // Completely remove all transitions
         transition: 'none'
       }}
-      draggable="true"
+      draggable={!isProtected}
       onContextMenu={(e) => onContextMenu(e, itemId)}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -248,13 +259,18 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onDoubleClick={onDoubleClick}
       onClick={handleClick}
     >
-      <div className="w-8 h-8 flex items-center justify-center mb-1">
+      <div className="w-8 h-8 flex items-center justify-center mb-1 relative">
         <img
           src={iconSource}
           alt={item.name}
           className="w-8 h-8 pointer-events-none"
           draggable="false"
         />
+        {isProtected && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-gray-800" 
+               title="Protected system item">
+          </div>
+        )}
       </div>
       
       {isRenaming ? (
@@ -275,7 +291,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
           </div>
         </div>
       ) : (
-        <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
+        <div className={`text-[11px] ${isProtected ? 'text-yellow-200' : 'text-white'} text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]`}>
           {displayName}
         </div>
       )}

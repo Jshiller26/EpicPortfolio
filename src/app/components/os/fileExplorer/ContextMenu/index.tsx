@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
+import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 
 interface FileExplorerContextMenuProps {
   x: number;
@@ -28,6 +29,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   
   // Determine if the paste option should be enabled
   const canPaste = !!clipboard.item;
+  const isProtected = selectedItem ? isProtectedItem(selectedItem.id) : false;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -88,12 +90,14 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 
   const handleCut = () => {
     if (!selectedItem) return;
+    if (isProtected) return; // Block operation for protected items
     clipboard.setClipboard(selectedItem, 'cut');
     onClose();
   };
 
   const handleCopy = () => {
     if (!selectedItem) return;
+    if (isProtected) return; // Block copy for desktop folder
     clipboard.setClipboard(selectedItem, 'copy');
     onClose();
   };
@@ -112,12 +116,14 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 
   const handleDelete = () => {
     if (!selectedItem) return;
+    if (isProtected) return; 
     fileSystem.deleteItem(selectedItem.id);
     onClose();
   };
 
   const handleRename = () => {
     if (!selectedItem) return;
+    if (isProtected) return;
     
     // Trigger a rename event that the item component will listen for
     window.dispatchEvent(new CustomEvent('renameItem', {
@@ -181,25 +187,29 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
           <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
           
           <button
-            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              ${isProtected ? 'text-gray-400 cursor-default' : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
             style={{
               fontSize: '12px',
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={handleCut}
+            onClick={isProtected ? undefined : handleCut}
+            disabled={isProtected}
           >
             <span>Cut</span>
           </button>
           
           <button
-            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              ${isProtected ? 'text-gray-400 cursor-default' : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
             style={{
               fontSize: '12px',
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={handleCopy}
+            onClick={isProtected ? undefined : handleCopy}
+            disabled={isProtected}
           >
             <span>Copy</span>
           </button>
@@ -207,13 +217,15 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
           <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
           
           <button
-            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              ${isProtected ? 'text-gray-400 cursor-default' : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
             style={{
               fontSize: '12px',
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={handleDelete}
+            onClick={isProtected ? undefined : handleDelete}
+            disabled={isProtected}
           >
             <span>Delete</span>
           </button>
@@ -221,13 +233,15 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
           <div className="h-[1px] bg-gray-300 my-[2px] mx-[1px]" />
           
           <button
-            className="w-full px-3 py-[6px] text-left flex items-center space-x-2 text-gray-900 hover:bg-[#f2f2f2]"
+            className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              ${isProtected ? 'text-gray-400 cursor-default' : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
             style={{
               fontSize: '12px',
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={handleRename}
+            onClick={isProtected ? undefined : handleRename}
+            disabled={isProtected}
           >
             <span>Rename</span>
           </button>

@@ -1,5 +1,6 @@
 import { FileSystemState, Folder, File, FileSystemItem } from '../../../types/fileSystem';
 import { checkNameConflict, generateUniqueFilename } from '../utils/pathUtils';
+import { isProtectedItem } from '../utils/protectionUtils';
 
 export const updatePathsAfterRename = (
   id: string, 
@@ -33,6 +34,11 @@ export const renameItem = (
   itemId: string, 
   newName: string
 ): FileSystemState => {
+  if (isProtectedItem(itemId)) {
+    console.warn(`Cannot rename protected item: ${itemId}`);
+    return state;
+  }
+  
   const newItems = { ...state.items };
   const item = newItems[itemId];
   
