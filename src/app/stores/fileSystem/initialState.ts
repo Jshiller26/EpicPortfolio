@@ -99,7 +99,7 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'desktop',
-      children: ['emc', 'knights', 'idea', 'pandora']
+      children: ['emc', 'knights', 'idea', 'pandora', 'visit-pa']
     } as Folder,
     
     // Projects subfolders
@@ -397,6 +397,71 @@ const initialState: FileSystemState = {
       parentId: 'pandora',
       content: '/videos/projects/pandora/PandoraVid.mp4',
       size: 28500
+    } as File,
+    
+    // Visit P.A. folder and files
+    'visit-pa': {
+      id: 'visit-pa',
+      name: 'Visit P.A.',
+      type: 'folder',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'my-projects',
+      children: ['visit-pa-pdf', 'visit-pa-image-1', 'visit-pa-image-2', 'visit-pa-video']
+    } as Folder,
+    
+    'visit-pa-pdf': {
+      id: 'visit-pa-pdf',
+      name: 'Visit PA.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\Visit PA.pdf',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'visit-pa',
+      content: '/pdfs/Visit PA.pdf',
+      size: 2048,
+      originalFileName: 'Visit PA.pdf'
+    } as File,
+    
+    'visit-pa-image-1': {
+      id: 'visit-pa-image-1',
+      name: 'VisitPA1.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\VisitPA1.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'visit-pa',
+      content: '/images/projects/Visit PA/VisitPA1.jpg',
+      size: 3050
+    } as File,
+    
+    'visit-pa-image-2': {
+      id: 'visit-pa-image-2',
+      name: 'VisitPA2.jpg',
+      type: 'file',
+      extension: 'jpg',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\VisitPA2.jpg',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'visit-pa',
+      content: '/images/projects/Visit PA/VisitPA2.jpg',
+      size: 2950
+    } as File,
+    
+    'visit-pa-video': {
+      id: 'visit-pa-video',
+      name: 'VisitPAVid.mp4',
+      type: 'file',
+      extension: 'mp4',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\VisitPAVid.mp4',
+      created: new Date(),
+      modified: new Date(),
+      parentId: 'visit-pa',
+      content: '/videos/projects/Visit PA/VisitPAVid.mp4',
+      size: 26800
     } as File,
     
     'readme': {
