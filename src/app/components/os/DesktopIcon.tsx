@@ -3,6 +3,7 @@ import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
+import { getDisplayName } from '@/app/utils/displayUtils';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -32,7 +33,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   position,
   isRenaming,
   newName,
-  isDragging,
   isNewItem,
   isCut,
   onContextMenu,
@@ -48,21 +48,24 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   iconSrc
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
+  const [isDraggingThis, setIsDraggingThis] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
+  const positionRef = useRef(position);
 
   // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
 
-  // Check if this item is selected in the file system
+  const displayName = item.type === 'file' 
+    ? getDisplayName(item.name)
+    : item.name;
+
   useEffect(() => {
-    const selectedItems = fileSystem.selectedItems;
-    setIsSelected(selectedItems.includes(itemId));
-  }, [fileSystem.selectedItems, itemId]);
+    positionRef.current = position;
+  }, [position]);
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -72,22 +75,24 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   }, [isRenaming]);
 
   useEffect(() => {
-    if (isNewItem || isDragging) {
+    if (isNewItem) {
+      setLastPosition(position);
       return;
     }
 
-    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
-      setIsVisible(false);
-      
-      setTimeout(() => {
-        setLastPosition(position);
-        setIsVisible(true);
-      }, 50);
+    if (isDraggingThis) {
+      return;
     }
-  }, [position, lastPosition, isNewItem, isDragging]);
+
+    // If position changed, update
+    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
+      // Always set last position to ensure we have the latest value
+      setLastPosition(position);
+    }
+  }, [position, lastPosition, isNewItem, isDraggingThis]);
 
   const handleDragStart = (e: React.DragEvent) => {
-    setIsVisible(false);
+    setIsDraggingThis(true);
     
     const dragData = {
       itemId: itemId,
@@ -107,12 +112,26 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleDragEnd = () => {
-    setLastPosition(position);
-    setIsVisible(true);
+    setIsDraggingThis(false);
+    setLastPosition(positionRef.current);
     
     // Remove dragging class from body
     document.body.classList.remove('dragging');
     document.body.classList.remove('dragging-over-folder');
+    
+    // Force save to localStorage
+    if (typeof localStorage !== 'undefined') {
+      const savedPositions = localStorage.getItem('desktopIconPositions');
+      if (savedPositions) {
+        try {
+          const positions = JSON.parse(savedPositions);
+          positions[itemId] = positionRef.current;
+          localStorage.setItem('desktopIconPositions', JSON.stringify(positions));
+        } catch (e) {
+          console.error('Error saving position to localStorage', e);
+        }
+      }
+    }
     
     onDragEnd();
   };
@@ -220,20 +239,20 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
-  const selectedClass = isSelected ? 'bg-blue-500/30' : '';
+
+  const isAtCharLimit = newName.length >= 15;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[88px] p-1 rounded 
-        ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
+      className={`absolute flex flex-col items-center group cursor-pointer w-[70px] h-[70px] p-1 rounded 
+        ${isDropTarget ? 'bg-gray-500/40' : 'hover:bg-gray-500/20'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
-        ${selectedClass}
         ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
-        transition: 'none'
+        transition: isDraggingThis ? 'none' : 'transform 0.05s ease-out'
       }}
       draggable="true"
       onContextMenu={(e) => onContextMenu(e, itemId)}
@@ -256,19 +275,25 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       </div>
       
       {isRenaming ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={newName}
-          onChange={onRenameChange}
-          onKeyDown={onRenameKeyDown}
-          onBlur={onRenameComplete}
-          className="text-black text-[11px] bg-white px-1 w-full text-center focus:outline-none rounded"
-          autoFocus
-        />
+        <div className="w-full">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newName}
+            onChange={onRenameChange}
+            onKeyDown={onRenameKeyDown}
+            onBlur={onRenameComplete}
+            className={`text-black text-[11px] bg-white px-1 w-full text-center focus:outline-none rounded ${isAtCharLimit ? 'border border-red-500' : ''}`}
+            maxLength={15}
+            autoFocus
+          />
+          <div className="text-[8px] text-white text-center mt-0.5 opacity-70">
+            {newName.length}/15 chars
+          </div>
+        </div>
       ) : (
         <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
-          {item.name}
+          {displayName}
         </div>
       )}
     </div>

@@ -7,6 +7,7 @@ import { getIconForItem } from '../../../utils/iconUtils';
 import { getAppInfo } from '../../../config/appConfig';
 import { openItem } from '../../../utils/appUtils';
 import { useWindowStore } from '../../../stores/windowStore';
+import { getDisplayName } from '../../../utils/displayUtils';
 
 interface FileListItemProps {
   item: FileSystemItem;
@@ -212,9 +213,14 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
   const handleItemClick = () => {
   };
+
   const getFileIcon = () => {
     return getIconForItem(item);
   };
+
+  const displayName = item.type === 'file' 
+    ? getDisplayName(item.name)
+    : item.name;
 
   return (
     <tr
@@ -272,7 +278,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
               />
             </div>
           ) : null}
-          <span className={`text-gray-700 ${isRenaming ? 'invisible' : 'visible'}`}>{item.name}</span>
+          <span className={`text-gray-700 ${isRenaming ? 'invisible' : 'visible'}`}>{displayName}</span>
         </div>
       </td>
       <td className="px-4 py-1 text-gray-700">

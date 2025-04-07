@@ -126,12 +126,15 @@ export const getInitialRenameName = (item: FileSystemItem): string => {
 };
 
 export const getFinalRenameName = (item: FileSystemItem, newName: string): string => {
+  // Truncate name to 15 characters if it's longer
+  const truncatedName = newName.length > 15 ? newName.substring(0, 15) : newName;
+  
   if (item.extension) {
-    return `${newName}.${item.extension}`;
+    return `${truncatedName}.${item.extension}`;
   } else if (item.name && item.name.includes('.')) {
     const extension = item.name.substring(item.name.lastIndexOf('.') + 1);
-    return `${newName}.${extension}`;
+    return `${truncatedName}.${extension}`;
   }
   
-  return newName;
+  return truncatedName;
 };

@@ -9,7 +9,6 @@ import {
   handleOpenItem
 } from '@/app/utils/desktopUtils';
 import { DesktopIcon } from '../DesktopIcon';
-import { VSCodeIcon } from '../VSCodeIcon';
 
 interface DesktopIconsProps {
   onOpenWindow: (windowId: string) => void;
@@ -40,7 +39,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   // Initialize icon positions with desktop children
   const { 
     iconPositions, 
-    vsCodePosition, 
   } = useIconPositions(desktop?.children || []);
 
   // This useEffect triggers the rename on the last created item
@@ -70,17 +68,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     });
   };
 
-  const handleVsCodeContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      itemId: 'vscode'
-    });
-  };
-
   const handleDesktopContextMenu = (e: React.MouseEvent) => {
     // Only show desktop context menu if we're right-clicking the desktop itself
     if (e.target === e.currentTarget) {
@@ -107,10 +94,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   // Open handlers
   const handleOpen = (itemId: string) => {
     handleOpenItem(itemId, items, onOpenWindow);
-  };
-
-  const handleOpenVsCode = () => {
-    onOpenWindow('vscode-new');
   };
 
   const handleRenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,11 +129,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
     setIsDragging(true);
     e.dataTransfer.setData("text/plain", itemId);
-  };
-
-  const handleVsCodeDragStart = (e: React.DragEvent) => {
-    setIsDragging(true);
-    e.dataTransfer.setData("text/plain", "vscode");
   };
 
   const handleDragEnd = () => {
@@ -191,16 +169,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
           />
         );
       })}
-      
-      {/* VS Code Icon */}
-      <VSCodeIcon
-        position={vsCodePosition}
-        isDragging={isDragging}
-        onDoubleClick={handleOpenVsCode}
-        onContextMenu={handleVsCodeContextMenu}
-        onDragStart={handleVsCodeDragStart}
-        onDragEnd={handleDragEnd}
-      />
     </div>
   );
 };

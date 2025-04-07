@@ -69,7 +69,7 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
     };
     
     // Create the file in the target folder
-    const newFileId = fileSystem.createFile(fileName, targetFolderId, JSON.stringify(appData), 0);
+    fileSystem.createFile(fileName, targetFolderId, JSON.stringify(appData), 0);
     
     // Dispatch event to notify the desktop that an app has been moved
     const event = new CustomEvent(AppMovedEvent, { 
@@ -91,18 +91,14 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
       
       let itemId = textData;
       let source = 'unknown';
-      let isApp = false;
       let isDesktopApp = false;
-      let appType = '';
       
       if (jsonData) {
         try {
           const dragData = JSON.parse(jsonData);
           itemId = dragData.itemId || textData;
           source = dragData.source || 'unknown';
-          isApp = Boolean(dragData.isApp);
           isDesktopApp = Boolean(dragData.isDesktopApp);
-          appType = dragData.appType || '';
         } catch (err) {
           console.error('Error parsing drag data JSON:', err);
         }

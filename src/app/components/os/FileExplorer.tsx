@@ -163,9 +163,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       }
     } else if (isFile(item)) {
       const isAppFile = 
-                       item.extension === 'exe' || 
-                       item.name.toLowerCase().endsWith('.exe');
-                       
+                     item.extension === 'exe' || 
+                     item.name.toLowerCase().endsWith('.exe');
+                     
       if (isAppFile) {
         if (openItem(item, openWindow)) {
           return;
