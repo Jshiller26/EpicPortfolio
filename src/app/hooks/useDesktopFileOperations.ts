@@ -82,7 +82,13 @@ export const useDesktopFileOperations = ({
   };
 
   const handleRenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewName(e.target.value);
+    // Limit input to 15 characters
+    const value = e.target.value;
+    if (value.length <= 15) {
+      setNewName(value);
+    } else {
+      setNewName(value.substring(0, 15));
+    }
   };
 
   const handleRenameComplete = () => {

@@ -51,7 +51,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   const [isVisible] = useState(true);
   const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
   const [isDraggingThis, setIsDraggingThis] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
@@ -67,12 +66,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
-
-  // Check if this item is selected in the file system
-  useEffect(() => {
-    const selectedItems = fileSystem.selectedItems;
-    setIsSelected(selectedItems.includes(itemId));
-  }, [fileSystem.selectedItems, itemId]);
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -246,16 +239,16 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
-  const selectedClass = isSelected ? 'bg-blue-500/30' : '';
+
+  const isAtCharLimit = newName.length >= 15;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute flex flex-col items-center group cursor-pointer w-[76px] h-[88px] p-1 rounded 
-        ${isDropTarget ? 'bg-blue-500/40' : 'hover:bg-white/10'} 
+      className={`absolute flex flex-col items-center group cursor-pointer w-[70px] h-[70px] p-1 rounded 
+        ${isDropTarget ? 'bg-gray-500/40' : 'hover:bg-gray-500/20'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
-        ${selectedClass}
         ${folderClasses} ${dropTargetClasses}`}
       style={{
         transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
@@ -282,16 +275,22 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       </div>
       
       {isRenaming ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={newName}
-          onChange={onRenameChange}
-          onKeyDown={onRenameKeyDown}
-          onBlur={onRenameComplete}
-          className="text-black text-[11px] bg-white px-1 w-full text-center focus:outline-none rounded"
-          autoFocus
-        />
+        <div className="w-full">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newName}
+            onChange={onRenameChange}
+            onKeyDown={onRenameKeyDown}
+            onBlur={onRenameComplete}
+            className={`text-black text-[11px] bg-white px-1 w-full text-center focus:outline-none rounded ${isAtCharLimit ? 'border border-red-500' : ''}`}
+            maxLength={15}
+            autoFocus
+          />
+          <div className="text-[8px] text-white text-center mt-0.5 opacity-70">
+            {newName.length}/15 chars
+          </div>
+        </div>
       ) : (
         <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
           {displayName}
