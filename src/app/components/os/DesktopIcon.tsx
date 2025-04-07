@@ -33,7 +33,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   position,
   isRenaming,
   newName,
-  isNewItem,
   isCut,
   onContextMenu,
   onDragStart,
@@ -49,9 +48,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible] = useState(true);
-  const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const [isDraggingThis, setIsDraggingThis] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
   const positionRef = useRef(position);
@@ -74,25 +71,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     }
   }, [isRenaming]);
 
-  useEffect(() => {
-    if (isNewItem) {
-      setLastPosition(position);
-      return;
-    }
-
-    if (isDraggingThis) {
-      return;
-    }
-
-    // If position changed, update
-    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
-      // Always set last position to ensure we have the latest value
-      setLastPosition(position);
-    }
-  }, [position, lastPosition, isNewItem, isDraggingThis]);
-
   const handleDragStart = (e: React.DragEvent) => {
-    setIsDraggingThis(true);
     
     const dragData = {
       itemId: itemId,
@@ -112,8 +91,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleDragEnd = () => {
-    setIsDraggingThis(false);
-    setLastPosition(positionRef.current);
     
     // Remove dragging class from body
     document.body.classList.remove('dragging');
@@ -130,6 +107,11 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         } catch (e) {
           console.error('Error saving position to localStorage', e);
         }
+      } else {
+        const newPositions = {
+          [itemId]: positionRef.current
+        };
+        localStorage.setItem('desktopIconPositions', JSON.stringify(newPositions));
       }
     }
     
@@ -251,8 +233,9 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         ${isVisible ? 'opacity-100' : 'opacity-0'}
         ${folderClasses} ${dropTargetClasses}`}
       style={{
-        transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
-        transition: isDraggingThis ? 'none' : 'transform 0.05s ease-out'
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        // Completely remove all transitions
+        transition: 'none'
       }}
       draggable="true"
       onContextMenu={(e) => onContextMenu(e, itemId)}
