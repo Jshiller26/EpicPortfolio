@@ -10,6 +10,7 @@ import VideoPlayer from './VideoPlayer';
 import Browser from './browser/Browser';
 import ImageViewer from './ImageViewer';
 import GameBoy from './games/GameBoy';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface WindowContentProps {
   windowId: string;
@@ -22,6 +23,11 @@ const getWindowType = (windowId: string) => {
   if (windowId.startsWith('vscode-')) {
     return 'vscode';
   }
+  
+  if (windowId.startsWith('password-dialog-')) {
+    return 'password-dialog';
+  }
+  
   return parts[0];
 };
 
@@ -33,6 +39,10 @@ const getContentId = (windowId: string) => {
     return 'new';
   }
   
+  if (windowId.startsWith('password-dialog-')) {
+    return windowId.substring('password-dialog-'.length);
+  }
+  
   parts.shift();
   parts.pop();
   
@@ -41,8 +51,15 @@ const getContentId = (windowId: string) => {
 
 export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   const fileSystem = useFileSystemStore();  
+  const windowStore = useWindowStore();
   const windowType = getWindowType(windowId);
   const contentId = getContentId(windowId);
+  
+  const windowData = windowStore.windows[windowId];
+  
+  if (windowData && windowData.content) {
+    return windowData.content;
+  }
   
   // Handle specific window types
   if (windowType === 'explorer') {

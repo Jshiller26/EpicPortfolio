@@ -99,7 +99,8 @@ const initialState: FileSystemState = {
       created: new Date(),
       modified: new Date(),
       parentId: 'desktop',
-      children: ['emc', 'knights', 'idea', 'pandora', 'visit-pa']
+      children: ['emc', 'knights', 'idea', 'pandora', 'visit-pa'],
+      isPasswordProtected: true
     } as Folder,
     
     // Projects subfolders
@@ -643,7 +644,8 @@ const initialState: FileSystemState = {
   clipboard: {
     items: [],
     operation: null
-  }
+  },
+  unlockedFolders: new Set<string>()
 };
 export const initialStateWithPdfNames = addOriginalFileNameToPdfs(initialState);
 

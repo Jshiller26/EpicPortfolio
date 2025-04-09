@@ -393,7 +393,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                       <img 
                         src={getIconForWindow(appType)}
                         alt={appType}
-                        className="w-5 h-5"
+                        className="w-5 h-5 object-contain"
                       />
                     </button>
                     {isOpen && (

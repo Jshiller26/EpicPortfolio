@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import React from 'react';
 
 interface WindowState {
   id: string;
@@ -10,6 +11,26 @@ interface WindowState {
   size: { width: number; height: number };
   zIndex: number;
   baseId: string;
+  content?: React.ReactNode;
+  title?: string;
+  showInTaskbar?: boolean;
+  minimizable?: boolean;
+  maximizable?: boolean;
+  resizable?: boolean;
+}
+
+interface WindowCreateOptions {
+  id: string;
+  title?: string;
+  content?: React.ReactNode;
+  width?: number;
+  height?: number;
+  x?: number;
+  y?: number;
+  resizable?: boolean;
+  minimizable?: boolean;
+  maximizable?: boolean;
+  showInTaskbar?: boolean;
 }
 
 interface WindowStore {
@@ -20,6 +41,7 @@ interface WindowStore {
   
   // Core window management
   openWindow: (id: string) => void;
+  createWindow: (options: WindowCreateOptions) => void;
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   restoreWindow: (id: string) => void;
@@ -49,8 +71,87 @@ export const useWindowStore = create<WindowStore>()(
       highestZIndex: 100,
       instanceCounters: {},
       
+      createWindow: (options) => {
+        const { windows, highestZIndex } = get();
+        const { 
+          id, 
+          title, 
+          content, 
+          width = DEFAULT_WINDOW_SIZE.width, 
+          height = DEFAULT_WINDOW_SIZE.height, 
+          x, 
+          y,
+          resizable = true,
+          minimizable = true,
+          maximizable = true,
+          showInTaskbar = true
+        } = options;
+        
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight - 48;
+        
+        const defaultPosition = {
+          x: x !== undefined ? x : Math.max(0, screenWidth / 2 - width / 2),
+          y: y !== undefined ? y : Math.max(0, screenHeight / 2 - height / 2)
+        };
+        
+        set({
+          windows: {
+            ...windows,
+            [id]: {
+              id,
+              baseId: id.split('-')[0],
+              isOpen: true,
+              isMinimized: false,
+              isMaximized: false,
+              position: defaultPosition,
+              size: { width, height },
+              zIndex: highestZIndex + 1,
+              content,
+              title,
+              showInTaskbar,
+              minimizable,
+              maximizable,
+              resizable
+            }
+          },
+          activeWindowId: id,
+          highestZIndex: highestZIndex + 1
+        });
+      },
+      
       openWindow: (baseId) => {
         const { windows, highestZIndex, instanceCounters } = get();
+        
+        if (windows[baseId]) {
+          if (windows[baseId].isMinimized) {
+            set({
+              windows: {
+                ...windows,
+                [baseId]: {
+                  ...windows[baseId],
+                  isMinimized: false,
+                  zIndex: highestZIndex + 1
+                }
+              },
+              activeWindowId: baseId,
+              highestZIndex: highestZIndex + 1
+            });
+          } else {
+            set({
+              windows: {
+                ...windows,
+                [baseId]: {
+                  ...windows[baseId],
+                  zIndex: highestZIndex + 1
+                }
+              },
+              activeWindowId: baseId,
+              highestZIndex: highestZIndex + 1
+            });
+          }
+          return baseId;
+        }
         
         if (baseId.startsWith('gameboy')) {
           const existingGameBoyWindow = Object.values(windows).find(
@@ -126,7 +227,11 @@ export const useWindowStore = create<WindowStore>()(
               isMaximized: false,
               position: defaultPosition,
               size: DEFAULT_WINDOW_SIZE,
-              zIndex: highestZIndex + 1
+              zIndex: highestZIndex + 1,
+              showInTaskbar: true,
+              minimizable: true,
+              maximizable: true,
+              resizable: true
             }
           },
           activeWindowId: uniqueId,
@@ -297,7 +402,12 @@ export const useWindowStore = create<WindowStore>()(
     {
       name: 'window-store',
       partialize: (state) => ({ 
-        windows: state.windows,
+        windows: Object.entries(state.windows).reduce((acc, [key, value]) => {
+          if (value.content) {
+            return acc;
+          }
+          return { ...acc, [key]: value };
+        }, {}),
         instanceCounters: state.instanceCounters
       }),
     }

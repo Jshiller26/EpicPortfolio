@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { FileSystemItem } from '@/app/types/fileSystem';
+import { FileSystemItem} from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
@@ -266,11 +266,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
           className="w-8 h-8 pointer-events-none"
           draggable="false"
         />
-        {isProtected && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-gray-800" 
-               title="Protected system item">
-          </div>
-        )}
       </div>
       
       {isRenaming ? (
@@ -291,7 +286,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
           </div>
         </div>
       ) : (
-        <div className={`text-[11px] ${isProtected ? 'text-yellow-200' : 'text-white'} text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]`}>
+        <div className={`text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]`}>
           {displayName}
         </div>
       )}

@@ -1,6 +1,7 @@
-import { FileSystemItem, File } from '@/app/types/fileSystem';
+import { FileSystemItem, File, Folder } from '@/app/types/fileSystem';
 import { getAppInfo } from '@/app/config/appConfig';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 export const isExeFile = (item: FileSystemItem): boolean => {
   if (item.extension === 'exe' || item.name.toLowerCase().endsWith('.exe')) {
@@ -18,6 +19,13 @@ export const openItem = (
   item: FileSystemItem, 
   onOpenWindow?: (windowId: string) => void
 ): boolean => {
+  if (item.type === 'folder' && (item as Folder).isPasswordProtected) {
+    const fileSystem = useFileSystemStore.getState();
+    if (!fileSystem.isUnlocked(item.id)) {
+      return false;
+    }
+  }
+  
   if (isExeFile(item)) {
     const appInfo = getAppInfo(item);
     

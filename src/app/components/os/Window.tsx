@@ -9,9 +9,38 @@ import { getIconForWindow, getWindowTitle } from '@/app/utils/iconUtils';
 
 interface WindowProps {
   id: string;
+  title?: string;
+  width?: number;
+  height?: number;
+  x?: number;
+  y?: number;
+  onClose?: () => void;
+  hideMinimize?: boolean;
+  hideMaximize?: boolean;
+  resizable?: boolean;
+  alwaysOnTop?: boolean;
+  initialState?: {
+    isMaximized?: boolean;
+    isMinimized?: boolean;
+  };
+  children?: React.ReactNode;
 }
 
-export const Window: React.FC<WindowProps> = ({ id }) => {
+export const Window: React.FC<WindowProps> = ({ 
+  id, 
+  title,
+  width,
+  height,
+  x,
+  y,
+  onClose,
+  hideMinimize = false,
+  hideMaximize = false,
+  resizable = true,
+  alwaysOnTop = false,
+  initialState,
+  children
+}) => {
   const rndRef = useRef<Rnd>(null);
   const fileSystem = useFileSystemStore();
   
@@ -25,6 +54,28 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   const maximizeWindow = useWindowStore(state => state.maximizeWindow);
   const unmaximizeWindow = useWindowStore(state => state.unmaximizeWindow);
   const closeWindow = useWindowStore(state => state.closeWindow);
+  
+  useEffect(() => {
+    if (!windowState && (width || height || x || y || title || initialState)) {
+      const initialOptions: any = {
+        id,
+        width: width || 800,
+        height: height || 600,
+        x,
+        y
+      };
+      
+      if (title) initialOptions.title = title;
+      if (children) initialOptions.content = children;
+      if (initialState?.isMaximized) initialOptions.isMaximized = true;
+      if (initialState?.isMinimized) initialOptions.isMinimized = true;
+      if (hideMinimize) initialOptions.minimizable = false;
+      if (hideMaximize) initialOptions.maximizable = false;
+      if (!resizable) initialOptions.resizable = false;
+      
+      useWindowStore.getState().createWindow(initialOptions);
+    }
+  }, [id, width, height, x, y, title, initialState, children, windowState, hideMinimize, hideMaximize, resizable]);
   
   // cleanup for GBA emulator
   useEffect(() => {
@@ -67,18 +118,22 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   };
   
   const handleClose = () => {
-    if (id.startsWith('gameboy-')) {
-      document.querySelectorAll('audio').forEach(audio => {
-        audio.pause();
-        audio.srcObject = null;
-      });
-      
-      if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
-        window.EJS_terminate();
+    if (onClose) {
+      onClose();
+    } else {
+      if (id.startsWith('gameboy-')) {
+        document.querySelectorAll('audio').forEach(audio => {
+          audio.pause();
+          audio.srcObject = null;
+        });
+        
+        if (window.EJS_terminate && typeof window.EJS_terminate === 'function') {
+          window.EJS_terminate();
+        }
       }
+      
+      closeWindow(id);
     }
-    
-    closeWindow(id);
   };
   
   const isEditorWindow = id.startsWith('editor-') || id.startsWith('vscode-');
@@ -89,6 +144,8 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
   };
   const maximizedPosition = { x: 0, y: 0 };
   
+  const effectiveZIndex = alwaysOnTop ? 9999 : zIndex;
+  
   return (
     <Rnd
       ref={rndRef}
@@ -96,7 +153,7 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       size={isMaximized ? maximizedSize : size}
       minWidth={400}
       minHeight={300}
-      style={{ zIndex }}
+      style={{ zIndex: effectiveZIndex }}
       onDragStop={(e, d) => {
         if (!isMaximized) {
           updateWindowPosition(id, { x: d.x, y: d.y });
@@ -113,7 +170,7 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       }}
       onMouseDown={() => setActiveWindow(id)}
       disableDragging={isMaximized}
-      enableResizing={!isMaximized}
+      enableResizing={!isMaximized && resizable}
       // prevent window dragging when interacting with file items
       cancel=".draggable-item"
       bounds="window"
@@ -151,22 +208,26 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
               unoptimized={true}
             />
             <span className={`text-sm ${isEditorWindow ? 'text-gray-300' : 'text-gray-700'}`}>
-              {getWindowTitle(id, fileSystem.items, fileSystem.currentPath)}
+              {windowState.title || getWindowTitle(id, fileSystem.items, fileSystem.currentPath)}
             </span>
           </div>
           <div className="flex h-full">
-            <button 
-              className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
-              onClick={handleMinimize}
-            >
-              <Minus size={16} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
-            </button>
-            <button 
-              className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
-              onClick={handleMaximize}
-            >
-              <Square size={14} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
-            </button>
+            {!hideMinimize && (
+              <button 
+                className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
+                onClick={handleMinimize}
+              >
+                <Minus size={16} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
+              </button>
+            )}
+            {!hideMaximize && (
+              <button 
+                className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
+                onClick={handleMaximize}
+              >
+                <Square size={14} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
+              </button>
+            )}
             <button 
               className="px-4 hover:bg-red-500 flex items-center justify-center h-full group"
               onClick={handleClose}
@@ -178,7 +239,7 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
 
         {/* Window Content */}
         <div className="flex-1 overflow-hidden">
-          <WindowContent windowId={id} />
+          {children || <WindowContent windowId={id} />}
         </div>
       </div>
     </Rnd>
