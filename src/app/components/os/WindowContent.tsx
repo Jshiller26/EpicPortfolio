@@ -10,6 +10,7 @@ import VideoPlayer from './VideoPlayer';
 import Browser from './browser/Browser';
 import ImageViewer from './ImageViewer';
 import GameBoy from './games/GameBoy';
+import Paint from './paint/Paint';
 
 interface WindowContentProps {
   windowId: string;
@@ -83,6 +84,8 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   } else if (windowType === 'gameboy') {
     const gameName = contentId || 'PokemonEmerald';
     return <GameBoy game={gameName} />;
+  } else if (windowType === 'paint') {
+    return <Paint />;
   }
   
   // Default content for unknown window types
