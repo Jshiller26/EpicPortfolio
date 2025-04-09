@@ -11,6 +11,7 @@ import Browser from './browser/Browser';
 import ImageViewer from './ImageViewer';
 import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
+import { PasswordDialog } from './PasswordDialog';
 
 interface WindowContentProps {
   windowId: string;
@@ -40,7 +41,7 @@ const getContentId = (windowId: string) => {
   }
   
   if (windowId.startsWith('password-dialog-')) {
-    return windowId.substring('password-dialog-'.length);
+    return windowId.split('-')[2];
   }
   
   parts.shift();
@@ -100,6 +101,32 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   } else if (windowType === 'gameboy') {
     const gameName = contentId || 'PokemonEmerald';
     return <GameBoy game={gameName} />;
+  } else if (windowType === 'password-dialog') {
+    const folderId = contentId;
+    const folder = fileSystem.items[folderId];
+    
+    const handleClose = () => {
+      windowStore.closeWindow(windowId);
+    };
+    
+    const handleSuccess = () => {
+      fileSystem.unlockItem(folderId);
+      
+      windowStore.closeWindow(windowId);
+      
+      setTimeout(() => {
+        windowStore.openWindow(`explorer-${folderId}`);
+      }, 100);
+    };
+    
+    return (
+      <PasswordDialog
+        folderId={folderId}
+        folderName={folder?.name || 'Protected Folder'}
+        onClose={handleClose}
+        onSuccess={handleSuccess}
+      />
+    );
   }
   
   // Default content for unknown window types

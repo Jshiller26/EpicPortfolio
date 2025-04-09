@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { verifyPassword } from '@/app/utils/passwordUtils';
 
 interface PasswordDialogProps {
   folderId: string;
@@ -31,14 +32,7 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const hashPassword = (pwd: string): string => {
-      return btoa(pwd.split('').reverse().join(''));
-    };
-    
-    const correctPasswordHash = hashPassword('Rayquaza');
-    const enteredPasswordHash = hashPassword(password);
-    
-    if (enteredPasswordHash === correctPasswordHash) {
+    if (verifyPassword(password)) {
       onSuccess();
     } else {
       setError(true);

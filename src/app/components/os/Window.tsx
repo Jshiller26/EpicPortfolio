@@ -57,10 +57,18 @@ export const Window: React.FC<WindowProps> = ({
   
   useEffect(() => {
     if (!windowState && (width || height || x || y || title || initialState)) {
+      let initialWidth = width || 800;
+      let initialHeight = height || 600;
+      
+      if (id.startsWith('password-dialog-')) {
+        initialWidth = 400;
+        initialHeight = 300;
+      }
+      
       const initialOptions: any = {
         id,
-        width: width || 800,
-        height: height || 600,
+        width: initialWidth,
+        height: initialHeight,
         x,
         y
       };
@@ -137,6 +145,7 @@ export const Window: React.FC<WindowProps> = ({
   };
   
   const isEditorWindow = id.startsWith('editor-') || id.startsWith('vscode-');
+  const isPasswordDialog = id.startsWith('password-dialog-');
   
   const maximizedSize = {
     width: window.innerWidth,
@@ -146,13 +155,16 @@ export const Window: React.FC<WindowProps> = ({
   
   const effectiveZIndex = alwaysOnTop ? 9999 : zIndex;
   
+  const minWidth = isPasswordDialog ? 400 : 400;
+  const minHeight = isPasswordDialog ? 300 : 300;
+  
   return (
     <Rnd
       ref={rndRef}
       position={isMaximized ? maximizedPosition : position}
       size={isMaximized ? maximizedSize : size}
-      minWidth={400}
-      minHeight={300}
+      minWidth={minWidth}
+      minHeight={minHeight}
       style={{ zIndex: effectiveZIndex }}
       onDragStop={(e, d) => {
         if (!isMaximized) {
@@ -220,7 +232,7 @@ export const Window: React.FC<WindowProps> = ({
                 <Minus size={16} className={isEditorWindow ? 'text-gray-300' : 'text-gray-600'} />
               </button>
             )}
-            {!hideMaximize && (
+            {!hideMaximize && !isPasswordDialog && (
               <button 
                 className={`px-4 ${isEditorWindow ? 'hover:bg-[#444444]' : 'hover:bg-gray-100'} flex items-center justify-center h-full`}
                 onClick={handleMaximize}

@@ -5,6 +5,7 @@ import { FileSystemItem, Folder, File } from '../../types/fileSystem';
 import NavigationBar from './fileExplorer/NavigationBar';
 import FileList from './fileExplorer/FileList';
 import { openItem } from '../../utils/appUtils';
+import { PasswordDialog } from './PasswordDialog';
 
 interface FileExplorerProps {
   initialPath?: string;
@@ -158,6 +159,43 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   const handleItemDoubleClick = (item: FileSystemItem) => {
     if (isFolder(item)) {
+      if (item.isPasswordProtected) {
+        const passwordWindowId = `password-dialog-${item.id}`;
+        
+        if (windowStore.windows[passwordWindowId]) {
+          windowStore.setActiveWindow(passwordWindowId);
+          return;
+        }
+        
+        windowStore.createWindow({
+          id: passwordWindowId,
+          title: 'Enter password',
+          content: (
+            <PasswordDialog
+              folderId={item.id}
+              folderName={item.name}
+              onClose={() => windowStore.closeWindow(passwordWindowId)}
+              onSuccess={() => {
+                fileSystem.unlockFolder(item.id);
+                windowStore.closeWindow(passwordWindowId);
+                if (item.path) {
+                  navigateToPath(item.path);
+                }
+              }}
+            />
+          ),
+          width: 400,
+          height: 320,
+          x: Math.max(0, (window.innerWidth - 400) / 2),
+          y: Math.max(0, (window.innerHeight - 320) / 2),
+          resizable: false,
+          minimizable: false,
+          maximizable: false,
+          showInTaskbar: true,
+        });
+        return;
+      }
+      
       if (item.path) {
         navigateToPath(item.path);
       }
