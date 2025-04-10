@@ -457,11 +457,11 @@ const initialState: FileSystemState = {
       name: 'VisitPAVid.mp4',
       type: 'file',
       extension: 'mp4',
-      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\VisitPAVid.mp4',
+      path: 'C:\\Desktop\\My Projects\\Visit P.A.\\VisitPAVidCompressed.mp4',
       created: new Date(),
       modified: new Date(),
       parentId: 'visit-pa',
-      content: '/videos/projects/Visit PA/VisitPAVid.mp4',
+      content: '/videos/projects/Visit PA/VisitPAVidCompressed.mp4',
       size: 26800
     } as File,
     
