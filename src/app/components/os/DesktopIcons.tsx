@@ -67,6 +67,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       const gameBoyId = Object.values(items).find(
         item => item.name === 'GameBoy.exe' && item.parentId === 'desktop'
       )?.id;
+      
+      const paintId = Object.values(items).find(
+        item => item.name === 'Paint.exe' && item.parentId === 'desktop'
+      )?.id;
 
       const updatedPositions: Record<string, { x: number, y: number }> = {};
       
@@ -86,6 +90,10 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         updatedPositions[gameBoyId] = { x: 0, y: GRID_SIZE * 3 };
       }
       
+      if (paintId) {
+        updatedPositions[paintId] = { x: 0, y: GRID_SIZE * 4 };
+      }
+      
       if (Object.keys(updatedPositions).length > 0) {
         setIconPositions(prev => ({
           ...prev,
@@ -99,7 +107,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (!desktop) return;
     
     const exeFiles = createAppItems();
-    const requiredExeFiles = ['vscode', 'gameboy'];
+    const requiredExeFiles = ['vscode', 'gameboy', 'paint'];
 
     const existingExeIds = new Set<string>();
     

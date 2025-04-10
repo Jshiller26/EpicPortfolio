@@ -12,6 +12,7 @@ import ImageViewer from './ImageViewer';
 import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
+import Paint from './paint/Paint';
 
 interface WindowContentProps {
   windowId: string;
@@ -127,6 +128,8 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
         onSuccess={handleSuccess}
       />
     );
+  } else if (windowType === 'paint') {
+    return <Paint />;
   }
   
   // Default content for unknown window types

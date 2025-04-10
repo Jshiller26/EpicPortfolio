@@ -47,6 +47,14 @@ export const APPS: Record<string, AppConfig> = {
     windowTitle: 'GameBoy Emulator',
     windowComponent: 'GameBoy',
     description: 'GameBoy emulator for retro games'
+  },
+  paint: {
+    id: 'paint',
+    name: 'Paint',
+    iconPath: '/images/desktop/paintIcon.png',
+    windowTitle: 'Paint',
+    windowComponent: 'Paint',
+    description: 'Simple drawing application'
   }
 };
 
