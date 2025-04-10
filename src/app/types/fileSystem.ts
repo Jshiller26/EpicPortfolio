@@ -19,12 +19,17 @@ export interface FileSystemItem {
   iconPath?: string;
   windowTitle?: string;
   windowComponent?: string;
+  
+  isPasswordProtected?: boolean;
+  password?: string;
 }
 
 // Interface for folder items
 export interface Folder extends FileSystemItem {
   type: 'folder';
-  children: string[]; // Array of child item IDs
+  children: string[];
+  isPasswordProtected?: boolean;
+  password?: string;
 }
 
 // Interface for file items
@@ -51,4 +56,5 @@ export type FileSystemState = {
     items: string[];
     operation: 'copy' | 'cut' | null;
   };
+  unlockedFolders?: Set<string>;
 };

@@ -73,7 +73,7 @@ export const createAppItems = (): Record<string, File> => {
 export const getAppInfo = (file: FileSystemItem): AppConfig | null => {
   if (file.type === 'file' && (file.extension === 'exe' || file.name.endsWith('.exe'))) {
     try {
-      if ('content' in file) {
+      if ('content' in file && typeof file.content === 'string') {
         const content = JSON.parse(file.content);
         if (content.appId && APPS[content.appId]) {
           return APPS[content.appId];

@@ -120,6 +120,44 @@ body.dragging * {
   cursor: pointer !important;
 }
 
+.system-item-protected {
+  pointer-events: auto !important;
+}
+
+.system-item-protected:hover::after {
+  content: "Protected system folder";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.protected-menu {
+  border-color: #ffd700 !important;
+  border-width: 2px !important;
+}
+
+.protected-menu button[disabled] {
+  background-color: #f0f0f0 !important;
+  position: relative;
+}
+
+.protected-menu button[disabled]::before {
+  content: "🔒";
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);

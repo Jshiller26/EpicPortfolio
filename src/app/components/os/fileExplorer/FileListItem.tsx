@@ -8,6 +8,7 @@ import { getAppInfo } from '../../../config/appConfig';
 import { openItem } from '../../../utils/appUtils';
 import { useWindowStore } from '../../../stores/windowStore';
 import { getDisplayName } from '../../../utils/displayUtils';
+import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 
 interface FileListItemProps {
   item: FileSystemItem;
@@ -28,6 +29,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const isProtected = isProtectedItem(item.id);
   
   type RenameItemEvent = CustomEvent<{ itemId: string }>;
 
@@ -35,7 +37,9 @@ const FileListItem: React.FC<FileListItemProps> = ({
   useEffect(() => {
     const handleRename = (e: RenameItemEvent) => {
       if (e.detail && e.detail.itemId === item.id) {
-        startRenaming();
+        if (!isProtected) {
+          startRenaming();
+        }
       }
     };
     
@@ -44,7 +48,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
     return () => {
       window.removeEventListener('renameItem', handleRename as EventListener);
     };
-  }, [item.id]);
+  }, [item.id, isProtected]);
   
   // Focus input when renaming starts
   useEffect(() => {
@@ -62,6 +66,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
   }, [isRenaming, item]);
   
   const startRenaming = () => {
+    if (isProtected) return;
     setIsRenaming(true);
     setNewName(item.name);
   };
@@ -93,7 +98,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
   
   // Handle drag start for file explorer items
   const handleDragStart = (e: React.DragEvent) => {
-    if (isRenaming) {
+    if (isRenaming || isProtected) {
       e.preventDefault();
       return;
     }
@@ -224,7 +229,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
   return (
     <tr
-      className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''}`}
+      className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''} ${isProtected ? 'bg-yellow-50' : ''}`}
       onDoubleClick={() => {
         if (isRenaming) return;
         
@@ -240,7 +245,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
         }
       }}
       onContextMenu={(e) => !isRenaming && onContextMenu(e, item)}
-      draggable={!isRenaming}
+      draggable={!isRenaming && !isProtected}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -278,7 +283,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
               />
             </div>
           ) : null}
-          <span className={`text-gray-700 ${isRenaming ? 'invisible' : 'visible'}`}>{displayName}</span>
+          <span className={`${isProtected ? 'text-yellow-700 font-medium' : 'text-gray-700'} ${isRenaming ? 'invisible' : 'visible'}`}>{displayName}</span>
         </div>
       </td>
       <td className="px-4 py-1 text-gray-700">

@@ -1,5 +1,6 @@
 import { FileSystemState, Folder, File, AppItem } from '../../../types/fileSystem';
 import { generateUniqueFilename } from '../utils/pathUtils';
+import { isProtectedItem } from '../utils/protectionUtils';
 
 export const updatePaths = (
   id: string, 
@@ -41,6 +42,12 @@ export const moveItem = (
   targetFolderId: string,
   onMoveComplete?: (movedId: string) => void,
 ): FileSystemState => {
+  if (isProtectedItem(itemId)) {
+    console.warn(`Cannot move protected item: ${itemId}`);
+    if (onMoveComplete) onMoveComplete(itemId);
+    return state;
+  }
+  
   const newItems = { ...state.items };
   const item = newItems[itemId];
   const targetFolder = newItems[targetFolderId];

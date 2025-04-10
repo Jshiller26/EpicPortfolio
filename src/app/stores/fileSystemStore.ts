@@ -46,8 +46,13 @@ export const useFileSystemStore = create<FileSystemState & {
   
   // Rename operation
   renameItem: (itemId: string, newName: string) => void;
+  
+  unlockFolder: (folderId: string) => void;
+  lockFolder: (folderId: string) => void;
+  isUnlocked: (folderId: string) => boolean;
 }>((set, get) => ({
   ...initialState,
+  unlockedFolders: new Set<string>(),
 
   // Navigation operations
   setCurrentPath: (path) => set(state => setCurrentPath(state, path)),
@@ -122,5 +127,22 @@ export const useFileSystemStore = create<FileSystemState & {
   ),
   
   // Rename operation
-  renameItem: (itemId, newName) => set(state => renameItem(state, itemId, newName))
+  renameItem: (itemId, newName) => set(state => renameItem(state, itemId, newName)),
+  
+  unlockFolder: (folderId) => set(state => {
+    const unlockedFolders = new Set(state.unlockedFolders || []);
+    unlockedFolders.add(folderId);
+    return { ...state, unlockedFolders };
+  }),
+  
+  lockFolder: (folderId) => set(state => {
+    const unlockedFolders = new Set(state.unlockedFolders || []);
+    unlockedFolders.delete(folderId);
+    return { ...state, unlockedFolders };
+  }),
+  
+  isUnlocked: (folderId) => {
+    const state = get();
+    return state.unlockedFolders?.has(folderId) || false;
+  }
 }));

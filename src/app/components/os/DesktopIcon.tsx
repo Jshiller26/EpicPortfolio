@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { FileSystemItem } from '@/app/types/fileSystem';
+import { FileSystemItem} from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
 import { IconPosition } from '@/app/hooks/useIconPositions';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { getDisplayName } from '@/app/utils/displayUtils';
+import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 
 interface DesktopIconProps {
   item: FileSystemItem;
@@ -33,7 +34,6 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   position,
   isRenaming,
   newName,
-  isNewItem,
   isCut,
   onContextMenu,
   onDragStart,
@@ -49,12 +49,11 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isVisible] = useState(true);
-  const [lastPosition, setLastPosition] = useState(position);
   const [isDropTarget, setIsDropTarget] = useState(false);
-  const [isDraggingThis, setIsDraggingThis] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
   const positionRef = useRef(position);
+  const isProtected = isProtectedItem(itemId);
 
   // Get icon for this item - use custom icon source or auto-detect
   const iconSource = iconSrc || getIconForItem(item);
@@ -74,25 +73,13 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
     }
   }, [isRenaming]);
 
-  useEffect(() => {
-    if (isNewItem) {
-      setLastPosition(position);
-      return;
-    }
-
-    if (isDraggingThis) {
-      return;
-    }
-
-    // If position changed, update
-    if (position.x !== lastPosition.x || position.y !== lastPosition.y) {
-      // Always set last position to ensure we have the latest value
-      setLastPosition(position);
-    }
-  }, [position, lastPosition, isNewItem, isDraggingThis]);
-
   const handleDragStart = (e: React.DragEvent) => {
-    setIsDraggingThis(true);
+    // Prevent dragging protected items
+    if (isProtected) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     
     const dragData = {
       itemId: itemId,
@@ -112,8 +99,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   };
 
   const handleDragEnd = () => {
-    setIsDraggingThis(false);
-    setLastPosition(positionRef.current);
+    if (isProtected) return;
     
     // Remove dragging class from body
     document.body.classList.remove('dragging');
@@ -130,6 +116,11 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
         } catch (e) {
           console.error('Error saving position to localStorage', e);
         }
+      } else {
+        const newPositions = {
+          [itemId]: positionRef.current
+        };
+        localStorage.setItem('desktopIconPositions', JSON.stringify(newPositions));
       }
     }
     
@@ -239,22 +230,25 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
   // Determine classnames based on folder type and drop state
   const folderClasses = item.type === 'folder' ? 'folder-item' : '';
   const dropTargetClasses = isDropTarget && item.type === 'folder' ? 'folder-drop-target' : '';
+  const protectedClasses = isProtected ? 'cursor-default' : 'cursor-pointer';
 
   const isAtCharLimit = newName.length >= 15;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute flex flex-col items-center group cursor-pointer w-[70px] h-[70px] p-1 rounded 
+      className={`absolute flex flex-col items-center group ${protectedClasses} w-[70px] h-[70px] p-1 rounded 
         ${isDropTarget ? 'bg-gray-500/40' : 'hover:bg-gray-500/20'} 
         ${isCut ? 'opacity-50' : ''}
         ${isVisible ? 'opacity-100' : 'opacity-0'}
-        ${folderClasses} ${dropTargetClasses}`}
+        ${folderClasses} ${dropTargetClasses}
+        ${isProtected ? 'system-item-protected' : ''}`}
       style={{
-        transform: `translate(${lastPosition.x}px, ${lastPosition.y}px)`,
-        transition: isDraggingThis ? 'none' : 'transform 0.05s ease-out'
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        // Completely remove all transitions
+        transition: 'none'
       }}
-      draggable="true"
+      draggable={!isProtected}
       onContextMenu={(e) => onContextMenu(e, itemId)}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -265,7 +259,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
       onDoubleClick={onDoubleClick}
       onClick={handleClick}
     >
-      <div className="w-8 h-8 flex items-center justify-center mb-1">
+      <div className="w-8 h-8 flex items-center justify-center mb-1 relative">
         <img
           src={iconSource}
           alt={item.name}
@@ -292,7 +286,7 @@ export const DesktopIcon: React.FC<DesktopIconProps> = ({
           </div>
         </div>
       ) : (
-        <div className="text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]">
+        <div className={`text-[11px] text-white text-center w-full break-words px-1 leading-tight [text-shadow:_0.5px_0.5px_1px_rgba(0,0,0,0.6),_-0.5px_-0.5px_1px_rgba(0,0,0,0.6),_0.5px_-0.5px_1px_rgba(0,0,0,0.6),_-0.5px_0.5px_1px_rgba(0,0,0,0.6)]`}>
           {displayName}
         </div>
       )}

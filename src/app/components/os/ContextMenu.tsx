@@ -75,10 +75,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
     e.stopPropagation();
   };
 
+  const hasProtectedItems = items.some(item => 
+    !('divider' in item) && !('submenu' in item) && item.disabled
+  );
+
   return (
     <div 
       ref={contextMenuRef}
-      className="context-menu fixed z-50 w-48 bg-white shadow-md rounded-none border border-gray-300"
+      className={`context-menu fixed z-50 w-48 shadow-md rounded-none border border-gray-300 ${hasProtectedItems ? 'protected-menu bg-gray-50' : 'bg-white'}`}
       style={{ 
         left: menuX,
         top: menuY,
@@ -86,6 +90,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       }}
       onContextMenu={preventDefault}
     >
+      {hasProtectedItems && (
+        <div className="bg-yellow-100 px-2 py-1 text-xs text-gray-600 border-b border-gray-300">
+          System Folder - Some options unavailable
+        </div>
+      )}
+      
       {items.map((item, index) => (
         <React.Fragment key={index}>
           {/* Check if this is a divider item */}
@@ -151,9 +161,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
           ) : (
             // Regular menu item
             <button
-              className={`w-full px-3 py-[6px] text-left flex items-center space-x-2
+              className={`w-full px-3 py-[6px] text-left flex items-center justify-between
                 ${item.disabled 
-                  ? 'text-gray-400 cursor-default' 
+                  ? 'text-gray-400 cursor-not-allowed bg-gray-100' 
                   : 'text-gray-900 hover:bg-[#f2f2f2]'}`}
               style={{
                 fontSize: '12px',
@@ -172,6 +182,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
               disabled={item.disabled}
             >
               <span>{item.label}</span>
+              {item.disabled && (
+                <span className="text-xs text-red-400 ml-1">(protected)</span>
+              )}
             </button>
           )}
         </React.Fragment>

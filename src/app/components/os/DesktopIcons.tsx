@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef} from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Folder, FileSystemItem} from '@/app/types/fileSystem';
 import useIconPositions from '@/app/hooks/useIconPositions';
@@ -15,6 +15,8 @@ import { useDesktopCreation } from '@/app/utils/desktopCreationUtils';
 // Import components
 import { DesktopIcon } from './DesktopIcon';
 import { DesktopContextMenuHandler } from './DesktopContextMenuHandler';
+import { PasswordDialog } from './PasswordDialog';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface DesktopIconsProps {
   onOpenWindow: (windowId: string) => void;
@@ -31,6 +33,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const deleteItem = fileSystem.deleteItem;
   const renameItem = fileSystem.renameItem;
   const moveItem = fileSystem.moveItem;
+  const windowStore = useWindowStore();
   
   // Track any file system changes
   const desktopChildrenRef = useRef<string[]>([]);
@@ -138,10 +141,57 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     });
   }, [desktop, items, createFile]);
 
+  const handlePasswordProtectedItem = (itemId: string) => {
+    const item = items[itemId];
+    if (!item) return;
+    
+    if (fileSystem.isUnlocked(itemId)) {
+      openItem(item, onOpenWindow);
+      return;
+    }
+    
+    const passwordWindowId = `password-dialog-${itemId}`;
+    
+    if (windowStore.windows[passwordWindowId]) {
+      windowStore.setActiveWindow(passwordWindowId);
+      return;
+    }
+    
+    windowStore.createWindow({
+      id: passwordWindowId,
+      title: 'Enter password',
+      content: (
+        <PasswordDialog
+          folderId={itemId}
+          folderName={item.name}
+          onClose={() => windowStore.closeWindow(passwordWindowId)}
+          onSuccess={() => {
+            fileSystem.unlockFolder(itemId);
+            windowStore.closeWindow(passwordWindowId);
+            openItem(item, onOpenWindow);
+          }}
+        />
+      ),
+      width: 400,
+      height: 320,
+      x: Math.max(0, (window.innerWidth - 400) / 2),
+      y: Math.max(0, (window.innerHeight - 320) / 2),
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      showInTaskbar: true,
+    });
+  };
+
   // Define handleOpenItem function for the file operations hook
   const handleOpenItem = (itemId: string, items: Record<string, FileSystemItem>, openWindow: (windowId: string) => void) => {
     const item = items[itemId];
     if (!item) return;
+    
+    if (item.type === 'folder' && (item as Folder).isPasswordProtected) {
+      handlePasswordProtectedItem(itemId);
+      return;
+    }
     
     openItem(item, openWindow);
   };

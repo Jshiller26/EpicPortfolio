@@ -1,6 +1,7 @@
 import { FileSystemItem, Folder, File } from '@/app/types/fileSystem';
 import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
 import { openItem } from '@/app/utils/appUtils';
+import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 
 // Create a new folder with a unique name
 export const createUniqueFolder = (
@@ -181,6 +182,46 @@ export const getItemContextMenu = (
   handleRename: (itemId: string) => void,
   handleProperties: (itemId: string) => void
 ): ContextMenuItem[] => {
+  const isProtected = isProtectedItem(itemId);
+  
+  if (isProtected) {
+    return [
+      {
+        label: 'Open',
+        onClick: () => handleOpen(itemId)
+      },
+      { divider: true },
+      {
+        label: 'Cut',
+        disabled: true,
+        onClick: () => {} 
+      },
+      {
+        label: 'Copy',
+        disabled: true,
+        onClick: () => {}
+      },
+      { divider: true },
+      {
+        label: 'Delete',
+        disabled: true,
+        onClick: () => {}
+      },
+      { divider: true },
+      {
+        label: 'Rename',
+        disabled: true,
+        onClick: () => {}
+      },
+      { divider: true },
+      {
+        label: 'Properties',
+        onClick: () => handleProperties(itemId)
+      }
+    ];
+  }
+
+  // Regular context menu for other items
   return [
     {
       label: 'Open',

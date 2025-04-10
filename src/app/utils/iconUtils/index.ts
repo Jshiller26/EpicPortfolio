@@ -1,6 +1,7 @@
 import { FileSystemItem, File} from '@/app/types/fileSystem';
 import { APPS, getAppInfo } from '@/app/config/appConfig';
 import { isExeFile } from '@/app/utils/appUtils';
+import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
 // Helper to get the base window type from a window ID
 export const getWindowType = (windowId: string) => {
@@ -15,6 +16,10 @@ export const getContentId = (windowId: string) => {
   
   if (windowId.startsWith('vscode-')) {
     return 'new';
+  }
+  
+  if (windowId.startsWith('password-dialog-')) {
+    return windowId.substring('password-dialog-'.length);
   }
   
   parts.shift();
@@ -34,6 +39,9 @@ export const getIconForItem = (item: FileSystemItem): string => {
   
   // Handle folders
   if (item.type === 'folder') {
+    if (item.isPasswordProtected) {
+      return '/images/desktop/lockedFolder.png';
+    }
     return '/images/desktop/icons8-folder.svg';
   }
   
@@ -90,6 +98,18 @@ export const getIconForItem = (item: FileSystemItem): string => {
 
 // Get the icon path for a window by its ID
 export const getIconForWindow = (windowId: string): string => {
+  if (windowId.startsWith('password-dialog-')) {
+    return '/images/lock.png';
+  }
+  
+  if (windowId.startsWith('explorer-')) {
+    const folderId = windowId.substring('explorer-'.length);
+    const folder = useFileSystemStore?.getState()?.items?.[folderId];
+    if (folder?.isPasswordProtected) {
+      return '/images/lock.png';
+    }
+  }
+  
   const windowType = getWindowType(windowId);
   
   const app = APPS[windowType];
@@ -178,6 +198,10 @@ export const getAppIdFromFile = (item: FileSystemItem): string | null => {
 
 // Get the window title based on its ID and file system data
 export const getWindowTitle = (windowId: string, items: Record<string, FileSystemItem>, currentPath: string): string => {
+  if (windowId.startsWith('password-dialog-')) {
+    return 'Enter password';
+  }
+  
   const windowType = getWindowType(windowId);
   const contentId = getContentId(windowId);
   
