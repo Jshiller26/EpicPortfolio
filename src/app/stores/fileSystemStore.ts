@@ -48,6 +48,7 @@ export const useFileSystemStore = create<FileSystemState & {
   renameItem: (itemId: string, newName: string) => void;
   
   unlockFolder: (folderId: string) => void;
+  lockFolder: (folderId: string) => void;
   isUnlocked: (folderId: string) => boolean;
 }>((set, get) => ({
   ...initialState,
@@ -131,6 +132,12 @@ export const useFileSystemStore = create<FileSystemState & {
   unlockFolder: (folderId) => set(state => {
     const unlockedFolders = new Set(state.unlockedFolders || []);
     unlockedFolders.add(folderId);
+    return { ...state, unlockedFolders };
+  }),
+  
+  lockFolder: (folderId) => set(state => {
+    const unlockedFolders = new Set(state.unlockedFolders || []);
+    unlockedFolders.delete(folderId);
     return { ...state, unlockedFolders };
   }),
   

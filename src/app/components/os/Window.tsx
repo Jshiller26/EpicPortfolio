@@ -26,6 +26,22 @@ interface WindowProps {
   children?: React.ReactNode;
 }
 
+// Define the type for window options
+interface WindowOptions {
+  id: string;
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+  title?: string;
+  content?: React.ReactNode;
+  isMaximized?: boolean;
+  isMinimized?: boolean;
+  minimizable?: boolean;
+  maximizable?: boolean;
+  resizable?: boolean;
+}
+
 export const Window: React.FC<WindowProps> = ({ 
   id, 
   title,
@@ -65,7 +81,7 @@ export const Window: React.FC<WindowProps> = ({
         initialHeight = 300;
       }
       
-      const initialOptions: any = {
+      const initialOptions: WindowOptions = {
         id,
         width: initialWidth,
         height: initialHeight,
@@ -129,6 +145,20 @@ export const Window: React.FC<WindowProps> = ({
     if (onClose) {
       onClose();
     } else {
+      // Lock folder when closing an explorer window
+      if (id.startsWith('explorer-')) {
+        const parts = id.split('-');
+        if (parts.length >= 2) {
+          const folderId = parts[1];
+          const folder = fileSystem.items[folderId];
+          if (folder && folder.type === 'folder' && folder.password) {
+            // Lock the folder when its explorer window is closed
+            fileSystem.lockFolder(folderId);
+          }
+        }
+      }
+      
+      // Special cleanup for gameboy
       if (id.startsWith('gameboy-')) {
         document.querySelectorAll('audio').forEach(audio => {
           audio.pause();

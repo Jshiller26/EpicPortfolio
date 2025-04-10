@@ -110,7 +110,7 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     };
     
     const handleSuccess = () => {
-      fileSystem.unlockItem(folderId);
+      fileSystem.unlockFolder(folderId);
       
       windowStore.closeWindow(windowId);
       

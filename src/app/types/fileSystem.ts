@@ -21,6 +21,7 @@ export interface FileSystemItem {
   windowComponent?: string;
   
   isPasswordProtected?: boolean;
+  password?: string;
 }
 
 // Interface for folder items
@@ -28,6 +29,7 @@ export interface Folder extends FileSystemItem {
   type: 'folder';
   children: string[];
   isPasswordProtected?: boolean;
+  password?: string;
 }
 
 // Interface for file items
