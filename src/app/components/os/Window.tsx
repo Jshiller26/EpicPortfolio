@@ -114,8 +114,7 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       onMouseDown={() => setActiveWindow(id)}
       disableDragging={isMaximized}
       enableResizing={!isMaximized}
-      // prevent window dragging when interacting with file items
-      cancel=".draggable-item"
+      dragHandleClassName="window-drag-handle"
       bounds="window"
       resizeHandleClasses={{
         bottom: 'h-1 bg-transparent ',
@@ -135,7 +134,7 @@ export const Window: React.FC<WindowProps> = ({ id }) => {
       >
         {/* Window Title Bar */}
         <div 
-          className={`h-9 flex items-center justify-between select-none ${
+          className={`window-drag-handle h-9 flex items-center justify-between select-none ${
             isActive 
               ? isEditorWindow ? 'bg-[#333333] text-white' : 'bg-white' 
               : isEditorWindow ? 'bg-[#252525] text-gray-300' : 'bg-gray-50'

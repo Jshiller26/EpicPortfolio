@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Paint Redirector</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        #jspaint-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #error-message {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .btn:hover {
+            background-color: #106ebe;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="jspaint-frame" src="https://jspaint.app" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+    
+    <div id="error-message">
+        <h2>Unable to load JS Paint</h2>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('jspaint-frame');
+        const errorMessage = document.getElementById('error-message');
+        const reloadBtn = document.getElementById('reload-btn');
+        
+        let iframeLoaded = false;
+        
+        const timeoutId = setTimeout(() => {
+            if (!iframeLoaded) {
+                iframe.style.display = 'none';
+                errorMessage.style.display = 'flex';
+            }
+        }, 5000);
+        
+        iframe.addEventListener('load', () => {
+            iframeLoaded = true;
+            clearTimeout(timeoutId);
+            iframe.style.display = 'block';
+            errorMessage.style.display = 'none';
+        });
+        
+        iframe.addEventListener('error', () => {
+            iframe.style.display = 'none';
+            errorMessage.style.display = 'flex';
+            clearTimeout(timeoutId);
+        });
+        
+        reloadBtn.addEventListener('click', () => {
+            iframe.src = iframe.src;
+            iframe.style.display = 'block';
+            errorMessage.style.display = 'none';
+            iframeLoaded = false;
+            
+            const newTimeoutId = setTimeout(() => {
+                if (!iframeLoaded) {
+                    iframe.style.display = 'none';
+                    errorMessage.style.display = 'flex';
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
