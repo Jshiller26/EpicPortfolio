@@ -100,7 +100,7 @@ const initialState: FileSystemState = {
       modified: new Date(),
       parentId: 'desktop',
       children: ['emc', 'knights', 'idea', 'pandora', 'visit-pa'],
-      isPasswordProtected: true
+      // isPasswordProtected: true uncommment to lock folder
     } as Folder,
     
     // Projects subfolders
