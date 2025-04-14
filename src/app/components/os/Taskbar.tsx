@@ -75,9 +75,14 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      const hours = now.getHours().toString().padStart(2, '0');
+      // Use 12-hour format with AM/PM
+      const hours = now.getHours();
       const minutes = now.getMinutes().toString().padStart(2, '0');
-      setCurrentTime(`${hours}:${minutes}`);
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+      
+      setCurrentTime(`${hours12}:${minutes} ${ampm}`);
       setCurrentDate(now.toLocaleDateString('en-US', {
         month: 'numeric',
         day: 'numeric',
@@ -86,7 +91,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
     };
 
     updateDateTime();
-    const interval = setInterval(updateDateTime, 60000);
+    // Update every second instead of every minute
+    const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -322,7 +328,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       )}
       
       {/* Windows 11 Taskbar */}
-      <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg z-50">
+      <div className="fixed bottom-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-md shadow-lg z-[1000]">
         <div className="h-full flex items-center justify-between px-3">
           {/* Empty space on left side bc centering issues*/}
           <div className="w-24"></div>

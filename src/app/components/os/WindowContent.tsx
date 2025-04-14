@@ -12,7 +12,7 @@ import ImageViewer from './ImageViewer';
 import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
-import Paint from './paint/Paint';
+import Paint from './Paint/Paint';
 
 interface WindowContentProps {
   windowId: string;
