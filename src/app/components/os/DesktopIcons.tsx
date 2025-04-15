@@ -37,6 +37,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   
   // Track any file system changes
   const desktopChildrenRef = useRef<string[]>([]);
+  const appInitializedRef = useRef<boolean>(false);
   
   // Initialize icon positions with desktop children
   const { 
@@ -104,7 +105,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   }, [desktop, items, setIconPositions]);
 
   useEffect(() => {
-    if (!desktop) return;
+    if (!desktop || appInitializedRef.current) return;
     
     const exeFiles = createAppItems();
     const requiredExeFiles = ['vscode', 'gameboy', 'paint'];
@@ -122,6 +123,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       }
     });
     
+    let createdAnyFile = false;
+    
     requiredExeFiles.forEach(exeId => {
       if (existingExeIds.has(exeId)) {
         return;
@@ -137,8 +140,12 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         exeFile.content,
         0
       );
-      
+      createdAnyFile = true;
     });
+    
+    if (createdAnyFile) {
+      appInitializedRef.current = true;
+    }
   }, [desktop, items, createFile]);
 
   const handlePasswordProtectedItem = (itemId: string) => {
