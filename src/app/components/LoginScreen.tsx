@@ -108,15 +108,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="flex flex-col items-center">
               <button 
                 type="button"
-                className="text-yellow-400 hover:text-yellow-300 text-sm mb-2 focus:outline-none"
+                className="text-white hover:text-gray-200 text-sm mb-2 focus:outline-none"
                 onClick={() => alert("PIN recovery functionality not implemented")}
+                style={{ color: 'white' }}
               >
                 I forgot my PIN
               </button>
               
               <button 
                 type="button" 
-                className="text-yellow-400 hover:text-yellow-300 text-sm focus:outline-none"
+                className="text-white hover:text-gray-200 text-sm focus:outline-none"
+                style={{ color: 'white' }}
               >
                 Sign-in options
               </button>

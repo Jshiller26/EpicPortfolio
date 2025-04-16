@@ -22,7 +22,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
       ) : (
         <LoginScreen 
           onLogin={onAuthenticated} 
-          backgroundImage="/images/desktop/mountainWallpaper.jpg" 
+          backgroundImage="/images/desktop/mountainWallpaper3.jpg" 
         />
       )}
     </>
