@@ -5,9 +5,10 @@ import Image from 'next/image';
 
 interface LockScreenProps {
   onUnlock: () => void;
+  transparentBg?: boolean;
 }
 
-export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
+export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, transparentBg = false }) => {
   const [time, setTime] = useState(new Date());
   const [showTime, setShowTime] = useState(true);
   
@@ -62,9 +63,11 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
     <div 
       className="fixed inset-0 flex flex-col items-center cursor-pointer"
       style={{
-        backgroundImage: "url('/images/desktop/mountainWallpaper3.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        ...(transparentBg ? {} : {
+          backgroundImage: "url('/images/desktop/mountainWallpaper3.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        })
       }}
       onClick={handleInteraction}
     >

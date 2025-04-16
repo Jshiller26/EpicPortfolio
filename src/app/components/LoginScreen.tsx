@@ -57,7 +57,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
   
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSubmit(e);
     }
@@ -95,7 +95,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 type="password"
                 value={password}
                 onChange={handlePasswordChange}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="PIN"
                 className={`w-full py-2 px-4 bg-black bg-opacity-50 text-white border ${error ? 'border-red-500' : 'border-gray-400'} rounded`}
                 disabled={loading}
