@@ -75,34 +75,35 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       className="fixed inset-0 flex items-center justify-center"
       style={defaultBgStyle}
     >
-      <div className="w-full max-w-md p-4">
+      {/* Moved the content up by adding negative margin-top */}
+      <div className="w-full max-w-md p-4 -mt-20">
         <div className="flex flex-col items-center">
-          <div className="rounded-full bg-white w-24 h-24 flex items-center justify-center mb-4 overflow-hidden">
+          <div className="rounded-full bg-white w-42 h-42 flex items-center justify-center mb-5 overflow-hidden">
             <Image 
               src="/images/desktop/defaultUser.png"
               alt="Default User"
-              width={80}
-              height={80}
+              width={150}
+              height={150}
             />
           </div>
           
-          <h2 className="text-2xl font-light text-white mb-2">Joe Shiller</h2>
+          <h2 className="text-2xl font-light text-white mb-4">Joe Shiller</h2>
           
           <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
-            <div className="relative w-full max-w-xs mb-4">
+            <div className="relative w-full max-w-xs mb-6">
               <input
                 ref={inputRef}
                 type="password"
                 value={password}
                 onChange={handlePasswordChange}
                 onKeyDown={handleKeyDown}
-                placeholder="PIN"
+                placeholder="Password"
                 className={`w-full py-2 px-4 bg-black bg-opacity-50 text-white border ${error ? 'border-red-500' : 'border-gray-400'} rounded`}
                 disabled={loading}
               />
               {error && (
                 <p className="absolute text-red-500 text-sm mt-1">
-                  The PIN is incorrect. Try again.
+                  The password is incorrect. Try again.
                 </p>
               )}
             </div>
@@ -110,11 +111,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="flex flex-col items-center">
               <button 
                 type="button"
-                className="text-white hover:text-gray-200 text-sm mb-2 focus:outline-none"
-                onClick={() => alert("PIN recovery functionality not implemented")}
+                className="text-white hover:text-gray-200 text-sm mb-4 focus:outline-none"
+                onClick={() => alert("make reference to where to find password")}
                 style={{ color: 'white' }}
               >
-                I forgot my PIN
+                I forgot my password
               </button>
               
               <button 
