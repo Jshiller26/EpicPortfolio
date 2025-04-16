@@ -22,7 +22,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   const formatTime = (date: Date) => {
     let hours = date.getHours();
     const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? '' : '';
     hours = hours % 12;
     hours = hours ? hours : 12;
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;

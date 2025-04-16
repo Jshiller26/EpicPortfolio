@@ -6,12 +6,14 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface LoginScreenProps {
   onLogin: () => void;
-  backgroundImage: string;
+  backgroundImage?: string;
+  noBackground?: boolean;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ 
   onLogin,
-  backgroundImage
+  backgroundImage = '/images/desktop/mountainWallpaperBlurred.jpg',
+  noBackground = false
 }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
@@ -61,7 +63,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
   };
   
-  const defaultBgStyle = {
+  const defaultBgStyle = noBackground ? {} : {
     backgroundColor: '#0078D7',
     backgroundImage: `url('${backgroundImage}')`,
     backgroundSize: 'cover',
