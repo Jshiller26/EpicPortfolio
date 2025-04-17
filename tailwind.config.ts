@@ -25,9 +25,18 @@ export default {
             transform: 'translateX(500%)',
           },
         },
+        spinContainer: {
+          '0%': { 
+            transform: 'rotate(0deg)',
+          },
+          '100%': { 
+            transform: 'rotate(360deg)',
+          },
+        },
       },
       animation: {
         'shine': 'shine 4s ease-out',
+        'spin-container': 'spinContainer 1.5s infinite linear',
       },
       gridTemplateColumns: {
         'auto-fit': 'repeat(auto-fit, minmax(80px, 1fr))',
