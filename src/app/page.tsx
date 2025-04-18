@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Desktop } from './components/os/Desktop';
 import AuthScreen from './components/AuthScreen';
 import LoadingScreen from './components/LoadingScreen';
@@ -14,17 +14,28 @@ const ProtectedDesktop = () => {
   const router = useRouter();
   const [currentState, setCurrentState] = useState<DesktopState>('AUTH_SCREEN');
   const [stateKey, setStateKey] = useState(0);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const isLogoutInProgress = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      if (currentState === 'AUTH_SCREEN') {
-        setStateKey(prev => prev + 1);
-        setCurrentState('LOADING');
-      }
-    } else {
+    if (isFirstLoad && isAuthenticated) {
+      setCurrentState('DESKTOP');
+      setIsFirstLoad(false);
+    } 
+    else if (isAuthenticated && currentState === 'AUTH_SCREEN' && !isFirstLoad) {
+      setStateKey(prev => prev + 1);
+      setCurrentState('LOADING');
+    } 
+    else if (!isAuthenticated && !isLogoutInProgress.current) {
       setCurrentState('AUTH_SCREEN');
     }
-  }, [isAuthenticated, currentState]);
+  }, [isAuthenticated, currentState, isFirstLoad]);
+
+  useEffect(() => {
+    if (isFirstLoad && !isAuthenticated) {
+      setIsFirstLoad(false);
+    }
+  }, []);
 
   const handleClose = () => {
     router.push('/start');
@@ -35,8 +46,14 @@ const ProtectedDesktop = () => {
   };
 
   const handleLogout = () => {
+    isLogoutInProgress.current = true;
+    
     // Force re-render of Auth screen on logout
     setStateKey(prev => prev + 1);
+    setCurrentState('AUTH_SCREEN');
+    setTimeout(() => {
+      isLogoutInProgress.current = false;
+    }, 100);
   };
 
   switch (currentState) {
