@@ -15,8 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const authenticated = localStorage.getItem('isAuthenticated');
+    const authenticated = sessionStorage.getItem('isAuthenticated');
     if (authenticated === 'true') {
       setIsAuthenticated(true);
     }
@@ -28,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!password || password === correctPassword) {
       setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true');
+      sessionStorage.setItem('isAuthenticated', 'true');
       return true;
     }
     return false;
@@ -36,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
+    sessionStorage.removeItem('isAuthenticated');
   };
 
   return (
