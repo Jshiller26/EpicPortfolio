@@ -3,6 +3,9 @@ import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface StartMenuProps {
   isOpen: boolean;
@@ -18,6 +21,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({
   const fileSystem = useFileSystemStore();
   const openWindow = useWindowStore(state => state.openWindow);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     // Handle clicking outside the menu to close it
@@ -88,6 +93,11 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     onClose();
   };
 
+  const handleLockScreen = () => {
+    logout();
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   // Pinned apps
@@ -124,7 +134,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
       {/* Start menu - explicitly centered */}
       <div 
         ref={menuRef}
-        className="fixed bottom-16 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg overflow-hidden z-40 w-96 animate-start-menu"
+        className="fixed bottom-16 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md rounded-lg shadow-lg overflow-hidden z-40 w-96 animate-start-menu relative"
         style={{ maxHeight: 'calc(100vh - 12rem)' }}
       >
         <div className="p-4">
@@ -167,7 +177,7 @@ export const StartMenu: React.FC<StartMenuProps> = ({
           </div>
 
           {/* Quick links / folders */}
-          <div>
+          <div className="mb-14">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
               Folders
             </h3>
@@ -184,6 +194,35 @@ export const StartMenu: React.FC<StartMenuProps> = ({
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Bottom bar*/}
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-blue-100 flex items-center justify-between px-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 overflow-hidden rounded-full bg-white flex items-center justify-center">
+              <Image 
+                src="/images/desktop/defaultUser.png" 
+                alt="User profile" 
+                width={28} 
+                height={28}
+              />
+            </div>
+            <span className="text-sm font-normal text-gray-700">Joe Shiller</span>
+          </div>
+          
+          {/* Power Button */}
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-200 transition-colors"
+            onClick={handleLockScreen}
+            title="Lock Screen"
+          >
+            <img 
+              src="/images/desktop/icons8-power-100.png" 
+              alt="Power" 
+              className="w-4 h-4"
+              style={{ filter: 'brightness(0.3)' }}
+            />
+          </button>
         </div>
       </div>
     </>

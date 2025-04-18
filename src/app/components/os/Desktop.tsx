@@ -8,6 +8,9 @@ import { Window } from './Window';
 import { BackButton } from './BackButton';
 import DialogBox from '../DialogBox';
 import { initDragCursorFix } from '@/app/utils/dragCursorFix';
+import { useAuth } from '@/app/contexts/AuthContext';
+import LoginScreen from '../LoginScreen';
+import LoadingScreen from '../LoadingScreen';
 
 interface DesktopProps {
   onClose: () => void;
@@ -20,8 +23,12 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [showShutdownDialog, setShowShutdownDialog] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
+  const [showLockScreen, setShowLockScreen] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
+  const [loginKey, setLoginKey] = useState(0); // Add a key to force re-render
   const router = useRouter();
   const fileSystem = useFileSystemStore();
+  const { logout } = useAuth();
   
   // Get window information from the store
   const windows = useWindowStore(state => state.windows);
@@ -35,6 +42,14 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   useEffect(() => {
     initDragCursorFix();
   }, []);
+  
+  // Clear window state when logged out
+  useEffect(() => {
+    if (showLockScreen) {
+      // Clear all windows when logged out
+      useWindowStore.getState().closeAllWindows();
+    }
+  }, [showLockScreen]);
   
   const toggleStartMenu = () => {
     setStartMenuOpen(!startMenuOpen);
@@ -50,6 +65,24 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
 
   const handleShutdown = () => {
     setShowShutdownDialog(true);
+  };
+
+  const handleLockScreen = () => {
+    setShowLockScreen(true);
+    logout(); // Log out the user
+    // Increment the key to force re-renders of child components
+    setLoginKey(prev => prev + 1);
+  };
+
+  const handleLogin = () => {
+    // Hide lock screen and show loading screen
+    setShowLockScreen(false);
+    setShowLoadingScreen(true);
+  };
+  
+  const handleLoadingComplete = () => {
+    // Hide loading screen and show desktop
+    setShowLoadingScreen(false);
   };
 
   const handleDialogClose = () => {
@@ -100,6 +133,22 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     }
   };
   
+  // If loading screen is showing after login, render it
+  if (showLoadingScreen) {
+    return <LoadingScreen key={`loading-${loginKey}`} onComplete={handleLoadingComplete} />;
+  }
+  
+  // If lock screen is showing, render it instead of desktop
+  if (showLockScreen) {
+    return (
+      <LoginScreen 
+        key={`login-${loginKey}`}
+        onLogin={handleLogin} 
+        backgroundImage="/images/desktop/desktopWallpaper.jpg" 
+      />
+    );
+  }
+  
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden" onClick={handleGlobalClick}>
       {/* Windows 11 wallpaper background */}
@@ -137,6 +186,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             onSearchClick={toggleSearch}
             isStartOpen={startMenuOpen}
             isSearchOpen={searchOpen}
+            onLockScreen={handleLockScreen}
           />
         </div>
 

@@ -12,6 +12,7 @@ interface TaskbarProps {
   onClose: () => void;
   onStartClick: () => void;
   onSearchClick: () => void;
+  onLockScreen: () => void; // New prop for lock screen functionality
   isStartOpen: boolean;
   isSearchOpen: boolean;
 }
@@ -57,6 +58,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   onWindowSelect,
   onStartClick,
   isStartOpen,
+  onLockScreen,
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -78,7 +80,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       // Use 12-hour format with AM/PM
       const hours = now.getHours();
       const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
       
@@ -208,7 +209,8 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       <StartMenu 
         isOpen={isStartOpen} 
         onClose={handleCloseStartMenu} 
-        onItemClick={onWindowSelect} 
+        onItemClick={onWindowSelect}
+        onLockScreen={onLockScreen}
       />
       
       {/* Search results */}
