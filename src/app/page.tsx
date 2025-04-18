@@ -7,43 +7,51 @@ import AuthScreen from './components/AuthScreen';
 import LoadingScreen from './components/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
+type DesktopState = 'AUTH_SCREEN' | 'LOADING' | 'DESKTOP';
+
 const ProtectedDesktop = () => {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const [showLoading, setShowLoading] = useState(false);
-  const [loadingComplete, setLoadingComplete] = useState(false);
-  
+  const [currentState, setCurrentState] = useState<DesktopState>('AUTH_SCREEN');
+  const [stateKey, setStateKey] = useState(0);
+
   useEffect(() => {
-    if (isAuthenticated && !showLoading && !loadingComplete) {
-      setShowLoading(true);
+    if (isAuthenticated) {
+      if (currentState === 'AUTH_SCREEN') {
+        setStateKey(prev => prev + 1);
+        setCurrentState('LOADING');
+      }
+    } else {
+      setCurrentState('AUTH_SCREEN');
     }
-  }, [isAuthenticated, showLoading, loadingComplete]);
-  
+  }, [isAuthenticated, currentState]);
+
   const handleClose = () => {
     router.push('/start');
   };
-  
-  const handleAuthenticated = () => {
 
-  };
-  
   const handleLoadingComplete = () => {
-    setLoadingComplete(true);
-    setShowLoading(false);
+    setCurrentState('DESKTOP');
   };
-  
-  // Show auth screen if not authenticated
-  if (!isAuthenticated) {
-    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+
+  const handleLogout = () => {
+    // Force re-render of Auth screen on logout
+    setStateKey(prev => prev + 1);
+  };
+
+  switch (currentState) {
+    case 'AUTH_SCREEN':
+      return <AuthScreen key={`auth-${stateKey}`} onAuthenticated={() => {}} />;
+    
+    case 'LOADING':
+      return <LoadingScreen key={`loading-${stateKey}`} onComplete={handleLoadingComplete} duration={2000} />;
+    
+    case 'DESKTOP':
+      return <Desktop key={`desktop-${stateKey}`} onClose={handleClose} onLogout={handleLogout} />;
+    
+    default:
+      return <AuthScreen key={`auth-default-${stateKey}`} onAuthenticated={() => {}} />;
   }
-  
-  // Show loading screen after authentication
-  if (showLoading && !loadingComplete) {
-    return <LoadingScreen onComplete={handleLoadingComplete} duration={2000} />;
-  }
-  
-  // Show desktop after loading
-  return <Desktop onClose={handleClose} />;
 };
 
 export default function HomePage() {

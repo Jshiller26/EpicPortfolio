@@ -24,8 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (password?: string) => {
-    // If no password provided, or correct password
-    if (!password || password === process.env.NEXT_PUBLIC_SYSTEM_PASSWORD) {
+    const correctPassword = process.env.NEXT_PUBLIC_SYSTEM_PASSWORD;
+    
+    if (!password || password === correctPassword) {
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true');
       return true;

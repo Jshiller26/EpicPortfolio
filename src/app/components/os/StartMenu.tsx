@@ -3,27 +3,25 @@ import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getIconForItem } from '@/app/utils/iconUtils';
-import { useAuth } from '@/app/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 interface StartMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onItemClick: (windowId: string) => void;
+  onLockScreen: () => void;
 }
 
 export const StartMenu: React.FC<StartMenuProps> = ({
   isOpen,
   onClose,
   onItemClick,
+  onLockScreen,
 }) => {
   const fileSystem = useFileSystemStore();
   const openWindow = useWindowStore(state => state.openWindow);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { logout } = useAuth();
-  const router = useRouter();
-
+  
   useEffect(() => {
     // Handle clicking outside the menu to close it
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,8 +92,8 @@ export const StartMenu: React.FC<StartMenuProps> = ({
   };
 
   const handleLockScreen = () => {
-    logout();
     onClose();
+    onLockScreen();
   };
 
   if (!isOpen) return null;
