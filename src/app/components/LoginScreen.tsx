@@ -18,6 +18,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { login } = useAuth();
   
@@ -61,6 +62,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (e.key === 'Enter') {
       handleSubmit(e);
     }
+  };
+
+  const handleHelpClick = () => {
+    setShowHelpMessage(true);
   };
   
   const defaultBgStyle = noBackground ? {} : {
@@ -108,23 +113,31 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               )}
             </div>
             
-            <div className="flex flex-col items-center">
-              <button 
-                type="button"
-                className="text-white hover:text-gray-200 text-sm mb-4 focus:outline-none"
-                onClick={() => alert("make reference to where to find password")}
-                style={{ color: 'white' }}
-              >
-                I forgot my password
-              </button>
-              
-              <button 
-                type="button" 
-                className="text-white hover:text-gray-200 text-sm focus:outline-none"
-                style={{ color: 'white' }}
-              >
-                Sign-in options
-              </button>
+            {/* Fixed height container to prevent layout shift */}
+            <div className="flex flex-col items-center min-h-[80px] flex-shrink-0 w-full justify-center">
+              {!showHelpMessage ? (
+                <>
+                  <button 
+                    type="button"
+                    className="text-white text-sm mb-4 focus:outline-none transition-all duration-150 hover:text-gray-400 hover:underline"
+                    onClick={handleHelpClick}
+                  >
+                    I forgot my password
+                  </button>
+                  
+                  <button 
+                    type="button" 
+                    className="text-white text-sm focus:outline-none transition-all duration-150 hover:text-gray-400 hover:underline"
+                    onClick={handleHelpClick}
+                  >
+                    Sign-in options
+                  </button>
+                </>
+              ) : (
+                <div className="text-white text-sm max-w-xs text-center bg-black bg-opacity-50 p-3 rounded animate-fade-in">
+                  Password can be found in &quot;Profile&quot; section of resume. If you are having trouble accessing the site you can reach me at shiller1205@gmail.com
+                </div>
+              )}
             </div>
           </form>
         </div>
