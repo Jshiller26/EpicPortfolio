@@ -6,6 +6,7 @@ import { DesktopIcons } from '../DesktopIcons';
 import { Window } from '../Window';
 import { BackButton } from '../BackButton';
 import DialogBox from '../../DialogBox';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface DesktopProps {
   onClose: () => void;
@@ -19,12 +20,14 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [isFading, setIsFading] = useState(false);
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const router = useRouter();
+  const { logout } = useAuth();
   
   // Get window information from the store
   const windows = useWindowStore(state => state.windows);
   const activeWindowId = useWindowStore(state => state.activeWindowId);
   const openWindow = useWindowStore(state => state.openWindow);
   const restoreWindow = useWindowStore(state => state.restoreWindow);
+  const closeAllWindows = useWindowStore(state => state.closeAllWindows);
   
   // Get window IDs for rendering
   const windowIds = Object.keys(windows);
@@ -43,6 +46,13 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
 
   const handleShutdown = () => {
     setShowShutdownDialog(true);
+  };
+
+  const handleLockScreen = () => {
+    setStartMenuOpen(false);
+    setSearchOpen(false);
+    closeAllWindows();
+    logout();
   };
 
   const handleDialogClose = () => {
@@ -136,6 +146,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             onSearchClick={toggleSearch}
             isStartOpen={startMenuOpen}
             isSearchOpen={searchOpen}
+            onLockScreen={handleLockScreen}
           />
         </div>
 
