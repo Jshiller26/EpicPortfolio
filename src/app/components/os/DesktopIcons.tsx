@@ -119,31 +119,36 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
 
   const clipboardOps = useDesktopClipboard({
     fileSystem: {
-      moveItem: fileSystem.moveItem,
-      copyItem: (itemId, targetFolderId) => {
+      moveItem: (itemId: string, targetId: string, callback?: (movedItemId: string) => void) => {
+        fileSystem.moveItem(itemId, targetId, callback);
+      },
+      copyItem: (itemId: string, targetId: string, callback?: (newId: string) => void) => {
         const originalPosition = iconPositions[itemId];
-        const newItemId = fileSystem.copyItem(itemId, targetFolderId);
         
-        if (newItemId && originalPosition) {
-          const offsetPosition = {
-            x: originalPosition.x + 20,
-            y: originalPosition.y + 20
-          };
-          
-          const newPosition = isPositionOccupied(offsetPosition.x, offsetPosition.y)
-            ? findNextAvailablePosition(0, 0, newItemId)
-            : offsetPosition;
+        fileSystem.copyItem(itemId, targetId, (newId: string) => {
+          if (newId && originalPosition && callback) {
+            const offsetPosition = {
+              x: originalPosition.x + 20,
+              y: originalPosition.y + 20
+            };
             
-          setTimeout(() => {
-            setIconPositions(prev => {
-              const updated = { ...prev, [newItemId]: newPosition };
-              localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
-              return updated;
-            });
-          }, 0);
-        }
-        
-        return newItemId;
+            const newPosition = isPositionOccupied(offsetPosition.x, offsetPosition.y)
+              ? findNextAvailablePosition(0, 0, newId)
+              : offsetPosition;
+              
+            setTimeout(() => {
+              setIconPositions(prev => {
+                const updated = { ...prev, [newId]: newPosition };
+                localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+                return updated;
+              });
+            }, 0);
+            
+            callback(newId);
+          }
+        });
+
+        return '';
       },
       createFile: fileSystem.createFile
     },
@@ -231,7 +236,9 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     findNextAvailablePosition,
     isPositionOccupied,
     setIconPositions,
-    moveItem: fileSystem.moveItem,
+    moveItem: (itemId: string, targetId: string, callback?: (movedItemId: string) => void) => {
+      fileSystem.moveItem(itemId, targetId, callback);
+    },
     createFile: fileSystem.createFile,
     appItems: {},
     items,
@@ -337,7 +344,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     const newItemsAdded = currentChildren.filter(id => !prevChildren.includes(id));
     
     if (newItemsAdded.length > 0) {
-      let currentPositions = {};
+      let currentPositions: Record<string, { x: number, y: number }> = {};
       
       try {
         const storedPositions = localStorage.getItem('desktopIconPositions');
