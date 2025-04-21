@@ -1,18 +1,16 @@
-import React, { useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Folder, FileSystemItem} from '@/app/types/fileSystem';
 import useIconPositions from '@/app/hooks/useIconPositions';
 import { openItem, getInitialRenameName } from '@/app/utils/appUtils';
 import { createAppItems } from '@/app/config/appConfig';
 
-// Import hooks
 import { useDesktopContextMenu } from '@/app/hooks/useDesktopContextMenu';
 import { useDesktopDragDrop } from '@/app/hooks/useDesktopDragDrop';
 import { useDesktopFileOperations } from '@/app/hooks/useDesktopFileOperations';
 import { useDesktopClipboard } from '@/app/hooks/useDesktopClipboard';
 import { useDesktopCreation } from '@/app/utils/desktopCreationUtils';
 
-// Import components
 import { DesktopIcon } from './DesktopIcon';
 import { DesktopContextMenuHandler } from './DesktopContextMenuHandler';
 import { PasswordDialog } from './PasswordDialog';
@@ -28,125 +26,19 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   const fileSystem = useFileSystemStore();
   const desktop = fileSystem.items['desktop'] as Folder;
   const items = fileSystem.items;
-  const createFolder = fileSystem.createFolder;
-  const createFile = fileSystem.createFile;
-  const deleteItem = fileSystem.deleteItem;
-  const renameItem = fileSystem.renameItem;
-  const moveItem = fileSystem.moveItem;
   const windowStore = useWindowStore();
   
-  // Track any file system changes
   const desktopChildrenRef = useRef<string[]>([]);
   const appInitializedRef = useRef<boolean>(false);
   
-  // Initialize icon positions with desktop children
   const { 
     iconPositions, 
     setIconPositions,
     newItems,
     findNextAvailablePosition,
     isPositionOccupied,
-    removeIconPosition  
+    removeIconPosition 
   } = useIconPositions(desktop?.children || [], []);
-
-  useEffect(() => {
-    if (!desktop) return;
-    
-    setTimeout(() => {
-      const myProjectsId = Object.values(items).find(
-        item => item.name === 'My Projects' && item.parentId === 'desktop'
-      )?.id;
-      
-      const readmeId = Object.values(items).find(
-        item => item.name === 'README.txt' && item.parentId === 'desktop'
-      )?.id;
-      
-      const vsCodeId = Object.values(items).find(
-        item => item.name === 'VS Code.exe' && item.parentId === 'desktop'
-      )?.id;
-      
-      const gameBoyId = Object.values(items).find(
-        item => item.name === 'GameBoy.exe' && item.parentId === 'desktop'
-      )?.id;
-      
-      const paintId = Object.values(items).find(
-        item => item.name === 'Paint.exe' && item.parentId === 'desktop'
-      )?.id;
-
-      const updatedPositions: Record<string, { x: number, y: number }> = {};
-      
-      if (myProjectsId) {
-        updatedPositions[myProjectsId] = { x: 0, y: 0 };
-      }
-      
-      if (vsCodeId) {
-        updatedPositions[vsCodeId] = { x: 0, y: GRID_SIZE };
-      }
-      
-      if (readmeId) {
-        updatedPositions[readmeId] = { x: 0, y: GRID_SIZE * 2 };
-      }
-      
-      if (gameBoyId) {
-        updatedPositions[gameBoyId] = { x: 0, y: GRID_SIZE * 3 };
-      }
-      
-      if (paintId) {
-        updatedPositions[paintId] = { x: 0, y: GRID_SIZE * 4 };
-      }
-      
-      if (Object.keys(updatedPositions).length > 0) {
-        setIconPositions(prev => ({
-          ...prev,
-          ...updatedPositions
-        }));
-      }
-    }, 100);
-  }, [desktop, items, setIconPositions]);
-
-  useEffect(() => {
-    if (!desktop || appInitializedRef.current) return;
-    
-    const exeFiles = createAppItems();
-    const requiredExeFiles = ['vscode', 'gameboy', 'paint'];
-
-    const existingExeIds = new Set<string>();
-    
-    Object.values(items).forEach(item => {
-      if (item.type === 'file') {
-        requiredExeFiles.forEach(requiredId => {
-          const exeFile = exeFiles[requiredId];
-          if (exeFile && item.name === exeFile.name) {
-            existingExeIds.add(requiredId);
-          }
-        });
-      }
-    });
-    
-    let createdAnyFile = false;
-    
-    requiredExeFiles.forEach(exeId => {
-      if (existingExeIds.has(exeId)) {
-        return;
-      }
-      
-      const exeFile = exeFiles[exeId];
-      if (!exeFile) return;
-      
-      console.log(`Creating ${exeFile.name} on desktop`);
-      createFile(
-        exeFile.name,
-        'desktop',
-        exeFile.content,
-        0
-      );
-      createdAnyFile = true;
-    });
-    
-    if (createdAnyFile) {
-      appInitializedRef.current = true;
-    }
-  }, [desktop, items, createFile]);
 
   const handlePasswordProtectedItem = (itemId: string) => {
     const item = items[itemId];
@@ -190,7 +82,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     });
   };
 
-  // Define handleOpenItem function for the file operations hook
   const handleOpenItem = (itemId: string, items: Record<string, FileSystemItem>, openWindow: (windowId: string) => void) => {
     const item = items[itemId];
     if (!item) return;
@@ -203,23 +94,58 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     openItem(item, openWindow);
   };
 
-  // File Operations Hook
   const fileOperations = useDesktopFileOperations({
     items,
-    renameItem,
-    deleteItem,
+    renameItem: (itemId, newName) => {
+      const position = iconPositions[itemId];
+      fileSystem.renameItem(itemId, newName);
+      
+      if (position) {
+        setTimeout(() => {
+          setIconPositions(prev => {
+            const updated = { ...prev, [itemId]: position };
+            localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+            return updated;
+          });
+        }, 0);
+      }
+    },
+    deleteItem: fileSystem.deleteItem,
     removeIconPosition,
     handleOpenItem,
     onOpenWindow,
     appItems: {}
   });
 
-  // Clipboard Hook
   const clipboardOps = useDesktopClipboard({
     fileSystem: {
-      moveItem,
-      copyItem: fileSystem.copyItem,
-      createFile
+      moveItem: fileSystem.moveItem,
+      copyItem: (itemId, targetFolderId) => {
+        const originalPosition = iconPositions[itemId];
+        const newItemId = fileSystem.copyItem(itemId, targetFolderId);
+        
+        if (newItemId && originalPosition) {
+          const offsetPosition = {
+            x: originalPosition.x + 20,
+            y: originalPosition.y + 20
+          };
+          
+          const newPosition = isPositionOccupied(offsetPosition.x, offsetPosition.y)
+            ? findNextAvailablePosition(0, 0, newItemId)
+            : offsetPosition;
+            
+          setTimeout(() => {
+            setIconPositions(prev => {
+              const updated = { ...prev, [newItemId]: newPosition };
+              localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+              return updated;
+            });
+          }, 0);
+        }
+        
+        return newItemId;
+      },
+      createFile: fileSystem.createFile
     },
     findNextAvailablePosition,
     isPositionOccupied,
@@ -228,19 +154,47 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     newItems
   });
 
-  // Creation Hook
   const creationOps = useDesktopCreation({
     desktop,
     items,
-    createFolder,
-    createFile,
+    createFolder: (name, parentId) => {
+      const newFolderId = fileSystem.createFolder(name, parentId);
+      
+      if (newFolderId) {
+        const newPosition = findNextAvailablePosition(0, 0, newFolderId);
+        setTimeout(() => {
+          setIconPositions(prev => {
+            const updated = { ...prev, [newFolderId]: newPosition };
+            localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+            return updated;
+          });
+        }, 0);
+      }
+      
+      return newFolderId;
+    },
+    createFile: (name, parentId, content, size) => {
+      const newFileId = fileSystem.createFile(name, parentId, content, size);
+      
+      if (newFileId) {
+        const newPosition = findNextAvailablePosition(0, 0, newFileId);
+        setTimeout(() => {
+          setIconPositions(prev => {
+            const updated = { ...prev, [newFileId]: newPosition };
+            localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+            return updated;
+          });
+        }, 0);
+      }
+      
+      return newFileId;
+    },
     findNextAvailablePosition,
     isPositionOccupied,
     setIconPositions,
     setLastCreatedItemId: fileOperations.setLastCreatedItemId
   });
 
-  // Context Menu Hook
   const contextMenuOps = useDesktopContextMenu({
     handleCreateNewFolder: () => {
       const position = contextMenuOps.contextMenu.desktopX !== undefined && 
@@ -272,80 +226,155 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     hasClipboardItem: !!clipboardOps.clipboard.item
   });
 
-  // Drag and Drop Hook
   const dragDropOps = useDesktopDragDrop({
     removeIconPosition,
     findNextAvailablePosition,
     isPositionOccupied,
     setIconPositions,
-    moveItem,
-    createFile,
+    moveItem: fileSystem.moveItem,
+    createFile: fileSystem.createFile,
     appItems: {},
     items,
     newItems,
     handleDesktopAppMoved: () => {}
   });
 
-  // Monitor for file system changes
+  const getFixedPositionForItem = (item: FileSystemItem) => {
+    if (item.parentId !== 'desktop') return null;
+    
+    const fixedPositions: Record<string, { x: number, y: number }> = {
+      'My Projects': { x: 0, y: 0 },
+      'README.txt': { x: 0, y: GRID_SIZE },
+      'VS Code.exe': { x: 0, y: GRID_SIZE * 2 },
+      'GameBoy.exe': { x: 0, y: GRID_SIZE * 3 },
+      'Paint.exe': { x: 0, y: GRID_SIZE * 4 }
+    };
+    
+    return fixedPositions[item.name] || null;
+  };
+
+  // Initialize fixed positions
   useEffect(() => {
-    if (desktop?.children) {
-      const currentChildren = desktop.children;
-      const prevChildren = desktopChildrenRef.current;
-      
-      const newItemsAdded = currentChildren.filter(id => !prevChildren.includes(id));
-      
-      if (newItemsAdded.length > 0) {
-        console.log("New items added to desktop:", newItemsAdded);
+    if (!desktop) return;
+    
+    const storageKey = 'fixed-positions-applied';
+    const positionsApplied = localStorage.getItem(storageKey);
+    
+    if (positionsApplied) return;
+    
+    const updatedPositions: Record<string, { x: number, y: number }> = {};
+    let otherItemsCount = 0;
+    
+    Object.values(items).forEach(item => {
+      if (item.parentId === 'desktop') {
+        const fixedPosition = getFixedPositionForItem(item);
         
-        const occupiedPositions = new Set(
-          Object.values(iconPositions).map(pos => `${pos.x},${pos.y}`)
-        );
-        
-        const startIndex = Object.keys(iconPositions).length;
-        
-        newItemsAdded.forEach((itemId, index) => {
-          if (!iconPositions[itemId]) {
-            const maxColumns = Math.floor(window.innerWidth / GRID_SIZE) - 1; 
-            
-            const col = (startIndex + index) % maxColumns;
-            const row = Math.floor((startIndex + index) / maxColumns);
-            
-            const x = col * GRID_SIZE;
-            const y = row * GRID_SIZE;
-            
-            const posKey = `${x},${y}`;
-            
-            if (!occupiedPositions.has(posKey)) {
-              setIconPositions(prev => ({
-                ...prev,
-                [itemId]: { x, y }
-              }));
-              occupiedPositions.add(posKey);
-            } else {
-              const nextPosition = findNextAvailablePosition(0, 0, itemId);
-              setIconPositions(prev => ({
-                ...prev,
-                [itemId]: nextPosition
-              }));
-              occupiedPositions.add(`${nextPosition.x},${nextPosition.y}`);
-            }
-            
-            const updatedNewItems = new Set(newItems);
-            updatedNewItems.add(itemId);
-            
-            setTimeout(() => {
-              const finalNewItems = new Set(newItems);
-              finalNewItems.delete(itemId);
-            }, 500);
+        if (fixedPosition) {
+          updatedPositions[item.id] = fixedPosition;
+        } else {
+          const col = 1 + (Math.floor(otherItemsCount / 5) % 5);
+          const row = (otherItemsCount % 5) + 1;
+          
+          updatedPositions[item.id] = { 
+            x: col * GRID_SIZE, 
+            y: row * GRID_SIZE 
+          };
+          
+          otherItemsCount++;
+        }
+      }
+    });
+    
+    localStorage.removeItem('desktopIconPositions');
+    setIconPositions(updatedPositions);
+    localStorage.setItem('desktopIconPositions', JSON.stringify(updatedPositions));
+    localStorage.setItem(storageKey, 'true');
+  }, [desktop, items, setIconPositions]);
+
+  useEffect(() => {
+    if (!desktop || appInitializedRef.current) return;
+    
+    const exeFiles = createAppItems();
+    const requiredExeFiles = ['vscode', 'gameboy', 'paint'];
+    const existingExeIds = new Set<string>();
+    
+    Object.values(items).forEach(item => {
+      if (item.type === 'file') {
+        requiredExeFiles.forEach(requiredId => {
+          const exeFile = exeFiles[requiredId];
+          if (exeFile && item.name === exeFile.name) {
+            existingExeIds.add(requiredId);
           }
         });
       }
+    });
+    
+    let createdAnyFile = false;
+    
+    requiredExeFiles.forEach(exeId => {
+      if (existingExeIds.has(exeId)) return;
       
-      desktopChildrenRef.current = [...currentChildren];
+      const exeFile = exeFiles[exeId];
+      if (!exeFile) return;
+      
+      console.log(`Creating ${exeFile.name} on desktop`);
+      fileSystem.createFile(exeFile.name, 'desktop', exeFile.content, 0);
+      createdAnyFile = true;
+    });
+    
+    if (createdAnyFile) {
+      appInitializedRef.current = true;
+      localStorage.removeItem('fixed-positions-applied');
     }
-  }, [desktop?.children, iconPositions, newItems, findNextAvailablePosition, setIconPositions]);
+  }, [desktop, items, fileSystem]);
 
-  // This useEffect triggers the rename on the last created item
+  // Monitor file system changes
+  useEffect(() => {
+    if (!desktop?.children) return;
+    
+    const currentChildren = desktop.children;
+    const prevChildren = desktopChildrenRef.current;
+    const newItemsAdded = currentChildren.filter(id => !prevChildren.includes(id));
+    
+    if (newItemsAdded.length > 0) {
+      let currentPositions = {};
+      
+      try {
+        const storedPositions = localStorage.getItem('desktopIconPositions');
+        currentPositions = storedPositions ? JSON.parse(storedPositions) : { ...iconPositions };
+      } catch (error) {
+        console.error('Error loading positions from localStorage:', error);
+        currentPositions = { ...iconPositions };
+      }
+      
+      const positionsToUpdate: Record<string, { x: number, y: number }> = {};
+      
+      newItemsAdded.forEach(itemId => {
+        if (!currentPositions[itemId]) {
+          const item = items[itemId];
+          const fixedPosition = item ? getFixedPositionForItem(item) : null;
+          
+          if (fixedPosition) {
+            positionsToUpdate[itemId] = fixedPosition;
+          } else {
+            positionsToUpdate[itemId] = findNextAvailablePosition(0, 0, itemId);
+          }
+        }
+      });
+      
+      if (Object.keys(positionsToUpdate).length > 0) {
+        setIconPositions(prev => {
+          const updated = { ...prev, ...positionsToUpdate };
+          localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    }
+    
+    desktopChildrenRef.current = [...currentChildren];
+  }, [desktop?.children, iconPositions, findNextAvailablePosition, setIconPositions, items]);
+
+  // Auto-rename newly created items
   useEffect(() => {
     if (fileOperations.lastCreatedItemId && !fileOperations.isRenaming) {
       const item = items[fileOperations.lastCreatedItemId];
@@ -359,7 +388,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     }
   }, [fileOperations.lastCreatedItemId, fileOperations.isRenaming, items]);
 
-  // Get all desktop items from file system
   const allItems = desktop?.type === 'folder' 
     ? desktop.children.map(itemId => items[itemId]).filter(Boolean) 
     : [];
@@ -371,7 +399,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       onDragOver={dragDropOps.handleDragOver}
       onDrop={(e) => dragDropOps.handleDrop(e, GRID_SIZE)}
     >
-      {/* Render all desktop items with a unified component */}
       {allItems.map((item) => {
         if (!item) return null;
         
@@ -379,16 +406,15 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         let position = iconPositions[itemId];
         
         if (!position) {
-          const newPosition = findNextAvailablePosition(0, 0, itemId);
-          setIconPositions(prev => ({
-            ...prev,
-            [itemId]: newPosition
-          }));
-          position = newPosition;
+          const fixedPosition = getFixedPositionForItem(item);
+          position = fixedPosition || findNextAvailablePosition(0, 0, itemId);
+          
+          setIconPositions(prev => {
+            const updated = { ...prev, [itemId]: position };
+            localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
+            return updated;
+          });
         }
-        
-        const isNewItem = newItems.has(itemId);
-        const isCut = clipboardOps.clipboard.operation === 'cut' && clipboardOps.clipboard.item?.id === itemId;
         
         return (
           <DesktopIcon
@@ -399,8 +425,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
             isRenaming={fileOperations.isRenaming === itemId}
             newName={fileOperations.newName}
             isDragging={dragDropOps.isDragging}
-            isNewItem={isNewItem}
-            isCut={isCut}
+            isNewItem={newItems.has(itemId)}
+            isCut={clipboardOps.clipboard.operation === 'cut' && clipboardOps.clipboard.item?.id === itemId}
             onContextMenu={(e) => contextMenuOps.handleContextMenu(e, itemId)}
             onDragStart={(e) => dragDropOps.handleDragStart(e, itemId)}
             onDragEnd={dragDropOps.handleDragEnd}
@@ -414,7 +440,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         );
       })}
 
-      {/* Context Menu */}
       <DesktopContextMenuHandler
         contextMenu={contextMenuOps.contextMenu}
         onClose={contextMenuOps.handleCloseContextMenu}
