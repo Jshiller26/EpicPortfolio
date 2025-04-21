@@ -5,9 +5,10 @@ import Image from 'next/image';
 
 interface LockScreenProps {
   onUnlock: () => void;
+  transparentBg?: boolean;
 }
 
-export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
+export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, transparentBg = false }) => {
   const [time, setTime] = useState(new Date());
   const [showTime, setShowTime] = useState(true);
   
@@ -22,7 +23,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   const formatTime = (date: Date) => {
     let hours = date.getHours();
     const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? '' : '';
     hours = hours % 12;
     hours = hours ? hours : 12;
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
@@ -61,16 +61,18 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
   
   return (
     <div 
-      className="fixed inset-0 flex flex-col items-center justify-center cursor-pointer"
+      className="fixed inset-0 flex flex-col items-center cursor-pointer"
       style={{
-        backgroundImage: "url('/images/desktop/mountainWallpaper.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        ...(transparentBg ? {} : {
+          backgroundImage: "url('/images/desktop/mountainWallpaper3.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        })
       }}
       onClick={handleInteraction}
     >
       <div 
-        className={`text-white text-center transition-transform duration-500 ${showTime ? 'transform-none' : 'transform -translate-y-full'}`}
+        className={`text-white text-center transition-transform duration-500 mt-32 ${showTime ? 'transform-none' : 'transform -translate-y-full'}`}
       >
         <div className="text-9xl font-light">{formatTime(time)}</div>
         <div className="text-3xl mt-4 font-light">{formatDate(time)}</div>

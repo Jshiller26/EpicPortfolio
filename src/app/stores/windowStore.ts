@@ -43,6 +43,7 @@ interface WindowStore {
   openWindow: (id: string) => void;
   createWindow: (options: WindowCreateOptions) => void;
   closeWindow: (id: string) => void;
+  closeAllWindows: () => void;
   minimizeWindow: (id: string) => void;
   restoreWindow: (id: string) => void;
   maximizeWindow: (id: string) => void;
@@ -262,6 +263,13 @@ export const useWindowStore = create<WindowStore>()(
         set({
           windows: windowsCopy,
           activeWindowId: newActiveId
+        });
+      },
+      
+      closeAllWindows: () => {
+        set({
+          windows: {},
+          activeWindowId: null
         });
       },
       

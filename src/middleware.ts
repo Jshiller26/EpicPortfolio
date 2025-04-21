@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 export function middleware() {
   const response = NextResponse.next();
 
-  response.headers.append('Content-Security-Policy', "frame-src 'self' https://jspaint.app");
+  response.headers.append(
+    'Content-Security-Policy', 
+    "frame-src 'self' https://* http://* data: blob:"
+  );
 
   return response;
 }

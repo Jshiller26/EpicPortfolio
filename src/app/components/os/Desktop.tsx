@@ -8,12 +8,14 @@ import { Window } from './Window';
 import { BackButton } from './BackButton';
 import DialogBox from '../DialogBox';
 import { initDragCursorFix } from '@/app/utils/dragCursorFix';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface DesktopProps {
   onClose: () => void;
+  onLogout?: () => void;
 }
 
-export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
+export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, setWidgetsOpen] = useState(false);
@@ -22,6 +24,8 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
   const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
   const router = useRouter();
   const fileSystem = useFileSystemStore();
+  const { logout } = useAuth();
+  const closeAllWindows = useWindowStore(state => state.closeAllWindows);
   
   // Get window information from the store
   const windows = useWindowStore(state => state.windows);
@@ -50,6 +54,17 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
 
   const handleShutdown = () => {
     setShowShutdownDialog(true);
+  };
+
+  const handleLockScreen = () => {
+    setStartMenuOpen(false);
+    setSearchOpen(false);
+    closeAllWindows();
+    logout();
+    
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const handleDialogClose = () => {
@@ -137,6 +152,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             onSearchClick={toggleSearch}
             isStartOpen={startMenuOpen}
             isSearchOpen={searchOpen}
+            onLockScreen={handleLockScreen}
           />
         </div>
 
