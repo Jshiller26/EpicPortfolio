@@ -118,40 +118,6 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
   });
 
   const clipboardOps = useDesktopClipboard({
-    fileSystem: {
-      moveItem: (itemId: string, targetId: string, callback?: (movedItemId: string) => void) => {
-        fileSystem.moveItem(itemId, targetId, callback);
-      },
-      copyItem: (itemId: string, targetId: string, callback?: (newId: string) => void) => {
-        const originalPosition = iconPositions[itemId];
-        
-        fileSystem.copyItem(itemId, targetId, (newId: string) => {
-          if (newId && originalPosition && callback) {
-            const offsetPosition = {
-              x: originalPosition.x + 20,
-              y: originalPosition.y + 20
-            };
-            
-            const newPosition = isPositionOccupied(offsetPosition.x, offsetPosition.y)
-              ? findNextAvailablePosition(0, 0, newId)
-              : offsetPosition;
-              
-            setTimeout(() => {
-              setIconPositions(prev => {
-                const updated = { ...prev, [newId]: newPosition };
-                localStorage.setItem('desktopIconPositions', JSON.stringify(updated));
-                return updated;
-              });
-            }, 0);
-            
-            callback(newId);
-          }
-        });
-
-        return '';
-      },
-      createFile: fileSystem.createFile
-    },
     findNextAvailablePosition,
     isPositionOccupied,
     setIconPositions,
@@ -215,11 +181,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
         : undefined;
       creationOps.handleCreateTextFile(position);
     },
-    handlePaste: () => {
-      const position = contextMenuOps.contextMenu.desktopX !== undefined && 
-                      contextMenuOps.contextMenu.desktopY !== undefined
-        ? { x: contextMenuOps.contextMenu.desktopX, y: contextMenuOps.contextMenu.desktopY }
-        : undefined;
+    handlePaste: (position) => {
       clipboardOps.handlePaste(position);
     },
     handleOpen: fileOperations.handleOpen,

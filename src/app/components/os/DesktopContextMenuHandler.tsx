@@ -35,12 +35,20 @@ export const DesktopContextMenuHandler: React.FC<DesktopContextMenuHandlerProps>
       onClose();
     };
     
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
     document.addEventListener('click', handleGlobalClick);
     document.addEventListener('closeAllContextMenus', handleCloseEvent);
+    document.addEventListener('keydown', handleKeyDown);
     
     return () => {
       document.removeEventListener('click', handleGlobalClick);
       document.removeEventListener('closeAllContextMenus', handleCloseEvent);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [contextMenu.visible, onClose]);
   
@@ -48,11 +56,13 @@ export const DesktopContextMenuHandler: React.FC<DesktopContextMenuHandlerProps>
     return null;
   }
 
+  const menuItems = getContextMenuItems(contextMenu.itemId);
+
   return (
     <ContextMenu
       x={contextMenu.x}
       y={contextMenu.y}
-      items={getContextMenuItems(contextMenu.itemId)}
+      items={menuItems}
       onClose={onClose}
     />
   );

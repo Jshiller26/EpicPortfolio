@@ -126,17 +126,26 @@ export const useDesktopDragDrop = ({
     }
   };
 
+  const snapToGrid = (x: number, y: number, gridSize: number): { x: number, y: number } => {
+    return {
+      x: Math.round(x / gridSize) * gridSize,
+      y: Math.round(y / gridSize) * gridSize
+    };
+  };
+
   const handleFileExplorerDrop = (itemId: string, e: React.DragEvent, gridSize: number) => {
     const desktopRect = e.currentTarget.getBoundingClientRect();
     
     const relativeX = Math.max(0, e.clientX - desktopRect.left);
     const relativeY = Math.max(0, e.clientY - desktopRect.top);
     
+    const snappedPosition = snapToGrid(relativeX, relativeY, gridSize);
+    
     const maxCols = Math.floor(desktopRect.width / gridSize) - 1;
     const maxRows = Math.floor(desktopRect.height / gridSize) - 1;
     
-    const x = Math.min(maxCols * gridSize, Math.floor(relativeX / gridSize) * gridSize);
-    const y = Math.min(maxRows * gridSize, Math.floor(relativeY / gridSize) * gridSize);
+    const x = Math.min(maxCols * gridSize, snappedPosition.x);
+    const y = Math.min(maxRows * gridSize, snappedPosition.y);
     
     moveItem(itemId, 'desktop', (movedItemId: string) => {
       const updatedNewItems = new Set(newItems);
@@ -205,14 +214,14 @@ export const useDesktopDragDrop = ({
       
       const relativeX = Math.max(0, e.clientX - desktopRect.left);
       const relativeY = Math.max(0, e.clientY - desktopRect.top);
+      const snappedPosition = snapToGrid(relativeX, relativeY, gridSize);
       
       // Calculate max grid positions to ensure icons stay visible
       const maxCols = Math.floor(desktopRect.width / gridSize) - 1;
       const maxRows = Math.floor(desktopRect.height / gridSize) - 1;
       
-      // Calculate grid position with bounds checking
-      const x = Math.min(maxCols * gridSize, Math.floor(relativeX / gridSize) * gridSize);
-      const y = Math.min(maxRows * gridSize, Math.floor(relativeY / gridSize) * gridSize);
+      const x = Math.min(maxCols * gridSize, snappedPosition.x);
+      const y = Math.min(maxRows * gridSize, snappedPosition.y);
       
       if (!isPositionOccupied(x, y, itemId)) {
         setIconPositions(prev => {
