@@ -64,6 +64,36 @@ const getOffsetPosition = (existingPosition: { x: number; y: number }) => {
   };
 };
 
+// Get cascading postiion when opening new windwos
+const getCascadingPosition = (windows: Record<string, WindowState>, width: number, height: number) => {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight - 48; // Subtract taskbar height
+  
+  const defaultPosition = {
+    x: Math.max(0, screenWidth / 2 - width / 2),
+    y: Math.max(0, screenHeight / 2 - height / 2)
+  };
+  
+  const openWindows = Object.values(windows).filter(w => w.isOpen && !w.isMinimized);
+  if (openWindows.length === 0) {
+    return defaultPosition;
+  }
+  
+  const topWindow = openWindows.reduce((highest, current) => 
+    current.zIndex > highest.zIndex ? current : highest, openWindows[0]);
+  
+  const newPosition = getOffsetPosition(topWindow.position);
+  
+  if (newPosition.x + width > screenWidth) {
+    newPosition.x = 50;
+  }
+  if (newPosition.y + height > screenHeight) {
+    newPosition.y = 50;
+  }
+  
+  return newPosition;
+};
+
 export const useWindowStore = create<WindowStore>()(
   persist(
     (set, get) => ({
@@ -88,13 +118,9 @@ export const useWindowStore = create<WindowStore>()(
           showInTaskbar = true
         } = options;
         
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight - 48;
-        
-        const defaultPosition = {
-          x: x !== undefined ? x : Math.max(0, screenWidth / 2 - width / 2),
-          y: y !== undefined ? y : Math.max(0, screenHeight / 2 - height / 2)
-        };
+        const position = (x !== undefined && y !== undefined) 
+          ? { x, y }
+          : getCascadingPosition(windows, width, height);
         
         set({
           windows: {
@@ -105,7 +131,7 @@ export const useWindowStore = create<WindowStore>()(
               isOpen: true,
               isMinimized: false,
               isMaximized: false,
-              position: defaultPosition,
+              position,
               size: { width, height },
               zIndex: highestZIndex + 1,
               content,
@@ -194,28 +220,7 @@ export const useWindowStore = create<WindowStore>()(
         const counter = (instanceCounters[baseId] || 0) + 1;
         const uniqueId = `${baseId}-${counter}`;
         
-        const existingWindows = Object.values(windows).filter(
-          window => window.baseId === baseId
-        );
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight - 48; // Subtract taskbar height
-        
-        let defaultPosition = {
-          x: Math.max(0, screenWidth / 2 - DEFAULT_WINDOW_SIZE.width / 2),
-          y: Math.max(0, screenHeight / 2 - DEFAULT_WINDOW_SIZE.height / 2)
-        };
-        
-        if (existingWindows.length > 0) {
-          const lastPosition = existingWindows[existingWindows.length - 1].position;
-          defaultPosition = getOffsetPosition(lastPosition);
-          
-          if (defaultPosition.x + DEFAULT_WINDOW_SIZE.width > screenWidth) {
-            defaultPosition.x = 50;
-          }
-          if (defaultPosition.y + DEFAULT_WINDOW_SIZE.height > screenHeight) {
-            defaultPosition.y = 50;
-          }
-        }
+        const position = getCascadingPosition(windows, DEFAULT_WINDOW_SIZE.width, DEFAULT_WINDOW_SIZE.height);
         
         set({
           windows: {
@@ -226,7 +231,7 @@ export const useWindowStore = create<WindowStore>()(
               isOpen: true,
               isMinimized: false,
               isMaximized: false,
-              position: defaultPosition,
+              position,
               size: DEFAULT_WINDOW_SIZE,
               zIndex: highestZIndex + 1,
               showInTaskbar: true,
