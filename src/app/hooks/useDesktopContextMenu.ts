@@ -47,7 +47,6 @@ export const useDesktopContextMenu = ({
   }, []);
 
   const handleDesktopContextMenu = useCallback((e: React.MouseEvent, gridSize: number) => {
-    // Only show desktop context menu if rightclicking the desktop itself
     if (e.target === e.currentTarget) {
       e.preventDefault();
       
@@ -78,16 +77,10 @@ export const useDesktopContextMenu = ({
       return getDesktopContextMenu(
         handleCreateNewFolder,
         handleCreateTextFile,
-        () => {
-          if (contextMenu.desktopX !== undefined && contextMenu.desktopY !== undefined) {
-            handlePaste({
-              x: contextMenu.desktopX,
-              y: contextMenu.desktopY
-            });
-          } else {
-            handlePaste();
-          }
-        },
+        () => handlePaste({
+          x: contextMenu.desktopX!,
+          y: contextMenu.desktopY!
+        }),
         hasClipboardItem
       );
     }

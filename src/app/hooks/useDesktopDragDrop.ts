@@ -46,27 +46,21 @@ export const useDesktopDragDrop = ({
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
     setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
-    
-    // Store the current dragged item ID
     draggedItemRef.current = itemId;
     
     const item = items[itemId];
-    
     const isExe = item && isExeFile(item);
     
-    const dragData = {
-      itemId: itemId,
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      itemId,
       source: 'desktop',
-      isExe: isExe
-    };
-    
-    e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+      isExe
+    }));
     e.dataTransfer.setData('text/plain', itemId);
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
-    // Reset dragged item
     draggedItemRef.current = null;
     
     if (typeof localStorage !== 'undefined') {
@@ -83,13 +77,7 @@ export const useDesktopDragDrop = ({
   const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Check if trying to drag a folder onto itself
-    if (draggedItemRef.current === folderId) {
-      e.dataTransfer.dropEffect = 'none';
-    } else {
-      e.dataTransfer.dropEffect = 'move';
-    }
+    e.dataTransfer.dropEffect = draggedItemRef.current === folderId ? 'none' : 'move';
   };
 
   const handleFolderDrop = (e: React.DragEvent, folderId: string) => {
@@ -97,14 +85,9 @@ export const useDesktopDragDrop = ({
     
     try {
       const jsonData = e.dataTransfer.getData('application/json');
-      let itemId: string;
-      
-      if (jsonData) {
-        const dragData = JSON.parse(jsonData);
-        itemId = dragData.itemId;
-      } else {
-        itemId = e.dataTransfer.getData('text/plain');
-      }
+      const itemId = jsonData 
+        ? JSON.parse(jsonData).itemId 
+        : e.dataTransfer.getData('text/plain');
       
       if (!itemId || itemId === folderId) return;
       
@@ -113,7 +96,6 @@ export const useDesktopDragDrop = ({
       
       moveItem(itemId, folderId, () => {
         removeIconPosition(itemId);
-        
         setIconPositions(prev => {
           const updated = { ...prev };
           delete updated[itemId];
@@ -133,49 +115,45 @@ export const useDesktopDragDrop = ({
     };
   };
 
-  const handleFileExplorerDrop = (itemId: string, e: React.DragEvent, gridSize: number) => {
+  const getDropPosition = (e: React.DragEvent, gridSize: number) => {
     const desktopRect = e.currentTarget.getBoundingClientRect();
-    
     const relativeX = Math.max(0, e.clientX - desktopRect.left);
     const relativeY = Math.max(0, e.clientY - desktopRect.top);
-    
     const snappedPosition = snapToGrid(relativeX, relativeY, gridSize);
     
     const maxCols = Math.floor(desktopRect.width / gridSize) - 1;
     const maxRows = Math.floor(desktopRect.height / gridSize) - 1;
     
-    const x = Math.min(maxCols * gridSize, snappedPosition.x);
-    const y = Math.min(maxRows * gridSize, snappedPosition.y);
+    return {
+      x: Math.min(maxCols * gridSize, snappedPosition.x),
+      y: Math.min(maxRows * gridSize, snappedPosition.y)
+    };
+  };
+
+  const applyIconPosition = (itemId: string, position: { x: number, y: number }) => {
+    setIconPositions(prev => {
+      const updated = {
+        ...prev,
+        [itemId]: position
+      };
+      positionsRef.current = updated;
+      return updated;
+    });
+  };
+
+  const handleFileExplorerDrop = (itemId: string, e: React.DragEvent, gridSize: number) => {
+    const position = getDropPosition(e, gridSize);
     
     moveItem(itemId, 'desktop', (movedItemId: string) => {
-      const updatedNewItems = new Set(newItems);
-      updatedNewItems.add(movedItemId);
+      newItems.add(movedItemId);
       
-      if (!isPositionOccupied(x, y, movedItemId)) {
-        setIconPositions(prev => {
-          const updated = {
-            ...prev,
-            [movedItemId]: { x, y }
-          };
-          positionsRef.current = updated;
-          return updated;
-        });
+      if (!isPositionOccupied(position.x, position.y, movedItemId)) {
+        applyIconPosition(movedItemId, position);
       } else {
-        const position = findNextAvailablePosition(0, 0, movedItemId);
-        setIconPositions(prev => {
-          const updated = {
-            ...prev,
-            [movedItemId]: position
-          };
-          positionsRef.current = updated;
-          return updated;
-        });
+        applyIconPosition(movedItemId, findNextAvailablePosition(0, 0, movedItemId));
       }
       
-      setTimeout(() => {
-        const finalNewItems = new Set(newItems);
-        finalNewItems.delete(movedItemId);
-      }, 500);
+      setTimeout(() => newItems.delete(movedItemId), 500);
       
       if (typeof localStorage !== 'undefined') {
         setTimeout(() => {
@@ -191,13 +169,12 @@ export const useDesktopDragDrop = ({
     
     try {
       const jsonData = e.dataTransfer.getData('application/json');
-      let itemId: string;
+      let itemId, source;
       
-      // Parse the drag data
       if (jsonData) {
         const dragData = JSON.parse(jsonData);
         itemId = dragData.itemId;
-        const source = dragData.source;
+        source = dragData.source;
         
         if (source === 'fileExplorer') {
           handleFileExplorerDrop(itemId, e, gridSize);
@@ -209,39 +186,12 @@ export const useDesktopDragDrop = ({
       
       if (!itemId) return;
       
-      // Get desktop dimensions for bounds checking
-      const desktopRect = e.currentTarget.getBoundingClientRect();
+      const position = getDropPosition(e, gridSize);
       
-      const relativeX = Math.max(0, e.clientX - desktopRect.left);
-      const relativeY = Math.max(0, e.clientY - desktopRect.top);
-      const snappedPosition = snapToGrid(relativeX, relativeY, gridSize);
-      
-      // Calculate max grid positions to ensure icons stay visible
-      const maxCols = Math.floor(desktopRect.width / gridSize) - 1;
-      const maxRows = Math.floor(desktopRect.height / gridSize) - 1;
-      
-      const x = Math.min(maxCols * gridSize, snappedPosition.x);
-      const y = Math.min(maxRows * gridSize, snappedPosition.y);
-      
-      if (!isPositionOccupied(x, y, itemId)) {
-        setIconPositions(prev => {
-          const updated = {
-            ...prev,
-            [itemId]: { x, y }
-          };
-          positionsRef.current = updated;
-          return updated;
-        });
+      if (!isPositionOccupied(position.x, position.y, itemId)) {
+        applyIconPosition(itemId, position);
       } else {
-        const position = findNextAvailablePosition(0, 0, itemId);
-        setIconPositions(prev => {
-          const updated = {
-            ...prev,
-            [itemId]: position
-          };
-          positionsRef.current = updated;
-          return updated;
-        });
+        applyIconPosition(itemId, findNextAvailablePosition(0, 0, itemId));
       }
       
       if (typeof localStorage !== 'undefined') {

@@ -1,7 +1,7 @@
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { FileSystemItem } from '@/app/types/fileSystem';
-import { useState, useCallback, useEffect} from 'react';
+import { useState, useCallback } from 'react';
 
 interface UseDesktopClipboardProps {
   findNextAvailablePosition: (startX: number, startY: number, excludeItemId?: string) => { x: number, y: number };
@@ -16,7 +16,8 @@ const GRID_SIZE = 76;
 export const useDesktopClipboard = ({
   findNextAvailablePosition,
   setIconPositions,
-  items}: UseDesktopClipboardProps) => {
+  items
+}: UseDesktopClipboardProps) => {
   const clipboard = useClipboardStore();
   const fileSystem = useFileSystemStore();
   
@@ -27,10 +28,10 @@ export const useDesktopClipboard = ({
   }>({ id: null, position: null, timestamp: 0 });
   
   const snapToGrid = useCallback((position: { x: number, y: number }): { x: number, y: number } => {
-    const gridX = Math.round(position.x / GRID_SIZE) * GRID_SIZE;
-    const gridY = Math.round(position.y / GRID_SIZE) * GRID_SIZE;
-    
-    return { x: gridX, y: gridY };
+    return {
+      x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(position.y / GRID_SIZE) * GRID_SIZE
+    };
   }, []);
 
   const handleCut = useCallback((itemId: string) => {
@@ -56,16 +57,13 @@ export const useDesktopClipboard = ({
       
       try {
         localStorage.setItem('desktopIconPositions', JSON.stringify(newPositions));
-      } catch  {
-      }
+      } catch {}
       return newPositions;
     });
   }, [setIconPositions]);
 
   const handlePaste = useCallback((contextPosition?: { x: number, y: number }) => {
-    if (!clipboard.item) {
-      return;
-    }
+    if (!clipboard.item) return;
     
     if (!contextPosition) {      
       if (clipboard.operation === 'cut') {
@@ -89,10 +87,8 @@ export const useDesktopClipboard = ({
     
     if (clipboard.operation === 'cut') {
       fileSystem.moveItem(clipboard.item.id, 'desktop', (movedItemId) => {
-
         setTimeout(() => {
           applyPositionToItem(movedItemId, snappedPosition);
-          
           setLastPaste({
             id: movedItemId,
             position: snappedPosition,
@@ -102,10 +98,8 @@ export const useDesktopClipboard = ({
       });
     } else if (clipboard.operation === 'copy') {
       fileSystem.copyItem(clipboard.item.id, 'desktop', (newId) => {
-        
         setTimeout(() => {
           applyPositionToItem(newId, snappedPosition);
-          
           setLastPaste({
             id: newId,
             position: snappedPosition,
@@ -123,40 +117,6 @@ export const useDesktopClipboard = ({
     findNextAvailablePosition, 
     applyPositionToItem
   ]);
-  
-  useEffect(() => {
-    if (!lastPaste.id || !lastPaste.position) return;
-    
-    const item = items[lastPaste.id];
-    if (!item) return;
-     is set correctly
-    setIconPositions(prev => {
-      if (prev[lastPaste.id]?.x !== lastPaste.position?.x || 
-          prev[lastPaste.id]?.y !== lastPaste.position?.y) {        
-        const newPositions = {
-          ...prev,
-          [lastPaste.id]: lastPaste.position!
-        };
-        
-        try {
-          localStorage.setItem('desktopIconPositions', JSON.stringify(newPositions));
-        } catch (error) {
-        }
-        
-        return newPositions;
-      }
-      return prev;
-    });
-    
-    const timer = setTimeout(() => {
-      if (lastPaste.timestamp === timestamp) {
-        setLastPaste({ id: null, position: null, timestamp: 0 });
-      }
-    }, 1000);
-    
-    const timestamp = lastPaste.timestamp;
-    return () => clearTimeout(timer);
-  }, [items, lastPaste, setIconPositions]);
 
   return {
     clipboard,
