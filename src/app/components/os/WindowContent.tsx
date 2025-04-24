@@ -13,6 +13,7 @@ import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
 import Paint from './Paint/Paint';
+import PropertiesDialog from './PropertiesDialog';
 
 interface WindowContentProps {
   windowId: string;
@@ -30,6 +31,10 @@ const getWindowType = (windowId: string) => {
     return 'password-dialog';
   }
   
+  if (windowId.startsWith('properties-')) {
+    return 'properties';
+  }
+  
   return parts[0];
 };
 
@@ -42,7 +47,11 @@ const getContentId = (windowId: string) => {
   }
   
   if (windowId.startsWith('password-dialog-')) {
-    return windowId.split('-')[2];
+    return windowId.split('-').slice(2).join('-');
+  }
+  
+  if (windowId.startsWith('properties-')) {
+    return windowId.split('-').slice(1).join('-');
   }
   
   parts.shift();
@@ -60,6 +69,15 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   const windowData = windowStore.windows[windowId];
   
   if (windowData && windowData.content) {
+    if (typeof windowData.content === 'object' && 'type' in windowData.content && windowData.content.type === 'properties-dialog') {
+      return (
+        <PropertiesDialog 
+          itemId={windowData.content.props.itemId} 
+          onClose={windowData.content.props.onClose} 
+        />
+      );
+    }
+    
     return windowData.content;
   }
   
@@ -130,6 +148,13 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     );
   } else if (windowType === 'paint') {
     return <Paint />;
+  } else if (windowType === 'properties') {
+    return (
+      <PropertiesDialog
+        itemId={contentId}
+        onClose={() => windowStore.closeWindow(windowId)}
+      />
+    );
   }
   
   // Default content for unknown window types

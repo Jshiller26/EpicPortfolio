@@ -4,6 +4,7 @@ import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
 import { useUserPreferencesStore, ViewMode, SortBy } from '@/app/stores/userPreferencesStore';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface FileExplorerContextMenuProps {
   x: number;
@@ -23,6 +24,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   const clipboard = useClipboardStore();
   const fileSystem = useFileSystemStore();
   const userPreferences = useUserPreferencesStore();
+  const windowStore = useWindowStore();
   
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
@@ -181,6 +183,68 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     }
     return '';
   };
+  
+  const handleProperties = () => {
+    if (selectedItem) {
+      const windowId = `properties-${selectedItem.id}`;
+      
+      if (windowStore.windows[windowId]) {
+        windowStore.setActiveWindow(windowId);
+        onClose();
+        return;
+      }
+      
+      windowStore.createWindow({
+        id: windowId,
+        title: `${selectedItem.name} Properties`,
+        content: {
+          type: 'properties-dialog',
+          props: {
+            itemId: selectedItem.id,
+            onClose: () => windowStore.closeWindow(windowId)
+          }
+        },
+        width: 370,
+        height: 450,
+        x: Math.max(0, (window.innerWidth - 370) / 2),
+        y: Math.max(0, (window.innerHeight - 450) / 2),
+        resizable: false,
+        minimizable: true,
+        maximizable: false,
+        showInTaskbar: true,
+      });
+    } else {
+      const windowId = `properties-${currentFolder}`;
+      
+      if (windowStore.windows[windowId]) {
+        windowStore.setActiveWindow(windowId);
+        onClose();
+        return;
+      }
+      
+      windowStore.createWindow({
+        id: windowId,
+        title: `${fileSystem.items[currentFolder]?.name || 'Folder'} Properties`,
+        content: {
+          type: 'properties-dialog',
+          props: {
+            itemId: currentFolder,
+            onClose: () => windowStore.closeWindow(windowId)
+          }
+        },
+        width: 370,
+        height: 450,
+        x: Math.max(0, (window.innerWidth - 370) / 2),
+        y: Math.max(0, (window.innerHeight - 450) / 2),
+        resizable: false,
+        minimizable: true,
+        maximizable: false,
+        showInTaskbar: true,
+      });
+    }
+    
+    onClose();
+  };
 
   return (
     <div 
@@ -279,10 +343,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={() => {
-              console.log('Properties for', selectedItem.name);
-              onClose();
-            }}
+            onClick={handleProperties}
           >
             <span>Properties</span>
           </button>
@@ -476,10 +537,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={() => {
-              console.log('Folder properties');
-              onClose();
-            }}
+            onClick={handleProperties}
           >
             <span>Properties</span>
           </button>
