@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ContextMenuItem } from '@/app/types/ui/ContextMenu';
 import { ContextMenuState } from '../components/os/DesktopContextMenuHandler';
 import { getDesktopContextMenu, getItemContextMenu } from '@/app/utils/desktopUtils';
@@ -6,7 +6,7 @@ import { getDesktopContextMenu, getItemContextMenu } from '@/app/utils/desktopUt
 interface UseDesktopContextMenuProps {
   handleCreateNewFolder: () => void;
   handleCreateTextFile: () => void;
-  handlePaste: () => void;
+  handlePaste: (position?: { x: number, y: number }) => void;
   handleOpen: (itemId: string) => void;
   handleCut: (itemId: string) => void;
   handleCopy: (itemId: string) => void;
@@ -35,7 +35,7 @@ export const useDesktopContextMenu = ({
     itemId: null
   });
 
-  const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({
@@ -44,10 +44,9 @@ export const useDesktopContextMenu = ({
       y: e.clientY,
       itemId
     });
-  };
+  }, []);
 
-  const handleDesktopContextMenu = (e: React.MouseEvent, gridSize: number) => {
-    // Only show desktop context menu if rightclicking the desktop itself
+  const handleDesktopContextMenu = useCallback((e: React.MouseEvent, gridSize: number) => {
     if (e.target === e.currentTarget) {
       e.preventDefault();
       
@@ -55,8 +54,8 @@ export const useDesktopContextMenu = ({
       const desktopX = e.clientX - desktopRect.left;
       const desktopY = e.clientY - desktopRect.top;
       
-      const gridX = Math.floor(desktopX / gridSize) * gridSize;
-      const gridY = Math.floor(desktopY / gridSize) * gridSize;
+      const gridX = Math.round(desktopX / gridSize) * gridSize;
+      const gridY = Math.round(desktopY / gridSize) * gridSize;
       
       setContextMenu({
         visible: true,
@@ -67,18 +66,21 @@ export const useDesktopContextMenu = ({
         desktopY: gridY
       });
     }
-  };
+  }, []);
 
-  const handleCloseContextMenu = () => {
+  const handleCloseContextMenu = useCallback(() => {
     setContextMenu(prev => ({ ...prev, visible: false }));
-  };
+  }, []);
 
-  const getContextMenuItems = (itemId: string | null): ContextMenuItem[] => {
+  const getContextMenuItems = useCallback((itemId: string | null): ContextMenuItem[] => {
     if (itemId === null) {
       return getDesktopContextMenu(
         handleCreateNewFolder,
         handleCreateTextFile,
-        handlePaste,
+        () => handlePaste({
+          x: contextMenu.desktopX!,
+          y: contextMenu.desktopY!
+        }),
         hasClipboardItem
       );
     }
@@ -92,7 +94,19 @@ export const useDesktopContextMenu = ({
       handleRename,
       handleProperties
     );
-  };
+  }, [
+    contextMenu,
+    handleCreateNewFolder, 
+    handleCreateTextFile, 
+    handlePaste, 
+    hasClipboardItem,
+    handleOpen,
+    handleCut,
+    handleCopy,
+    handleDelete,
+    handleRename,
+    handleProperties
+  ]);
 
   return {
     contextMenu,

@@ -1,6 +1,6 @@
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 
-export const PROTECTED_ITEMS = ['desktop']; 
+export const PROTECTED_ITEMS: string[] = []; 
 
 export const isProtectedItem = (itemId: string): boolean => {
   return PROTECTED_ITEMS.includes(itemId);

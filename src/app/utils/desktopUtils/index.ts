@@ -135,20 +135,6 @@ export const getDesktopContextMenu = (
 ): ContextMenuItem[] => {
   return [
     {
-      label: 'New',
-      submenu: [
-        { label: 'Folder', onClick: handleCreateNewFolder },
-        { label: 'Text Document', onClick: handleCreateTextFile },
-      ]
-    },
-    { divider: true },
-    {
-      label: 'Paste',
-      onClick: handlePaste,
-      disabled: !hasClipboardItem
-    },
-    { divider: true },
-    {
       label: 'View',
       submenu: [
         { label: 'Large Icons', onClick: () => console.log('Large Icons') },
@@ -164,6 +150,20 @@ export const getDesktopContextMenu = (
         { label: 'Type', onClick: () => console.log('Sort by Type') },
         { label: 'Date modified', onClick: () => console.log('Sort by Date') },
       ]
+    },
+    { divider: true },
+    {
+      label: 'New',
+      submenu: [
+        { label: 'Folder', onClick: handleCreateNewFolder },
+        { label: 'Text Document', onClick: handleCreateTextFile },
+      ]
+    },
+    { divider: true },
+    {
+      label: 'Paste',
+      onClick: handlePaste,
+      disabled: !hasClipboardItem
     },
     { divider: true },
     {

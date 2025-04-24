@@ -23,46 +23,35 @@ export const useDesktopCreation = ({
   setLastCreatedItemId
 }: UseDesktopCreationProps) => {
   
+  const createItem = (
+    itemId: string | null, 
+    contextPosition?: { x: number, y: number }
+  ) => {
+    if (!itemId) return;
+    
+    const position = contextPosition && !isPositionOccupied(contextPosition.x, contextPosition.y)
+      ? contextPosition
+      : findNextAvailablePosition(0, 0, itemId);
+      
+    setIconPositions(prev => ({
+      ...prev,
+      [itemId]: position
+    }));
+    
+    setLastCreatedItemId(itemId);
+  };
+  
   const handleCreateNewFolder = (contextPosition?: { x: number, y: number }) => {    
     const folderId = createUniqueFolder(desktop, items, createFolder);
-    
     if (folderId) {
-      if (contextPosition && !isPositionOccupied(contextPosition.x, contextPosition.y)) {
-        setIconPositions(prev => ({
-          ...prev,
-          [folderId]: contextPosition
-        }));
-      } else {
-        const nextPosition = findNextAvailablePosition(0, 0, folderId);
-        setIconPositions(prev => ({
-          ...prev,
-          [folderId]: nextPosition
-        }));
-      }
-      
-      setLastCreatedItemId(folderId);
+      createItem(folderId, contextPosition);
     }
   };
 
   const handleCreateTextFile = (contextPosition?: { x: number, y: number }) => {
     const fileId = createUniqueTextFile(desktop, items, createFile);
-    console.log(`Created new text file with ID: ${fileId}`);
-    
     if (fileId) {
-      if (contextPosition && !isPositionOccupied(contextPosition.x, contextPosition.y)) {
-        setIconPositions(prev => ({
-          ...prev,
-          [fileId]: contextPosition
-        }));
-      } else {
-        const nextPosition = findNextAvailablePosition(0, 0, fileId);
-        setIconPositions(prev => ({
-          ...prev,
-          [fileId]: nextPosition
-        }));
-      }
-      
-      setLastCreatedItemId(fileId);
+      createItem(fileId, contextPosition);
     }
   };
 
