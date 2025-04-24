@@ -51,7 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         setError(true);
         setPassword('');
       }
-    } catch (error) {
+    } catch {
       setError(true);
     } finally {
       setLoading(false);

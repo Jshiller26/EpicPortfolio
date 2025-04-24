@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Desktop } from '../components/os/Desktop';
+import { AuthProvider } from '../contexts/AuthContext';
 
 export default function DesktopPage() {
   const router = useRouter();
@@ -11,5 +12,9 @@ export default function DesktopPage() {
     router.push('/start');
   };
   
-  return <Desktop onClose={handleClose} />;
+  return (
+    <AuthProvider>
+      <Desktop onClose={handleClose} />
+    </AuthProvider>
+  );
 }

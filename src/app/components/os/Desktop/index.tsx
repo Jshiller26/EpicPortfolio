@@ -45,6 +45,12 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
     setShowShutdownDialog(true);
   };
 
+  const handleLockScreen = () => {
+    setStartMenuOpen(false);
+    setSearchOpen(false);
+    router.push('/');
+  };
+
   const handleDialogClose = () => {
     setShowShutdownDialog(false);
     setFadeOpacity('opacity-0');
@@ -136,6 +142,7 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose }) => {
             onSearchClick={toggleSearch}
             isStartOpen={startMenuOpen}
             isSearchOpen={searchOpen}
+            onLockScreen={handleLockScreen}
           />
         </div>
 
