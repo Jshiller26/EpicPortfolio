@@ -3,7 +3,7 @@ import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
-import { useUserPreferencesStore, ViewMode } from '@/app/stores/userPreferencesStore';
+import { useUserPreferencesStore, ViewMode, SortBy } from '@/app/stores/userPreferencesStore';
 
 interface FileExplorerContextMenuProps {
   x: number;
@@ -167,6 +167,20 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
   };
 
   const isActiveViewMode = (mode: ViewMode) => userPreferences.fileExplorerViewMode === mode;
+
+  const handleSortChange = (sortBy: SortBy) => {
+    userPreferences.setSorting(sortBy);
+    onClose();
+  };
+
+  const isActiveSortOption = (sortBy: SortBy) => userPreferences.sortBy === sortBy;
+
+  const getSortDirectionIndicator = (sortBy: SortBy) => {
+    if (userPreferences.sortBy === sortBy) {
+      return userPreferences.sortDirection === 'asc' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
 
   return (
     <div 
@@ -372,28 +386,25 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
                 onContextMenu={preventDefault}
               >
                 <button 
-                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
-                  style={{ fontSize: '12px' }}
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('large') ? 'bold' : 'normal' }}
                   onClick={() => handleViewModeChange('large')}
                 >
-                  {isActiveViewMode('large') && <span className="mr-2">✓</span>}
-                  <span className={isActiveViewMode('large') ? 'font-semibold' : ''}>Large Icons</span>
+                  Large Icons
                 </button>
                 <button 
-                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
-                  style={{ fontSize: '12px' }}
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('medium') ? 'bold' : 'normal' }}
                   onClick={() => handleViewModeChange('medium')}
                 >
-                  {isActiveViewMode('medium') && <span className="mr-2">✓</span>}
-                  <span className={isActiveViewMode('medium') ? 'font-semibold' : ''}>Medium Icons</span>
+                  Medium Icons
                 </button>
                 <button 
-                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
-                  style={{ fontSize: '12px' }}
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('small') ? 'bold' : 'normal' }}
                   onClick={() => handleViewModeChange('small')}
                 >
-                  {isActiveViewMode('small') && <span className="mr-2">✓</span>}
-                  <span className={isActiveViewMode('small') ? 'font-semibold' : ''}>Small Icons</span>
+                  Small Icons
                 </button>
               </div>
             )}
@@ -424,17 +435,33 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
                 }}
                 onContextMenu={preventDefault}
               >
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Name
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('name') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('name')}
+                >
+                  Name{getSortDirectionIndicator('name')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Size
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('size') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('size')}
+                >
+                  Size{getSortDirectionIndicator('size')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Type
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('type') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('type')}
+                >
+                  Type{getSortDirectionIndicator('type')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Date modified
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('modified') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('modified')}
+                >
+                  Date modified{getSortDirectionIndicator('modified')}
                 </button>
               </div>
             )}
