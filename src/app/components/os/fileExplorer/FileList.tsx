@@ -5,6 +5,7 @@ import FileExplorerContextMenu from './ContextMenu';
 import { createPortal } from 'react-dom';
 import { useFileSystemStore } from '../../../stores/fileSystemStore';
 import { APPS } from '../../../config/appConfig';
+import { useUserPreferencesStore } from '@/app/stores/userPreferencesStore';
 
 const AppMovedEvent = 'desktopAppMoved';
 
@@ -17,6 +18,7 @@ interface FileListProps {
 const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFolderId }) => {
   const fileListRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
+  const { fileExplorerViewMode } = useUserPreferencesStore();
   
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
@@ -147,6 +149,7 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
               onDoubleClick={onItemDoubleClick} 
               onContextMenu={(e) => handleContextMenu(e, item)}
               currentFolderId={currentFolderId || ''}
+              viewMode={fileExplorerViewMode}
             />
           ))}
           {items.length === 0 && (

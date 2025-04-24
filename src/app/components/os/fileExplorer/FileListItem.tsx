@@ -9,19 +9,22 @@ import { openItem } from '../../../utils/appUtils';
 import { useWindowStore } from '../../../stores/windowStore';
 import { getDisplayName } from '../../../utils/displayUtils';
 import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
+import { ViewMode } from '@/app/stores/userPreferencesStore';
 
 interface FileListItemProps {
   item: FileSystemItem;
   onDoubleClick: (item: FileSystemItem) => void;
   onContextMenu: (e: React.MouseEvent, item: FileSystemItem) => void;
   currentFolderId: string;
+  viewMode: ViewMode;
 }
 
 const FileListItem: React.FC<FileListItemProps> = ({ 
   item, 
   onDoubleClick, 
   onContextMenu,
-  currentFolderId 
+  currentFolderId,
+  viewMode 
 }) => {
   const fileSystem = useFileSystemStore();
   const windowStore = useWindowStore();
@@ -227,9 +230,52 @@ const FileListItem: React.FC<FileListItemProps> = ({
     ? getDisplayName(item.name)
     : item.name;
 
+  const getIconSize = () => {
+    switch (viewMode) {
+      case 'large': return 24;
+      case 'medium': return 16;
+      case 'small': return 12;
+      default: return 16; 
+    }
+  };
+
+  const getViewModeStyles = () => {
+    const iconSize = getIconSize();
+    
+    switch (viewMode) {
+      case 'large':
+        return {
+          rowClass: 'py-2',
+          iconClass: `w-${iconSize/4} h-${iconSize/4}`, 
+          fontSize: '14px'
+        };
+      case 'medium':
+        return {
+          rowClass: 'py-1',
+          iconClass: `w-${iconSize/4} h-${iconSize/4}`,
+          fontSize: '12px'
+        };
+      case 'small':
+        return {
+          rowClass: 'py-0.5',
+          iconClass: `w-${iconSize/4} h-${iconSize/4}`,
+          fontSize: '11px'
+        };
+      default:
+        return {
+          rowClass: 'py-1',
+          iconClass: 'w-4 h-4',
+          fontSize: '12px'
+        };
+    }
+  };
+
+  const styles = getViewModeStyles();
+  const iconSize = getIconSize();
+
   return (
     <tr
-      className={`explorer-item draggable-item ${isDragOver ? 'bg-blue-100' : ''} ${isProtected ? 'bg-yellow-50' : ''}`}
+      className={`explorer-item draggable-item ${styles.rowClass} ${isDragOver ? 'bg-blue-100' : ''} ${isProtected ? 'bg-yellow-50' : ''}`}
       onDoubleClick={() => {
         if (isRenaming) return;
         
@@ -251,15 +297,16 @@ const FileListItem: React.FC<FileListItemProps> = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleItemClick}
+      style={{ fontSize: styles.fontSize }}
     >
       <td className="px-4 py-1">
         <div className="flex items-center gap-2 relative">
           <Image
             src={getFileIcon()}
             alt={item.type}
-            width={16}
-            height={16}
-            className="w-4 h-4"
+            width={iconSize}
+            height={iconSize}
+            className={styles.iconClass}
             unoptimized={true}
           />
           {isRenaming ? (

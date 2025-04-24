@@ -3,6 +3,7 @@ import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
+import { useUserPreferencesStore, ViewMode } from '@/app/stores/userPreferencesStore';
 
 interface FileExplorerContextMenuProps {
   x: number;
@@ -21,6 +22,8 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 }) => {
   const clipboard = useClipboardStore();
   const fileSystem = useFileSystemStore();
+  const userPreferences = useUserPreferencesStore();
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
   
@@ -45,11 +48,11 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside, { capture: true });
     document.addEventListener('keydown', handleEscape);
     
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside, { capture: true });
       document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
@@ -157,6 +160,13 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     
     onClose();
   };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    userPreferences.setFileExplorerViewMode(mode);
+    onClose();
+  };
+
+  const isActiveViewMode = (mode: ViewMode) => userPreferences.fileExplorerViewMode === mode;
 
   return (
     <div 
@@ -361,14 +371,29 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
                 }}
                 onContextMenu={preventDefault}
               >
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Large Icons
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
+                  style={{ fontSize: '12px' }}
+                  onClick={() => handleViewModeChange('large')}
+                >
+                  {isActiveViewMode('large') && <span className="mr-2">✓</span>}
+                  <span className={isActiveViewMode('large') ? 'font-semibold' : ''}>Large Icons</span>
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Medium Icons
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
+                  style={{ fontSize: '12px' }}
+                  onClick={() => handleViewModeChange('medium')}
+                >
+                  {isActiveViewMode('medium') && <span className="mr-2">✓</span>}
+                  <span className={isActiveViewMode('medium') ? 'font-semibold' : ''}>Medium Icons</span>
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Small Icons
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2] flex items-center" 
+                  style={{ fontSize: '12px' }}
+                  onClick={() => handleViewModeChange('small')}
+                >
+                  {isActiveViewMode('small') && <span className="mr-2">✓</span>}
+                  <span className={isActiveViewMode('small') ? 'font-semibold' : ''}>Small Icons</span>
                 </button>
               </div>
             )}
