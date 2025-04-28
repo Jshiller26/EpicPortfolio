@@ -3,6 +3,8 @@ import { FileSystemItem, File } from '@/app/types/fileSystem';
 import { useClipboardStore } from '@/app/stores/clipboardStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { isProtectedItem } from '@/app/stores/fileSystem/utils/protectionUtils';
+import { useUserPreferencesStore, ViewMode, SortBy } from '@/app/stores/userPreferencesStore';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface FileExplorerContextMenuProps {
   x: number;
@@ -21,6 +23,9 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
 }) => {
   const clipboard = useClipboardStore();
   const fileSystem = useFileSystemStore();
+  const userPreferences = useUserPreferencesStore();
+  const windowStore = useWindowStore();
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
   
@@ -45,11 +50,11 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside, { capture: true });
     document.addEventListener('keydown', handleEscape);
     
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside, { capture: true });
       document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
@@ -158,6 +163,89 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
     onClose();
   };
 
+  const handleViewModeChange = (mode: ViewMode) => {
+    userPreferences.setFileExplorerViewMode(mode);
+    onClose();
+  };
+
+  const isActiveViewMode = (mode: ViewMode) => userPreferences.fileExplorerViewMode === mode;
+
+  const handleSortChange = (sortBy: SortBy) => {
+    userPreferences.setSorting(sortBy);
+    onClose();
+  };
+
+  const isActiveSortOption = (sortBy: SortBy) => userPreferences.sortBy === sortBy;
+
+  const getSortDirectionIndicator = (sortBy: SortBy) => {
+    if (userPreferences.sortBy === sortBy) {
+      return userPreferences.sortDirection === 'asc' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
+  
+  const handleProperties = () => {
+    if (selectedItem) {
+      const windowId = `properties-${selectedItem.id}`;
+      
+      if (windowStore.windows[windowId]) {
+        windowStore.setActiveWindow(windowId);
+        onClose();
+        return;
+      }
+      
+      windowStore.createWindow({
+        id: windowId,
+        title: `${selectedItem.name} Properties`,
+        content: {
+          type: 'properties-dialog',
+          props: {
+            itemId: selectedItem.id,
+            onClose: () => windowStore.closeWindow(windowId)
+          }
+        },
+        width: 370,
+        height: 450,
+        x: Math.max(0, (window.innerWidth - 370) / 2),
+        y: Math.max(0, (window.innerHeight - 450) / 2),
+        resizable: false,
+        minimizable: true,
+        maximizable: false,
+        showInTaskbar: true,
+      });
+    } else {
+      const windowId = `properties-${currentFolder}`;
+      
+      if (windowStore.windows[windowId]) {
+        windowStore.setActiveWindow(windowId);
+        onClose();
+        return;
+      }
+      
+      windowStore.createWindow({
+        id: windowId,
+        title: `${fileSystem.items[currentFolder]?.name || 'Folder'} Properties`,
+        content: {
+          type: 'properties-dialog',
+          props: {
+            itemId: currentFolder,
+            onClose: () => windowStore.closeWindow(windowId)
+          }
+        },
+        width: 370,
+        height: 450,
+        x: Math.max(0, (window.innerWidth - 370) / 2),
+        y: Math.max(0, (window.innerHeight - 450) / 2),
+        resizable: false,
+        minimizable: true,
+        maximizable: false,
+        showInTaskbar: true,
+      });
+    }
+    
+    onClose();
+  };
+
   return (
     <div 
       ref={menuRef}
@@ -255,10 +343,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={() => {
-              console.log('Properties for', selectedItem.name);
-              onClose();
-            }}
+            onClick={handleProperties}
           >
             <span>Properties</span>
           </button>
@@ -361,13 +446,25 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
                 }}
                 onContextMenu={preventDefault}
               >
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('large') ? 'bold' : 'normal' }}
+                  onClick={() => handleViewModeChange('large')}
+                >
                   Large Icons
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('medium') ? 'bold' : 'normal' }}
+                  onClick={() => handleViewModeChange('medium')}
+                >
                   Medium Icons
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveViewMode('small') ? 'bold' : 'normal' }}
+                  onClick={() => handleViewModeChange('small')}
+                >
                   Small Icons
                 </button>
               </div>
@@ -399,17 +496,33 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
                 }}
                 onContextMenu={preventDefault}
               >
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Name
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('name') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('name')}
+                >
+                  Name{getSortDirectionIndicator('name')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Size
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('size') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('size')}
+                >
+                  Size{getSortDirectionIndicator('size')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Type
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('type') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('type')}
+                >
+                  Type{getSortDirectionIndicator('type')}
                 </button>
-                <button className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" style={{ fontSize: '12px' }}>
-                  Date modified
+                <button 
+                  className="w-full px-3 py-[6px] text-left text-gray-900 hover:bg-[#f2f2f2]" 
+                  style={{ fontSize: '12px', fontWeight: isActiveSortOption('modified') ? 'bold' : 'normal' }}
+                  onClick={() => handleSortChange('modified')}
+                >
+                  Date modified{getSortDirectionIndicator('modified')}
                 </button>
               </div>
             )}
@@ -424,10 +537,7 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
               lineHeight: '1',
               fontFamily: 'Segoe UI, system-ui, sans-serif'
             }}
-            onClick={() => {
-              console.log('Folder properties');
-              onClose();
-            }}
+            onClick={handleProperties}
           >
             <span>Properties</span>
           </button>

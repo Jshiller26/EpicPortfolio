@@ -21,7 +21,7 @@ export const useDesktopClipboard = ({
   const clipboard = useClipboardStore();
   const fileSystem = useFileSystemStore();
   
-  const [lastPaste, setLastPaste] = useState<{
+  const [, setLastPaste] = useState<{
     id: string | null;
     position: { x: number, y: number } | null;
     timestamp: number;

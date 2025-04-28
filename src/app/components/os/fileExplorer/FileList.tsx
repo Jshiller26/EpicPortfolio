@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { FileSystemItem } from '../../../types/fileSystem';
 import FileListItem from './FileListItem';
 import FileExplorerContextMenu from './ContextMenu';
 import { createPortal } from 'react-dom';
 import { useFileSystemStore } from '../../../stores/fileSystemStore';
 import { APPS } from '../../../config/appConfig';
+import { useUserPreferencesStore } from '@/app/stores/userPreferencesStore';
 
 const AppMovedEvent = 'desktopAppMoved';
 
@@ -17,6 +18,7 @@ interface FileListProps {
 const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFolderId }) => {
   const fileListRef = useRef<HTMLDivElement>(null);
   const fileSystem = useFileSystemStore();
+  const { fileExplorerViewMode, sortBy, sortDirection } = useUserPreferencesStore();
   
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
@@ -28,6 +30,58 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
     x: 0,
     y: 0
   });
+
+  const sortedItems = useMemo(() => {
+    const itemsCopy = [...items];
+    
+    return itemsCopy.sort((a, b) => {
+      if (a.type === 'folder' && b.type !== 'folder') {
+        return -1;
+      }
+      if (a.type !== 'folder' && b.type === 'folder') {
+        return 1;
+      }
+      
+      let compareResult = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          compareResult = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          break;
+        
+        case 'size':
+          // Only files have sizes
+          if (a.type === 'file' && b.type === 'file') {
+            const aSize = a.size || 0;
+            const bSize = b.size || 0;
+            compareResult = aSize - bSize;
+          }
+          break;
+        
+        case 'type':
+          if (a.type === 'file' && b.type === 'file') {
+            const aExt = a.extension || '';
+            const bExt = b.extension || '';
+            compareResult = aExt.localeCompare(bExt, undefined, { sensitivity: 'base' });
+          }
+          if (compareResult === 0) {
+            compareResult = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+          }
+          break;
+        
+        case 'modified':
+          const aDate = a.modified ? new Date(a.modified).getTime() : 0;
+          const bDate = b.modified ? new Date(b.modified).getTime() : 0;
+          compareResult = aDate - bDate;
+          break;
+        
+        default:
+          compareResult = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      }
+      
+      return sortDirection === 'asc' ? compareResult : -compareResult;
+    });
+  }, [items, sortBy, sortDirection]);
 
   const handleContextMenu = (e: React.MouseEvent, item?: FileSystemItem) => {
     e.preventDefault();
@@ -140,16 +194,17 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
+          {sortedItems.map((item) => (
             <FileListItem 
               key={item.id} 
               item={item} 
               onDoubleClick={onItemDoubleClick} 
               onContextMenu={(e) => handleContextMenu(e, item)}
               currentFolderId={currentFolderId || ''}
+              viewMode={fileExplorerViewMode}
             />
           ))}
-          {items.length === 0 && (
+          {sortedItems.length === 0 && (
             <tr>
               <td colSpan={4} className="text-center py-4 text-gray-500">
                 This folder is empty

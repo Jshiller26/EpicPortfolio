@@ -2,6 +2,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import React from 'react';
 
+// Define a custom content type for properties dialog
+export interface PropertiesDialogContent {
+  type: string;
+  props: {
+    itemId: string;
+    onClose: () => void;
+  };
+}
+
+// Union type for all possible content types
+type WindowContent = React.ReactNode | PropertiesDialogContent;
+
 interface WindowState {
   id: string;
   isOpen: boolean;
@@ -11,7 +23,7 @@ interface WindowState {
   size: { width: number; height: number };
   zIndex: number;
   baseId: string;
-  content?: React.ReactNode;
+  content?: WindowContent;
   title?: string;
   showInTaskbar?: boolean;
   minimizable?: boolean;
@@ -22,7 +34,7 @@ interface WindowState {
 interface WindowCreateOptions {
   id: string;
   title?: string;
-  content?: React.ReactNode;
+  content?: WindowContent;
   width?: number;
   height?: number;
   x?: number;

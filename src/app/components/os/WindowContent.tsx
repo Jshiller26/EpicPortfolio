@@ -13,10 +13,14 @@ import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
 import Paint from './Paint/Paint';
+import PropertiesDialog from './PropertiesDialog';
 
 interface WindowContentProps {
   windowId: string;
 }
+
+// Import the PropertiesDialogContent type from window store
+import type { PropertiesDialogContent } from '@/app/stores/windowStore';
 
 const getWindowType = (windowId: string) => {
   const parts = windowId.split('-');
@@ -28,6 +32,10 @@ const getWindowType = (windowId: string) => {
   
   if (windowId.startsWith('password-dialog-')) {
     return 'password-dialog';
+  }
+  
+  if (windowId.startsWith('properties-')) {
+    return 'properties';
   }
   
   return parts[0];
@@ -42,7 +50,11 @@ const getContentId = (windowId: string) => {
   }
   
   if (windowId.startsWith('password-dialog-')) {
-    return windowId.split('-')[2];
+    return windowId.split('-').slice(2).join('-');
+  }
+  
+  if (windowId.startsWith('properties-')) {
+    return windowId.split('-').slice(1).join('-');
   }
   
   parts.shift();
@@ -60,7 +72,22 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   const windowData = windowStore.windows[windowId];
   
   if (windowData && windowData.content) {
-    return windowData.content;
+    // Check if the content is a PropertiesDialogContent object
+    if (typeof windowData.content === 'object' && 
+        windowData.content !== null && 
+        !React.isValidElement(windowData.content) &&
+        'type' in windowData.content && 
+        windowData.content.type === 'properties-dialog') {
+      const propsContent = windowData.content as PropertiesDialogContent;
+      return (
+        <PropertiesDialog 
+          itemId={propsContent.props.itemId} 
+          onClose={propsContent.props.onClose} 
+        />
+      );
+    }
+    // Otherwise it's a normal React element
+    return windowData.content as React.ReactNode;
   }
   
   // Handle specific window types
@@ -130,6 +157,13 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     );
   } else if (windowType === 'paint') {
     return <Paint />;
+  } else if (windowType === 'properties') {
+    return (
+      <PropertiesDialog
+        itemId={contentId}
+        onClose={() => windowStore.closeWindow(windowId)}
+      />
+    );
   }
   
   // Default content for unknown window types

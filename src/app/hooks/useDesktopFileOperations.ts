@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FileSystemItem } from '@/app/types/fileSystem';
 import { getInitialRenameName, getFinalRenameName } from '@/app/utils/appUtils';
 import { getAppInfo } from '@/app/config/appConfig';
+import { useWindowStore } from '@/app/stores/windowStore';
 
 interface UseDesktopFileOperationsProps {
   items: Record<string, FileSystemItem>;
@@ -25,6 +26,7 @@ export const useDesktopFileOperations = ({
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [lastCreatedItemId, setLastCreatedItemId] = useState<string | null>(null);
+  const windowStore = useWindowStore();
 
   const handleOpen = (itemId: string) => {
     if (appItems[itemId]) {
@@ -117,7 +119,36 @@ export const useDesktopFileOperations = ({
     }
   };
 
-  const handleProperties = () => {
+  const handleProperties = (itemId: string) => {
+    const item = items[itemId] || appItems[itemId];
+    if (!item) return;
+    
+    const windowId = `properties-${itemId}`;
+    
+    if (windowStore.windows[windowId]) {
+      windowStore.setActiveWindow(windowId);
+      return;
+    }
+    
+    windowStore.createWindow({
+      id: windowId,
+      title: `${item.name} Properties`,
+      content: {
+        type: 'properties-dialog',
+        props: {
+          itemId: itemId,
+          onClose: () => windowStore.closeWindow(windowId)
+        }
+      },
+      width: 370,
+      height: 450,
+      x: Math.max(0, (window.innerWidth - 370) / 2),
+      y: Math.max(0, (window.innerHeight - 450) / 2),
+      resizable: false,
+      minimizable: true,
+      maximizable: false,
+      showInTaskbar: true,
+    });
   };
 
   return {

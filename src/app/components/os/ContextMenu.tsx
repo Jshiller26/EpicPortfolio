@@ -58,13 +58,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       }
     };
 
-    // Add the handler to mousedown to catch clicks
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside, { capture: true });
     document.addEventListener('keydown', handleEscape);
     
     // Clean up
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside, { capture: true });
       document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
