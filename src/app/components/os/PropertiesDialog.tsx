@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { FileSystemItem, Folder, File } from '@/app/types/fileSystem';
+import { Folder, File } from '@/app/types/fileSystem';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { formatSize } from '@/app/utils/displayUtils';
 
@@ -11,6 +11,21 @@ interface PropertiesDialogProps {
 const PropertiesDialog: React.FC<PropertiesDialogProps> = ({ itemId, onClose }) => {
   const { items } = useFileSystemStore();
   const dialogRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (!dialogRef.current) return;
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      e.stopPropagation();
+    };
+    
+    const dialogElement = dialogRef.current;
+    dialogElement.addEventListener('mousedown', handleMouseDown, true);
+    
+    return () => {
+      dialogElement.removeEventListener('mousedown', handleMouseDown, true);
+    };
+  }, []);
   
   if (!itemId || !items[itemId]) {
     return null;
@@ -90,21 +105,6 @@ const PropertiesDialog: React.FC<PropertiesDialogProps> = ({ itemId, onClose }) 
     
     return parts.join(', ');
   };
-  
-  useEffect(() => {
-    if (!dialogRef.current) return;
-    
-    const handleMouseDown = (e: MouseEvent) => {
-      e.stopPropagation();
-    };
-    
-    const dialogElement = dialogRef.current;
-    dialogElement.addEventListener('mousedown', handleMouseDown, true);
-    
-    return () => {
-      dialogElement.removeEventListener('mousedown', handleMouseDown, true);
-    };
-  }, [dialogRef.current]);
   
   return (
     <div 
