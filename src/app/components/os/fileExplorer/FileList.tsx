@@ -52,7 +52,9 @@ const FileList: React.FC<FileListProps> = ({ items, onItemDoubleClick, currentFo
         case 'size':
           // Only files have sizes
           if (a.type === 'file' && b.type === 'file') {
-            compareResult = a.size - b.size;
+            const aSize = a.size || 0;
+            const bSize = b.size || 0;
+            compareResult = aSize - bSize;
           }
           break;
         
