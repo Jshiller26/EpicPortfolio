@@ -19,6 +19,9 @@ interface WindowContentProps {
   windowId: string;
 }
 
+// Import the PropertiesDialogContent type from window store
+import type { PropertiesDialogContent } from '@/app/stores/windowStore';
+
 const getWindowType = (windowId: string) => {
   const parts = windowId.split('-');
   if (parts.length < 2) return '';
@@ -69,16 +72,22 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
   const windowData = windowStore.windows[windowId];
   
   if (windowData && windowData.content) {
-    if (typeof windowData.content === 'object' && 'type' in windowData.content && windowData.content.type === 'properties-dialog') {
+    // Check if the content is a PropertiesDialogContent object
+    if (typeof windowData.content === 'object' && 
+        windowData.content !== null && 
+        !React.isValidElement(windowData.content) &&
+        'type' in windowData.content && 
+        windowData.content.type === 'properties-dialog') {
+      const propsContent = windowData.content as PropertiesDialogContent;
       return (
         <PropertiesDialog 
-          itemId={windowData.content.props.itemId} 
-          onClose={windowData.content.props.onClose} 
+          itemId={propsContent.props.itemId} 
+          onClose={propsContent.props.onClose} 
         />
       );
     }
-    
-    return windowData.content;
+    // Otherwise it's a normal React element
+    return windowData.content as React.ReactNode;
   }
   
   // Handle specific window types
