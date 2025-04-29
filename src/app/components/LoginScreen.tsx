@@ -33,7 +33,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     if (error) setError(false);
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!password.trim()) {
@@ -43,7 +43,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setLoading(true);
     
     try {
-      const success = login(password);
+      const success = await login(password);
       
       if (success) {
         onLogin();
