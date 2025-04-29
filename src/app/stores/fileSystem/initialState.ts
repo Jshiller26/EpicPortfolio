@@ -1,4 +1,5 @@
 import { FileSystemState, Folder, File } from '../../types/fileSystem';
+import { readmeContent } from './readme-content';
 
 const addOriginalFileNameToPdfs = (state: FileSystemState): FileSystemState => {
   const newItems = { ...state.items };
@@ -472,10 +473,10 @@ const initialState: FileSystemState = {
       extension: 'txt',
       path: 'C:\\Desktop\\README.txt',
       created: new Date('2024-10-15T12:08:00'),
-      modified: new Date('2024-10-15T12:08:00'),
+      modified: new Date('2025-04-29T09:30:00'),
       parentId: 'desktop',
-      content: 'Hi',
-      size: 100
+      content: readmeContent,
+      size: 2500
     } as File,
     
     'resume': {
