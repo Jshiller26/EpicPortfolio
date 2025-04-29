@@ -19,7 +19,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ fileId }) => {
     
     if (file && file.type === 'file') {
       const physicalFileName = file.originalFileName || file.name;
-      setPdfUrl(`/pdfs/${physicalFileName}#toolbar=1&navpanes=0&pagemode=none&view=FitH&zoom=100`);
+      setPdfUrl(`/pdfs/${physicalFileName}#zoom=75&navpanes=0`);
       setLoading(false);
     } else {
       setError("File not found in the file system");
