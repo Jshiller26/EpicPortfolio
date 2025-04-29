@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (password?: string) => boolean;
+  login: (password?: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -22,15 +22,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = (password?: string) => {
-    const correctPassword = process.env.NEXT_PUBLIC_SYSTEM_PASSWORD;
-    
-    if (!password || password === correctPassword) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('isAuthenticated', 'true');
-      return true;
+  const login = async (password?: string) => {
+    if (!password) {
+      return false;
     }
-    return false;
+
+    try {
+      // Try client side authentication first (for development)
+      const clientPassword = process.env.NEXT_PUBLIC_SYSTEM_PASSWORD;
+      if (clientPassword && password === clientPassword) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('isAuthenticated', 'true');
+        return true;
+      }
+
+      // try server-side (for production)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('isAuthenticated', 'true');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
   const logout = () => {
