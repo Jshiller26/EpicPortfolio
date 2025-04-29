@@ -481,16 +481,16 @@ const initialState: FileSystemState = {
     
     'resume': {
       id: 'resume',
-      name: 'Resume.pdf',
+      name: 'JoeShillerResume.pdf',
       type: 'file',
       extension: 'pdf',
-      path: 'C:\\Documents\\Resume.pdf',
+      path: 'C:\\Documents\\JoeShillerResume.pdf',
       created: new Date('2024-09-21T16:45:00'),
-      modified: new Date('2024-10-01T09:12:00'),
+      modified: new Date('2025-04-28T09:12:00'),
       parentId: 'documents',
-      content: '[PDF content would be here]',
+      content: '/pdfs/JoeShillerResume.pdf',
       size: 250,
-      originalFileName: 'Resume.pdf'
+      originalFileName: 'JoeShillerResume.pdf'
     } as File,
     
     'screenshots': {

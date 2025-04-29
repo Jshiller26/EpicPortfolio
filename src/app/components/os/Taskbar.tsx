@@ -224,12 +224,12 @@ export const Taskbar: React.FC<TaskbarProps> = ({
       {showSearchResults && (
         <>
           <div 
-            className="fixed inset-0 bg-transparent z-30"
+            className="fixed inset-0 bg-transparent z-[1001]"
             onClick={handleCloseSearchResults}
           />
           
           {/* Centered search results panel */}
-          <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-40">
+          <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-[1002]">
             <div className="bg-white/95 backdrop-blur-md rounded-lg shadow-lg overflow-hidden animate-search-results w-96">
               <div className="p-4">
                 {searchResults.length === 0 ? (
