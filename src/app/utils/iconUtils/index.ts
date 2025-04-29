@@ -132,6 +132,8 @@ export const getIconForWindow = (windowId: string): string => {
       return '/images/desktop/icons8-chrome.svg';
     case 'edge':
       return '/images/desktop/icons8-microsoft-edge.svg';
+    case 'spotify':
+      return '/images/icons/spotifyIcon.png';
     default:
       return '/images/desktop/icons8-file.svg';
   }
@@ -238,6 +240,9 @@ export const getWindowTitle = (windowId: string, items: Record<string, FileSyste
     case 'video': {
       const file = items[contentId];
       return file ? file.name : 'Video Player';
+    }
+    case 'spotify': {
+      return 'Spotify';
     }
     default:
       return 'Window';

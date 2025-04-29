@@ -71,7 +71,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   const openWindow = useWindowStore(state => state.openWindow);    
   const groupedWindows = groupWindowsByType(windows);
   const runningAppTypes = Object.keys(groupedWindows).filter(type => 
-    !['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'].includes(type)
+    !['spotify-1', 'chrome-1', 'vscode-1', 'explorer-1'].includes(type)
   );
 
   useEffect(() => {
@@ -201,7 +201,14 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   };
 
   // Determine pinned apps and running apps for the taskbar
-  const pinnedApps = ['edge-1', 'chrome-1', 'vscode-1', 'explorer-1'];
+  const pinnedApps = ['spotify-1', 'chrome-1', 'vscode-1', 'explorer-1'];
+
+  const getCustomIconForWindow = (windowId: string) => {
+    if (windowId === 'spotify-1') {
+      return '/images/icons/spotifyIcon.png';
+    }
+    return getIconForWindow(windowId);
+  };
 
   return (
     <>
@@ -399,7 +406,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                       onClick={handlePinnedAppClick}
                     >
                       <img 
-                        src={getIconForWindow(appType)}
+                        src={getCustomIconForWindow(appType)}
                         alt={appType}
                         className="w-5 h-5 object-contain"
                       />
@@ -437,7 +444,7 @@ export const Taskbar: React.FC<TaskbarProps> = ({
                       }`}
                     >
                       <img 
-                        src={getIconForWindow(instanceIds[0])}
+                        src={getCustomIconForWindow(instanceIds[0])}
                         alt={appType}
                         className="w-5 h-5 object-contain"
                       />

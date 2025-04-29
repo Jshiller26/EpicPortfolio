@@ -14,6 +14,7 @@ import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
 import Paint from './Paint/Paint';
 import PropertiesDialog from './PropertiesDialog';
+import Spotify from './Spotify/Spotify';
 
 interface WindowContentProps {
   windowId: string;
@@ -126,6 +127,8 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     return <div className="p-4">Video not found.</div>;
   } else if (windowType === 'chrome') {
     return <Browser windowId={windowId} />;
+  } else if (windowType === 'spotify') {
+    return <Spotify />;
   } else if (windowType === 'gameboy') {
     const gameName = contentId || 'PokemonEmerald';
     return <GameBoy game={gameName} />;

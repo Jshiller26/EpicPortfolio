@@ -55,6 +55,14 @@ export const APPS: Record<string, AppConfig> = {
     windowTitle: 'Paint',
     windowComponent: 'Paint',
     description: 'Simple drawing application'
+  },
+  spotify: {
+    id: 'spotify',
+    name: 'Spotify',
+    iconPath: '/images/icons/spotifyIcon.png',
+    windowTitle: 'Spotify',
+    windowComponent: 'Spotify',
+    description: 'Music streaming service'
   }
 };
 
