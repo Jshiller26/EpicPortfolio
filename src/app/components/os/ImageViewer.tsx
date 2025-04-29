@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCw, RotateCcw, Maximize2, X } from 'lucide-react';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { File } from '@/app/types/fileSystem';
@@ -15,13 +14,8 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [imagePath, setImagePath] = useState('/images/placeholder.svg');
   
-  const containerRef = useRef<HTMLDivElement>(null);
-
   // Get image path based on file content
   useEffect(() => {
     if (file && file.type === 'file') {
@@ -36,40 +30,16 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
     }
   }, [file]);
 
-  // Reset position when zoom changes to 1
-  useEffect(() => {
-    if (zoom === 1) {
-      setPosition({ x: 0, y: 0 });
-    }
-    if (containerRef.current) {
-      containerRef.current.style.cursor = zoom > 1 ? 'grab' : 'default';
-    }
-  }, [zoom]);
-
   if (!file || file.type !== 'file') {
     return <div className="p-4">File not found.</div>;
   }
 
   const zoomIn = () => {
-    setZoom(prev => {
-      const newZoom = Math.min(prev + 0.25, 3);
-      // Reset position when zooming back to 1
-      if (newZoom === 1) {
-        setPosition({ x: 0, y: 0 });
-      }
-      return newZoom;
-    });
+    setZoom(prev => Math.min(prev + 0.25, 3));
   };
 
   const zoomOut = () => {
-    setZoom(prev => {
-      const newZoom = Math.max(prev - 0.25, 0.25);
-      // Reset position when zooming back to 1
-      if (newZoom === 1) {
-        setPosition({ x: 0, y: 0 });
-      }
-      return newZoom;
-    });
+    setZoom(prev => Math.max(prev - 0.25, 0.25));
   };
 
   const rotateClockwise = () => {
@@ -82,40 +52,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
 
   const toggleFullscreen = () => {
     setIsFullscreen(prev => !prev);
-  };
-
-  // Mouse event handlers for panning
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (zoom > 1) {
-      setIsDragging(true);
-      setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
-      // Add cursor styling
-      if (containerRef.current) {
-        containerRef.current.style.cursor = 'grabbing';
-      }
-      e.preventDefault(); // Prevent default behavior
-      e.stopPropagation(); // Stop propagation to parent
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging && zoom > 1) {
-      const newX = e.clientX - startPos.x;
-      const newY = e.clientY - startPos.y;
-      setPosition({ x: newX, y: newY });
-      e.preventDefault(); // Prevent default behavior
-      e.stopPropagation(); // Stop propagation to parent
-    }
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsDragging(false);
-    // Reset cursor
-    if (containerRef.current) {
-      containerRef.current.style.cursor = zoom > 1 ? 'grab' : 'default';
-    }
-    e.preventDefault(); // Prevent default behavior
-    e.stopPropagation(); // Stop propagation to parent
   };
 
   return (
@@ -144,12 +80,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
 
       {/* Image Container */}
       <div 
-        ref={containerRef}
-        className={`flex-1 flex items-center justify-center bg-white overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className={`flex-1 flex items-center justify-center bg-white overflow-auto ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
       >
         {isFullscreen && (
           <button
@@ -160,23 +91,17 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ fileId }) => {
           </button>
         )}
         
-        <div 
-          className="relative" 
+        <img
+          src={imagePath}
+          alt={file.name || 'Image'}
           style={{ 
-            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-            transition: zoom === 1 ? 'transform 0.2s ease-in-out' : 'none',
-            padding: '0.5rem'
+            transform: `scale(${zoom}) rotate(${rotation}deg)`,
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain'
           }}
-        >
-          <Image
-            src={imagePath}
-            alt={file.name || 'Image'}
-            width={1000}
-            height={800}
-            className="pointer-events-none max-h-[calc(100vh-6rem)] max-w-full object-contain"
-            unoptimized={true}
-          />
-        </div>
+          className="max-h-full max-w-full"
+        />
       </div>
 
       {/* Status Bar */}
