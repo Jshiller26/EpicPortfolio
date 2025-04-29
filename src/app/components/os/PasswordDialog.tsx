@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { verifyPassword } from '@/app/utils/passwordUtils';
 
 interface PasswordDialogProps {
   folderId: string;
@@ -29,10 +28,15 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
     if (error) setError(false);
   };
 
+  const verifyEncryptedFolderPassword = (password: string) => {
+    const folderPassword = process.env.NEXT_PUBLIC_ENCRYPTED_FOLDER_PASSWORD;
+    return password === folderPassword;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (verifyPassword(password)) {
+    if (verifyEncryptedFolderPassword(password)) {
       onSuccess();
     } else {
       setError(true);
