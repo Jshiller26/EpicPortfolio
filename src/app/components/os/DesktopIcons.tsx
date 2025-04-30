@@ -216,7 +216,8 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
       'README.txt': { x: 0, y: GRID_SIZE },
       'VS Code.exe': { x: 0, y: GRID_SIZE * 2 },
       'GameBoy.exe': { x: 0, y: GRID_SIZE * 3 },
-      'Paint.exe': { x: 0, y: GRID_SIZE * 4 }
+      'Paint.exe': { x: 0, y: GRID_SIZE * 4 },
+      'Minesweeper.exe': { x: 0, y: GRID_SIZE * 5 }
     };
     
     return fixedPositions[item.name] || null;
@@ -264,7 +265,7 @@ export const DesktopIcons: React.FC<DesktopIconsProps> = ({ onOpenWindow }) => {
     if (!desktop || appInitializedRef.current) return;
     
     const exeFiles = createAppItems();
-    const requiredExeFiles = ['vscode', 'gameboy', 'paint'];
+    const requiredExeFiles = ['vscode', 'gameboy', 'paint', 'minesweeper'];
     const existingExeIds = new Set<string>();
     
     Object.values(items).forEach(item => {
