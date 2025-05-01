@@ -13,6 +13,7 @@ import GameBoy from './games/GameBoy';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { PasswordDialog } from './PasswordDialog';
 import Paint from './Paint/Paint';
+import Minesweeper from './Minesweeper/Minesweeper';
 import PropertiesDialog from './PropertiesDialog';
 import Spotify from './Spotify/Spotify';
 
@@ -160,6 +161,8 @@ export const WindowContent: React.FC<WindowContentProps> = ({ windowId }) => {
     );
   } else if (windowType === 'paint') {
     return <Paint />;
+  } else if (windowType === 'minesweeper') {
+    return <Minesweeper />;
   } else if (windowType === 'properties') {
     return (
       <PropertiesDialog

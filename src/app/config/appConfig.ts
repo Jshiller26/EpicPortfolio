@@ -56,6 +56,14 @@ export const APPS: Record<string, AppConfig> = {
     windowComponent: 'Paint',
     description: 'Simple drawing application'
   },
+  minesweeper: {
+    id: 'minesweeper',
+    name: 'Minesweeper',
+    iconPath: '/images/desktop/Minesweeper.png',
+    windowTitle: 'Minesweeper',
+    windowComponent: 'Minesweeper',
+    description: 'Classic Windows Minesweeper game'
+  },
   spotify: {
     id: 'spotify',
     name: 'Spotify',

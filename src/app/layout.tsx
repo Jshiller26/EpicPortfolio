@@ -14,8 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Epic Portfolio",
+  title: "JshillerOS",
   description: "My Epic Portoflio Site",
+  icons: {
+    icon: '/images/RayrayIcon.webp',
+    shortcut: '/images/RayrayIcon.webp',
+    apple: '/images/RayrayIcon.webp',
+  },
 };
 
 export default function RootLayout({
