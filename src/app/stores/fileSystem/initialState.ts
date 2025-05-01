@@ -100,11 +100,41 @@ const initialState: FileSystemState = {
       created: new Date('2024-09-20T14:30:00'),
       modified: new Date('2024-10-10T09:45:00'),
       parentId: 'desktop',
-      children: ['emc', 'knights', 'idea', 'pandora', 'visit-pa'],
+      children: ['vyxen', 'emc', 'knights', 'idea', 'pandora', 'visit-pa'],
       // isPasswordProtected: true uncommment to lock folder
     } as Folder,
     
     // Projects subfolders
+    'vyxen': {
+      id: 'vyxen',
+      name: 'Vyxen',
+      type: 'folder',
+      path: 'C:\\Desktop\\My Projects\\Vyxen',
+      created: new Date('2025-05-01T09:30:00'),
+      modified: new Date('2025-05-01T10:45:00'),
+      parentId: 'my-projects',
+      children: [
+        'vyxen-pdf',
+        'vyxen-home1',
+        'vyxen-home2',
+        'vyxen-explore',
+        'vyxen-explore2',
+        'vyxen-post2',
+        'vyxen-post3',
+        'vyxen-postpage1',
+        'vyxen-profile1',
+        'vyxen-profile2',
+        'vyxen-search1',
+        'vyxen-settings',
+        'vyxen-signup1',
+        'vyxen-signup2',
+        'vyxen-messaging1',
+        'vyxen-messaging2',
+        'vyxen-messaging3',
+        'vyxen-comments'
+      ]
+    } as Folder,
+
     'emc': {
       id: 'emc',
       name: 'EMC',
@@ -503,6 +533,242 @@ const initialState: FileSystemState = {
       parentId: 'pictures',
       children: []
     } as Folder,
+
+    // Vyxen files
+    'vyxen-pdf': {
+      id: 'vyxen-pdf',
+      name: 'Vyxen.pdf',
+      type: 'file',
+      extension: 'pdf',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Vyxen.pdf',
+      created: new Date('2025-05-01T09:35:00'),
+      modified: new Date('2025-05-01T09:35:00'),
+      parentId: 'vyxen',
+      content: '/pdfs/Vyxen.pdf',
+      size: 2048,
+      originalFileName: 'Vyxen.pdf'
+    } as File,
+
+    'vyxen-home1': {
+      id: 'vyxen-home1',
+      name: 'Home1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Home1.png',
+      created: new Date('2025-05-01T09:40:00'),
+      modified: new Date('2025-05-01T09:40:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Home1.png',
+      size: 2850
+    } as File,
+
+    'vyxen-home2': {
+      id: 'vyxen-home2',
+      name: 'Home2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Home2.png',
+      created: new Date('2025-05-01T09:42:00'),
+      modified: new Date('2025-05-01T09:42:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Home2.png',
+      size: 2950
+    } as File,
+
+    'vyxen-explore': {
+      id: 'vyxen-explore',
+      name: 'Explore.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Explore.png',
+      created: new Date('2025-05-01T09:45:00'),
+      modified: new Date('2025-05-01T09:45:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Explore.png',
+      size: 3050
+    } as File,
+
+    'vyxen-explore2': {
+      id: 'vyxen-explore2',
+      name: 'Explore2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Explore2.png',
+      created: new Date('2025-05-01T09:47:00'),
+      modified: new Date('2025-05-01T09:47:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Explore2.png',
+      size: 3150
+    } as File,
+
+    'vyxen-post2': {
+      id: 'vyxen-post2',
+      name: 'Post2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Post2.png',
+      created: new Date('2025-05-01T09:50:00'),
+      modified: new Date('2025-05-01T09:50:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Post2.png',
+      size: 2750
+    } as File,
+
+    'vyxen-post3': {
+      id: 'vyxen-post3',
+      name: 'Post3.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Post3.png',
+      created: new Date('2025-05-01T09:52:00'),
+      modified: new Date('2025-05-01T09:52:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Post3.png',
+      size: 2850
+    } as File,
+
+    'vyxen-postpage1': {
+      id: 'vyxen-postpage1',
+      name: 'Postpage1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Postpage1.png',
+      created: new Date('2025-05-01T09:55:00'),
+      modified: new Date('2025-05-01T09:55:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Postpage1.png',
+      size: 2950
+    } as File,
+
+    'vyxen-profile1': {
+      id: 'vyxen-profile1',
+      name: 'Profile1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Profile1.png',
+      created: new Date('2025-05-01T09:58:00'),
+      modified: new Date('2025-05-01T09:58:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Profile1.png',
+      size: 3050
+    } as File,
+
+    'vyxen-profile2': {
+      id: 'vyxen-profile2',
+      name: 'Profile2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Profile2.png',
+      created: new Date('2025-05-01T10:00:00'),
+      modified: new Date('2025-05-01T10:00:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Profile2.png',
+      size: 3150
+    } as File,
+
+    'vyxen-search1': {
+      id: 'vyxen-search1',
+      name: 'Search1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Search1.png',
+      created: new Date('2025-05-01T10:03:00'),
+      modified: new Date('2025-05-01T10:03:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Search1.png',
+      size: 2850
+    } as File,
+
+    'vyxen-settings': {
+      id: 'vyxen-settings',
+      name: 'Settings.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Settings.png',
+      created: new Date('2025-05-01T10:05:00'),
+      modified: new Date('2025-05-01T10:05:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Settings.png',
+      size: 2750
+    } as File,
+
+    'vyxen-signup1': {
+      id: 'vyxen-signup1',
+      name: 'Signup1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Signup1.png',
+      created: new Date('2025-05-01T10:08:00'),
+      modified: new Date('2025-05-01T10:08:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Signup1.png',
+      size: 2650
+    } as File,
+
+    'vyxen-signup2': {
+      id: 'vyxen-signup2',
+      name: 'Signup2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Signup2.png',
+      created: new Date('2025-05-01T10:10:00'),
+      modified: new Date('2025-05-01T10:10:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Signup2.png',
+      size: 2750
+    } as File,
+
+    'vyxen-messaging1': {
+      id: 'vyxen-messaging1',
+      name: 'Messaging1.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Messaging1.png',
+      created: new Date('2025-05-01T10:13:00'),
+      modified: new Date('2025-05-01T10:13:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Messaging1.png',
+      size: 2850
+    } as File,
+
+    'vyxen-messaging2': {
+      id: 'vyxen-messaging2',
+      name: 'Messaging2.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Messaging2.png',
+      created: new Date('2025-05-01T10:15:00'),
+      modified: new Date('2025-05-01T10:15:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Messaging2.png',
+      size: 2950
+    } as File,
+
+    'vyxen-messaging3': {
+      id: 'vyxen-messaging3',
+      name: 'Messaging3.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\Messaging3.png',
+      created: new Date('2025-05-01T10:17:00'),
+      modified: new Date('2025-05-01T10:17:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/Messaging3.png',
+      size: 3050
+    } as File,
+
+    'vyxen-comments': {
+      id: 'vyxen-comments',
+      name: 'CommentSection.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Vyxen\\CommentSection.png',
+      created: new Date('2025-05-01T10:20:00'),
+      modified: new Date('2025-05-01T10:20:00'),
+      parentId: 'vyxen',
+      content: '/images/projects/vyxen/CommentSection.png',
+      size: 2750
+    } as File,
     
     // EMC folder
     'emc-bizquiz-pdf': {
