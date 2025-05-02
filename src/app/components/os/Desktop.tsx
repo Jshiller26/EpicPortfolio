@@ -116,8 +116,13 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
   };
   
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-hidden" onClick={handleGlobalClick}>
-      {/* Windows 11 wallpaper background */}
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden animate-desktop-appear" onClick={handleGlobalClick}>
+      <img 
+        src="/images/desktop/desktopWallpaper.jpg" 
+        alt="Preload Wallpaper" 
+        className="hidden" 
+      />
+      
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ 

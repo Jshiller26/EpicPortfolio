@@ -20,7 +20,6 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   const centerX = 40;
   const centerY = 40; 
 
-  // Calculate positions for the dotas
   for (let i = 0; i < 5; i++) {
     const angle = (i * (2 * Math.PI / 5)) - Math.PI / 2;
     const x = centerX + radius * Math.cos(angle) - (dotSize / 2);
@@ -56,7 +55,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         backgroundColor: '#0078D7',
         backgroundImage: `url('${backgroundImage}')`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
+        transition: 'opacity 0.05s ease-in-out'
       }}
     >
       <div className="w-full max-w-md p-4 -mt-20">
@@ -67,6 +67,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
               alt="Default User"
               width={150}
               height={150}
+              priority={true}
             />
           </div>
           
@@ -102,6 +103,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
               alt="Default User"
               width={30}
               height={30}
+              priority={true}
             />
           </div>
           <p className="text-white text-sm">Joe Shiller</p>
@@ -117,6 +119,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             width={24} 
             height={24} 
             style={{ filter: 'brightness(0) invert(1)' }}
+            priority={true}
           />
         </div>
         <div className="flex items-center justify-center w-6 h-6">
@@ -126,6 +129,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             width={24} 
             height={24} 
             style={{ filter: 'brightness(0) invert(1)' }}
+            priority={true}
           />
         </div>
         <div className="flex items-center justify-center w-6 h-6">
@@ -135,6 +139,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             width={24} 
             height={24} 
             style={{ filter: 'brightness(0) invert(1)' }}
+            priority={true}
           />
         </div>
       </div>

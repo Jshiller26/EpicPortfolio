@@ -135,24 +135,6 @@ export const getDesktopContextMenu = (
 ): ContextMenuItem[] => {
   return [
     {
-      label: 'View',
-      submenu: [
-        { label: 'Large Icons', onClick: () => console.log('Large Icons') },
-        { label: 'Medium Icons', onClick: () => console.log('Medium Icons') },
-        { label: 'Small Icons', onClick: () => console.log('Small Icons') },
-      ]
-    },
-    {
-      label: 'Sort By',
-      submenu: [
-        { label: 'Name', onClick: () => console.log('Sort by Name') },
-        { label: 'Size', onClick: () => console.log('Sort by Size') },
-        { label: 'Type', onClick: () => console.log('Sort by Type') },
-        { label: 'Date modified', onClick: () => console.log('Sort by Date') },
-      ]
-    },
-    { divider: true },
-    {
       label: 'New',
       submenu: [
         { label: 'Folder', onClick: handleCreateNewFolder },
@@ -164,11 +146,6 @@ export const getDesktopContextMenu = (
       label: 'Paste',
       onClick: handlePaste,
       disabled: !hasClipboardItem
-    },
-    { divider: true },
-    {
-      label: 'Properties',
-      onClick: () => console.log('Desktop properties')
     }
   ];
 };

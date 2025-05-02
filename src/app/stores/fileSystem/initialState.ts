@@ -154,7 +154,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-03-03T09:18:00'),
       modified: new Date('2025-03-07T15:27:00'),
       parentId: 'my-projects',
-      children: ['knights-pdf', 'knights-puzzle-explainer', 'knights-image-1', 'knights-image-2', 'knights-demo-video']
+      children: ['knights-pdf', 'knights-puzzle-explainer', 'knights-image-1', 'knights-image-2', 'knights-demo-video', 'knights-map-screenshot', 'knights-mine-screenshot']
     } as Folder,
     
     // I.D.E.A. Museum folder
@@ -351,6 +351,32 @@ const initialState: FileSystemState = {
       parentId: 'knights',
       content: '/images/projects/knights/knights2.jpg',
       size: 2950
+    } as File,
+
+    'knights-map-screenshot': {
+      id: 'knights-map-screenshot',
+      name: 'mapScreenshot.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\mapScreenshot.png',
+      created: new Date('2025-03-05T11:15:00'),
+      modified: new Date('2025-03-05T11:15:00'),
+      parentId: 'knights',
+      content: '/images/projects/knights/mapScreenshot.png',
+      size: 2750
+    } as File,
+
+    'knights-mine-screenshot': {
+      id: 'knights-mine-screenshot',
+      name: 'mineScreenshot.png',
+      type: 'file',
+      extension: 'png',
+      path: 'C:\\Desktop\\My Projects\\Knights Escape Room\\mineScreenshot.png',
+      created: new Date('2025-03-05T11:20:00'),
+      modified: new Date('2025-03-05T11:20:00'),
+      parentId: 'knights',
+      content: '/images/projects/knights/mineScreenshot.png',
+      size: 2850
     } as File,
     
     'knights-demo-video': {

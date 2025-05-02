@@ -84,6 +84,18 @@ image {
   transition-duration: 3000ms;
 }
 
+.duration-300 {
+  transition-duration: 200ms;
+}
+
+.duration-50 {
+  transition-duration: 25ms;
+}
+
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .draggable-item {
   cursor: pointer;
 }
@@ -239,4 +251,21 @@ body.dragging * {
 
 .animate-start-menu {
   animation: startMenuAppear 0.15s ease-out forwards;
+}
+
+@keyframes desktopAppear {
+  from {
+    transform: scale(1.01);
+    filter: blur(2px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+.animate-desktop-appear {
+  animation: desktopAppear 0.15s ease-out forwards;
 }
