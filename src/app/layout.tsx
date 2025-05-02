@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "JshillerOS",
-  description: "My Epic Portoflio Site",
+  description: "Epic Portfolio Site",
   icons: {
     icon: '/rayray.ico',
     shortcut: '/rayray.ico',
