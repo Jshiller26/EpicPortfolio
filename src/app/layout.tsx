@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "JshillerOS",
   description: "My Epic Portoflio Site",
   icons: {
-    icon: '/images/RayrayIcon.webp',
-    shortcut: '/images/RayrayIcon.webp',
-    apple: '/images/RayrayIcon.webp',
+    icon: '/rayray.ico',
+    shortcut: '/rayray.ico',
+    apple: '/rayray.ico',
   },
 };
 
