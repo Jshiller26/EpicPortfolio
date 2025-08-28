@@ -13,7 +13,6 @@ export function middleware() {
 
 export const config = {
   matcher: [
-    // Skip API, Next internals, favicon, and static images in /images/**
     '/((?!api|_next/static|_next/image|favicon.ico|images).*)',
   ],
 };
