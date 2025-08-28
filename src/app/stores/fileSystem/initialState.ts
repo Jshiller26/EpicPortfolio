@@ -584,7 +584,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:40:00'),
       modified: new Date('2025-05-01T09:40:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Home1.png',
+      content: '/images/projects/Vyxen/Home1.png',
       size: 2850
     } as File,
 
@@ -597,7 +597,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:42:00'),
       modified: new Date('2025-05-01T09:42:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Home2.png',
+      content: '/images/projects/Vyxen/Home2.png',
       size: 2950
     } as File,
 
@@ -610,7 +610,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:45:00'),
       modified: new Date('2025-05-01T09:45:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Explore.png',
+      content: '/images/projects/Vyxen/Explore.png',
       size: 3050
     } as File,
 
@@ -623,7 +623,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:47:00'),
       modified: new Date('2025-05-01T09:47:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Explore2.png',
+      content: '/images/projects/Vyxen/Explore2.png',
       size: 3150
     } as File,
 
@@ -636,7 +636,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:50:00'),
       modified: new Date('2025-05-01T09:50:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Post2.png',
+      content: '/images/projects/Vyxen/Post2.png',
       size: 2750
     } as File,
 
@@ -649,7 +649,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:52:00'),
       modified: new Date('2025-05-01T09:52:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Post3.png',
+      content: '/images/projects/Vyxen/Post3.png',
       size: 2850
     } as File,
 
@@ -662,7 +662,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:55:00'),
       modified: new Date('2025-05-01T09:55:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Postpage1.png',
+      content: '/images/projects/Vyxen/Postpage1.png',
       size: 2950
     } as File,
 
@@ -675,7 +675,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T09:58:00'),
       modified: new Date('2025-05-01T09:58:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Profile1.png',
+      content: '/images/projects/Vyxen/Profile1.png',
       size: 3050
     } as File,
 
@@ -688,7 +688,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:00:00'),
       modified: new Date('2025-05-01T10:00:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Profile2.png',
+      content: '/images/projects/Vyxen/Profile2.png',
       size: 3150
     } as File,
 
@@ -701,7 +701,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:03:00'),
       modified: new Date('2025-05-01T10:03:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Search1.png',
+      content: '/images/projects/Vyxen/Search1.png',
       size: 2850
     } as File,
 
@@ -714,7 +714,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:05:00'),
       modified: new Date('2025-05-01T10:05:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Settings.png',
+      content: '/images/projects/Vyxen/Settings.png',
       size: 2750
     } as File,
 
@@ -727,7 +727,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:08:00'),
       modified: new Date('2025-05-01T10:08:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Signup1.png',
+      content: '/images/projects/Vyxen/Signup1.png',
       size: 2650
     } as File,
 
@@ -740,7 +740,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:10:00'),
       modified: new Date('2025-05-01T10:10:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Signup2.png',
+      content: '/images/projects/Vyxen/Signup2.png',
       size: 2750
     } as File,
 
@@ -753,7 +753,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:13:00'),
       modified: new Date('2025-05-01T10:13:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Messaging1.png',
+      content: '/images/projects/Vyxen/Messaging1.png',
       size: 2850
     } as File,
 
@@ -766,7 +766,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:15:00'),
       modified: new Date('2025-05-01T10:15:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Messaging2.png',
+      content: '/images/projects/Vyxen/Messaging2.png',
       size: 2950
     } as File,
 
@@ -779,7 +779,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:17:00'),
       modified: new Date('2025-05-01T10:17:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/Messaging3.png',
+      content: '/images/projects/Vyxen/Messaging3.png',
       size: 3050
     } as File,
 
@@ -792,7 +792,7 @@ const initialState: FileSystemState = {
       created: new Date('2025-05-01T10:20:00'),
       modified: new Date('2025-05-01T10:20:00'),
       parentId: 'vyxen',
-      content: '/images/projects/vyxen/CommentSection.png',
+      content: '/images/projects/Vyxen/CommentSection.png',
       size: 2750
     } as File,
     
