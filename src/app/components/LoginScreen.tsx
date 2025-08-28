@@ -135,7 +135,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </>
               ) : (
                 <div className="text-white text-sm max-w-xs text-center bg-black bg-opacity-50 p-3 rounded animate-fade-in">
-                  Password can be found in &quot;Profile&quot; section of resume. If you are having trouble accessing the site you can reach me at shiller1205@gmail.com
+                  Password can be found in &quot;Projects&quot; section of my resume. If you are having trouble accessing the site you can reach me at shiller1205@gmail.com
                 </div>
               )}
             </div>
