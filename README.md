@@ -1,19 +1,19 @@
-# 🖥️ Windows OS Portfolio
+# Windows OS Portfolio
 
 A Windows-inspired interactive portfolio website built with Next.js.
 
-## ✨ Overview
+## Overview
 
 This is a personal portfolio site built to showcase some of my past projects / skills and provide some information about me. This web app is a parody of Windows OS, featuring a fully functional file system, a familiar user interface, and a few pre-installed apps.
 
-## 🔐 Lock Screen and Authorization
+## Lock Screen and Authorization
 
 - **Lock Screen**: Displays current time and date in real-time with Windows-style loading animations and transitions
 - **Login Screen**: User authentication with password field and forgot password hint
 - **Session Management**: Persistent authentication using sessionStorage
 - **Secure Authentication**: Server-side password validation
 
-## 💻 Desktop / Home Screen
+## Desktop / Home Screen
 
 - **Desktop Windows**
   - Draggable and resizable windows with maximize/minimize controls
@@ -40,7 +40,7 @@ This is a personal portfolio site built to showcase some of my past projects / s
   - Quick access to common folders
   - Power button for system shutdown
 
-## 📁 File System
+## File System
 
 - **File Explorer**
   - Windows-style navigation with path breadcrumbs
@@ -58,7 +58,7 @@ This is a personal portfolio site built to showcase some of my past projects / s
   - Support for multiple file types (text, image, PDF, video)
   - File metadata (creation date, modified date, size)
 
-## 📱 Applications
+## Applications
 
 - **Text Editor**
   - Simple Notepad-style text editor for viewing and editing text files
