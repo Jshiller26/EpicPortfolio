@@ -103,9 +103,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 onChange={handlePasswordChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Password"
-                className={`w-full py-2 px-4 bg-black bg-opacity-50 text-white border ${error ? 'border-red-500' : 'border-gray-400'} rounded`}
+                className={`w-full py-2 px-4 pr-12 bg-black bg-opacity-50 text-white border ${error ? 'border-red-500' : 'border-gray-400'} rounded`}
                 disabled={loading}
               />
+              <button
+                type="submit"
+                disabled={loading || !password.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 p-1"
+                aria-label="Submit password"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="w-6 h-6"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
               {error && (
                 <p className="absolute text-red-500 text-sm mt-1">
                   The password is incorrect. Try again.

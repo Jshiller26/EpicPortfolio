@@ -16,11 +16,6 @@ const PreloadedDesktop: React.FC<PreloadedDesktopProps> = (props) => {
     const preloadAssets = () => {
       const assets = [
         '/images/desktop/desktopWallpaper.jpg',
-        '/images/desktop/icons/logo.png',
-        '/images/desktop/icons/search.png',
-        '/images/desktop/icons/fileExplorer.png',
-        '/images/desktop/icons/edge.png',
-        '/images/desktop/icons/settings.png',
         '/images/desktop/defaultUser.png'
       ];
       

@@ -23,13 +23,6 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'pokemon-emerald';
-  src: url('/fonts/pokemon-emerald.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -56,7 +49,7 @@ body {
 }
 
 .press-start {
-  font-family: 'Pokemon', sans-serif;
+  font-family: 'Gbboot', sans-serif;
   text-align: center;
   /* animation: blink 1s infinite; */
 }
@@ -69,7 +62,7 @@ image {
 }
 
 .dialogText {
-  font-family: 'pokemon-emerald', monospace;
+  font-family: 'Gbboot', monospace;
   font-size: 2rem;
   line-height: 1.5;
   white-space: pre-wrap;

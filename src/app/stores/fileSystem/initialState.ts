@@ -66,7 +66,7 @@ const initialState: FileSystemState = {
       created: new Date('2024-10-15T12:15:00'),
       modified: new Date('2024-10-15T12:15:00'),
       parentId: 'c-drive',
-      children: ['resume']
+      children: []
     } as Folder,
     
     'pictures': {
@@ -533,20 +533,6 @@ const initialState: FileSystemState = {
       parentId: 'desktop',
       content: readmeContent,
       size: 2500
-    } as File,
-    
-    'resume': {
-      id: 'resume',
-      name: 'JoeShillerResume.pdf',
-      type: 'file',
-      extension: 'pdf',
-      path: 'C:\\Documents\\JoeShillerResume.pdf',
-      created: new Date('2024-09-21T16:45:00'),
-      modified: new Date('2025-04-28T09:12:00'),
-      parentId: 'documents',
-      content: '/pdfs/JoeShillerResume.pdf',
-      size: 250,
-      originalFileName: 'JoeShillerResume.pdf'
     } as File,
     
     'screenshots': {

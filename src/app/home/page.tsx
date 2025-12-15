@@ -1,18 +1,18 @@
 "use client";
 
-import React, { Suspense } from 'react';
-import Room from '../components/Room';
-
-function RoomComponent() {
-  return <Room />;
-}
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    router.push('/');
+  }, [router]);
+  
   return (
-    <div className="w-full h-screen bg-black">
-      <Suspense fallback={<div className="w-full h-screen bg-black flex items-center justify-center text-white">Loading...</div>}>
-        <RoomComponent />
-      </Suspense>
+    <div className="w-full h-screen bg-black flex items-center justify-center">
+      <p className="text-white text-xl">Redirecting...</p>
     </div>
   );
 }
