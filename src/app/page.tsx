@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import PreloadedDesktop from './components/os/PreloadedDesktop';
 import AuthScreen from './components/AuthScreen';
@@ -11,7 +10,6 @@ type DesktopState = 'AUTH_SCREEN' | 'LOADING' | 'DESKTOP';
 
 const ProtectedDesktop = () => {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
   const [currentState, setCurrentState] = useState<DesktopState>('AUTH_SCREEN');
   const [stateKey, setStateKey] = useState(0);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -41,7 +39,7 @@ const ProtectedDesktop = () => {
     if (isFirstLoad && !isAuthenticated) {
       setIsFirstLoad(false);
     }
-  }, []);
+  }, [isFirstLoad, isAuthenticated]);
 
   const handleLoadingToDesktopTransition = () => {
     setIsTransitioning(true);
