@@ -7,7 +7,6 @@ export default function StartPage() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect directly to home page
     router.push('/');
   }, [router]);
   

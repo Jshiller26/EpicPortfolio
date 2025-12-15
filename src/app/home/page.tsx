@@ -7,7 +7,6 @@ export default function Home() {
   const router = useRouter();
   
   useEffect(() => {
-    // Redirect to main page since room is removed
     router.push('/');
   }, [router]);
   
