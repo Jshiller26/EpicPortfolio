@@ -59,7 +59,7 @@ const ProtectedDesktop = () => {
   };
 
   const handleClose = () => {
-    router.push('/start');
+    // No longer redirect to /start, just stay on current page
   };
 
   const handleLoadingComplete = () => {

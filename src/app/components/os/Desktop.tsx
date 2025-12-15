@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useWindowStore } from '@/app/stores/windowStore';
 import { useFileSystemStore } from '@/app/stores/fileSystemStore';
 import { Taskbar } from './Taskbar';
 import { DesktopIcons } from './DesktopIcons';
 import { Window } from './Window';
-import { BackButton } from './BackButton';
-import DialogBox from '../DialogBox';
 import { initDragCursorFix } from '@/app/utils/dragCursorFix';
 import { useAuth } from '@/app/contexts/AuthContext';
 
@@ -19,10 +16,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, setWidgetsOpen] = useState(false);
-  const [showShutdownDialog, setShowShutdownDialog] = useState(false);
-  const [isFading, setIsFading] = useState(false);
-  const [fadeOpacity, setFadeOpacity] = useState('opacity-0');
-  const router = useRouter();
   const fileSystem = useFileSystemStore();
   const { logout } = useAuth();
   const closeAllWindows = useWindowStore(state => state.closeAllWindows);
@@ -52,10 +45,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
     setWidgetsOpen(false);
   };
 
-  const handleShutdown = () => {
-    setShowShutdownDialog(true);
-  };
-
   const handleLockScreen = () => {
     setStartMenuOpen(false);
     setSearchOpen(false);
@@ -67,27 +56,9 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
     }
   };
 
-  const handleDialogClose = () => {
-    setShowShutdownDialog(false);
-    setFadeOpacity('opacity-0');
-    setIsFading(true);
-    
-    setTimeout(() => {
-      setFadeOpacity('opacity-100');
-    }, 50);
-    
-    setTimeout(() => {
-      router.push('/home?from=desktop');
-    }, 500);
-  };
-
   const handleGlobalClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       fileSystem.selectItems([]);
-    }
-    
-    if (showShutdownDialog) {
-      handleDialogClose();
     }
   };
   
@@ -130,9 +101,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
           backgroundColor: "#0078D4" 
         }}
       />
-
-      {/* Back Button */}
-      <BackButton onClick={handleShutdown} />
       
       {/* Desktop Content */}
       <div className="h-full w-full relative">
@@ -160,22 +128,6 @@ export const Desktop: React.FC<DesktopProps> = ({ onClose, onLogout }) => {
             onLockScreen={handleLockScreen}
           />
         </div>
-
-        {/* Shutdown Dialog */}
-        {showShutdownDialog && (
-          <DialogBox 
-            message="You shut down the PC."
-            onClose={handleDialogClose}
-          />
-        )}
-
-        {/* Fade Out Layer */}
-        {isFading && (
-          <div 
-            className={`absolute inset-0 z-50 bg-black pointer-events-none transition-opacity duration-500 ${fadeOpacity}`}
-            aria-hidden="true"
-          />
-        )}
       </div>
     </div>
   );
